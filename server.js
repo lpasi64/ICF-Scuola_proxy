@@ -42,6 +42,31 @@ Durante tutta la conversazione, tieni traccia anche dei FATTORI PERSONALI (serie
 
 Non chiedere esplicitamente di questi codici — ricavali dalle risposte narrative e segnalali nel JSON come "fpItems".
 
+REGOLA CRITICA — distinzione diagnosi vs fattori personali:
+Le diagnosi cliniche (autismo, ADHD, dislessia, disprassia, paralisi cerebrale, ecc.) NON sono fattori personali (i). Vanno tradotte nelle corrispondenti funzioni corporee (b) con il qualificatore appropriato. Esempi:
+- Autismo livello 2 → b122 (funzioni psicosociali globali, qualifier 2-3), b1301 (motivazione), b1641 (organizzazione), b1670 (ricezione del linguaggio)
+- ADHD → b140 (attenzione, qualifier 2-3), b1301 (motivazione), b147 (funzioni psicomotorie)
+- Dislessia → b1670 (ricezione linguaggio scritto), b16700 (comprensione linguaggio scritto)
+- Disortografia → b1671 (espressione linguaggio scritto)
+- Disgrafia → b1671 (espressione linguaggio scritto), b7602 (coordinazione dei movimenti volontari), b176 (sequenze di movimenti complessi)
+- Discalculia → b172 (funzioni del calcolo)
+- Disprassia / Disturbo della coordinazione motoria (DCD) → b176 (sequenze di movimenti complessi), b147 (funzioni psicomotorie), b7601 (controllo movimenti volontari)
+- Disabilità intellettiva (qualsiasi livello) → b117 (funzioni intellettive, qualifier: lieve=1, moderato=2, grave=3, profondo=4)
+- Sindrome di Down → b117 (funzioni intellettive), b122 (funzioni psicosociali), b1670 (ricezione linguaggio), b320 (articolazione)
+- Disturbo del linguaggio (DL) / DSL → b167 (funzioni mentali del linguaggio), b1670 (ricezione), b1671 (espressione), b320 (articolazione)
+- Balbuzie / Disturbo della fluenza → b330 (fluenza e ritmo del parlato)
+- Paralisi cerebrale infantile (PCI) → b735 (tono muscolare), b760 (controllo movimenti volontari), b770 (pattern del cammino); aggiungere b117 o b164 solo se documentata compromissione cognitiva
+- Epilessia → b160 (funzioni del pensiero) se crisi frequenti impattano la cognizione; altrimenti solo se esplicitamente documentato
+- Disturbo oppositivo-provocatorio (DOP) → b126 (temperamento e personalità), b152 (funzioni emotive), b1301 (motivazione)
+- Disturbo della condotta → b126, b152, b1645 (giudizio)
+- Disturbo d'ansia → b152 (funzioni emotive, qualifier in base all'intensità)
+- Mutismo selettivo → b330 (fluenza del parlato), b152 (funzioni emotive)
+- Trauma / PTSD → b152 (funzioni emotive), b144 (memoria), b1640 (astrazione)
+- Ipoacusia / Sordità → b230 (funzioni uditive, qualifier in base al grado)
+- Deficit visivo / Cecità → b210 (funzioni della vista, qualifier in base al grado)
+
+I fattori personali (i) raccolgono invece: storia di vita, eventi significativi, interessi, motivazioni, schemi emotivi e di pensiero, abitudini — tutto ciò che riguarda la persona al di là della sua condizione di salute.
+
 Se durante il colloquio emergono informazioni cliniche (diagnosi, referti, osservazioni mediche), rileva anche le FUNZIONI CORPOREE (serie b) e STRUTTURE CORPOREE (serie s) più rilevanti:
 
 Funzioni corporee più frequenti in contesto scolastico:
