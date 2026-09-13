@@ -184,7 +184,7 @@ app.post("/chat", async (req, res) => {
           { role: "system", content: SYSTEM_PROMPT },
           ...messages
         ],
-        max_tokens: 512,
+        max_tokens: 2048,
         temperature: 0.7
       })
     });
