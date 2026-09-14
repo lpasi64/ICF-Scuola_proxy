@@ -1,11 +1,24 @@
 import express from "express";
 import cors from "cors";
 import fetch from "node-fetch";
+import Anthropic from "@anthropic-ai/sdk";
+import { Packer } from "docx";
+import { buildPromptPart1, buildPromptPart2, buildPromptPart3, buildPromptPart4 } from "./pei-prompt.js";
+import { buildDocx } from "./pei-docx-builder.js";
+import { ISTITUTI_SEC2 } from "./pei-gradi.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const ZAI_API_KEY = process.env.ZAI_API_KEY;
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
+const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+const anthropicClient = ANTHROPIC_API_KEY ? new Anthropic({ apiKey: ANTHROPIC_API_KEY }) : null;
+// Generazione PEI: claude-sonnet-5 — più economico ($2/$10 per 1M token input/output) E più
+// recente del claude-sonnet-4-6 usato nel progetto "Generatore PEI" originale ($3/$15), nessun
+// compromesso di qualità. Non DeepSeek/GLM: il testo generato viene parsato con regex da
+// pei-docx-builder.js (marker DISC:/SPEC81:/CRIT84:, blocchi ### Obiettivo N) — un formato
+// diverso produce sezioni vuote nel .docx, rischio non accettabile per un documento ministeriale.
+const PEI_MODEL = "claude-sonnet-5";
 
 // Provider primario: GLM-5.3-Flash (Z.ai), modello multimodale (usato qui solo in modalità
 // testo) con contesto 1M token. Fallback automatico su DeepSeek se GLM non è configurato o
@@ -292,6 +305,277 @@ app.post("/chat", async (req, res) => {
   } catch (err) {
     console.error(`Errore proxy (${ZAI_MODEL}):`, err.message);
     res.status(500).json({ error: "Errore interno del proxy: nessun provider disponibile." });
+  }
+});
+
+// ── GENERAZIONE PEI ─────────────────────────────────────────────────────────
+// Portato da G:\Il mio Drive\ICF_Scuola\PEI con Claude\server\index.js (progetto "Generatore
+// PEI", 20+ commit di messa a punto) — stessa logica, adattata da upload multipart a corpo
+// JSON (i dati sono già in memoria nel browser a fine colloquio, non un file da caricare).
+// Unica correzione rispetto all'originale: l'estrazione anagrafica cercava solo le chiavi
+// top-level anagrafica/nome/studente/cognome, mai allievo.nome (la forma nidificata del nostro
+// schema) — corretto sotto in due punti, marcati "FIX allievo.nome".
+
+// Compatta il JSON ICF per rispettare il rate limit 30k token/min (mai il JSON originale intero).
+// Riconosce sia il formato reale "ICF Scuola" (array {icf, performance, capacita}) sia il nostro
+// formato a oggetto (codici_icf.d137 = {performance, capacita}) — verificato compatibile.
+function compactIcf(obj, codeRegex = null) {
+  const out = {};
+
+  // Dati demografici — FIX allievo.nome: aggiunta la chiave "allievo" (schema nidificato)
+  for (const k of ['allievo', 'anagrafica', 'nome', 'studente', 'cognome', 'diagnosi', 'diagnosis', 'profilo', 'etichetta']) {
+    if (obj[k] != null) out[k] = obj[k];
+  }
+
+  // Ricerca ICF — Pattern A: chiavi top-level {d110:{P,C}} o nidificate
+  //               Pattern B: array [{icf:"d110", performance:"1", capacita:"2"}]  ← formato reale "ICF Scuola"
+  //               Pattern C: array [{codice:"d110", P:1, C:2}]  ← altri formati
+  // IMPORTANTE: si ricorre SEMPRE nei figli — anche quando cod matcha il regex ma è
+  // un dominio padre (es. "d1") privo di qualificatori, i suoi figli codici_icf
+  // e fattori_ambientali devono comunque essere visitati.
+  function walk(node, depth) {
+    if (!node || typeof node !== 'object' || depth > 10) return;
+    if (Array.isArray(node)) {
+      for (const item of node) {
+        if (!item || typeof item !== 'object') continue;
+        // Formato reale ICF Scuola: campo "icf" contiene il codice foglia
+        const cod = String(item.icf || item.codice || item.code || item.cod || '').trim();
+        if (/^[bdes]\d/i.test(cod) && (!codeRegex || codeRegex.test(cod))) {
+          // P = performance (stringa "1"-"4" o testo "F++" per fattori ambientali)
+          // C = capacita (stringa "1"-"4")
+          const rawP = item.performance ?? item.P ?? item.p ?? item.qualificatore_P ?? item.qualP ?? null;
+          const rawC = item.capacita    ?? item.capacity ?? item.C ?? item.c ?? item.qualificatore_C ?? item.qualC ?? null;
+          const pNum = rawP != null && rawP !== '' && !isNaN(+rawP) ? +rawP : null;
+          const cNum = rawC != null && rawC !== '' && !isNaN(+rawC) ? +rawC : null;
+          // Per fattori ambientali e*: qualificatore testuale "F++", "B-", ecc.
+          const pTxt = /^e/i.test(cod) && rawP != null && rawP !== '' && isNaN(+rawP) ? String(rawP) : null;
+          if (pNum != null || cNum != null || pTxt != null) {
+            const e = {};
+            if (pNum != null) e.P = pNum;
+            if (cNum != null) e.C = cNum;
+            if (pTxt != null) e.Q = pTxt;   // qualifier testuale (es. "F++")
+            out[cod] = e;
+          }
+        }
+        // Ricorre SEMPRE nei figli (anche se cod era un dominio padre senza qualificatori)
+        walk(item, depth + 1);
+      }
+      return;
+    }
+    for (const [k, v] of Object.entries(node)) {
+      if (!v || typeof v !== 'object') continue;
+      if (/^[bdes]\d{1,5}[a-z0-9]*$/i.test(k)) {
+        if (!codeRegex || codeRegex.test(k)) {
+          const rawP = v.P ?? v.p ?? v.performance ?? v.qualificatore_P ?? v.qualP ?? null;
+          const rawC = v.C ?? v.c ?? v.capacity   ?? v.capacita ?? v.qualificatore_C ?? v.qualC ?? null;
+          const pNum = rawP != null && rawP !== '' && !isNaN(+rawP) ? +rawP : null;
+          const cNum = rawC != null && rawC !== '' && !isNaN(+rawC) ? +rawC : null;
+          if (pNum != null || cNum != null) {
+            const e = {};
+            if (pNum != null) e.P = pNum;
+            if (cNum != null) e.C = cNum;
+            out[k] = e;
+          }
+        }
+        walk(v, depth + 1); // ricorre sempre per gestire sotto-codici annidati
+      } else { walk(v, depth + 1); }
+    }
+  }
+  walk(obj, 0);
+
+  const codesFound = Object.keys(out).filter(k => /^[bdes]\d/i.test(k)).length;
+  if (codesFound >= 3) {
+    console.log(`[PEI] compactIcf estratti ${codesFound} codici → ${JSON.stringify(out).length} chars`);
+    return JSON.stringify(out);
+  }
+
+  // Fallback: rimuovi tutte le stringhe > 60 chars (note/descrizioni) dall'intero JSON.
+  // Mantiene numeri (qualificatori!), booleani e stringhe brevi (nomi, codici).
+  function slim(node, depth) {
+    if (node == null || depth > 8) return null;
+    if (typeof node === 'number' || typeof node === 'boolean') return node;
+    if (typeof node === 'string') return node.length <= 60 ? node : null;
+    if (Array.isArray(node)) {
+      const r = node.slice(0, 100).map(v => slim(v, depth + 1)).filter(x => x != null);
+      return r.length ? r : null;
+    }
+    const r = {};
+    let cnt = 0;
+    for (const [k, v] of Object.entries(node)) {
+      if (cnt > 300) break;
+      const s = slim(v, depth + 1);
+      if (s != null) { r[k] = s; cnt++; }
+    }
+    return Object.keys(r).length ? r : null;
+  }
+
+  const slimmed = JSON.stringify(slim(obj) || {});
+  console.log(`[PEI] compactIcf fallback slim → ${slimmed.length} chars`);
+  return slimmed;
+}
+
+// Parser testo AI → struttura dati per pei-docx-builder.js
+function parsePeiText(text, grado, istituto, eta, sesso, jsonData) {
+
+  // Estrai nome dal JSON ICF — FIX allievo.nome: controllato per primo (schema nidificato)
+  let nomeStudente = '';
+  try {
+    const j = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
+    nomeStudente = j?.allievo?.nome || j?.anagrafica?.nome || j?.nome || j?.studente || '';
+  } catch {}
+
+  // Helper: estrae il contenuto tra due heading (approccio riga per riga, più robusto)
+  // Gestisce: ## Titolo, **Titolo**, * Titolo, o testo semplice
+  function extract(from, to) {
+    // Rimuove formattazione markdown dalla riga solo per il confronto
+    const bare   = l => l.replace(/\*\*/g, '').replace(/^[#*>\-\s]+/, '').toLowerCase();
+    const lns    = text.split('\n');
+    const fromLc = from.toLowerCase();
+    let start    = -1;
+    for (let i = 0; i < lns.length; i++) {
+      if (bare(lns[i]).includes(fromLc)) { start = i + 1; break; }
+    }
+    if (start === -1) return '';
+    let end = lns.length;
+    if (to) {
+      const toLc = to.toLowerCase();
+      for (let i = start; i < lns.length; i++) {
+        if (bare(lns[i]).includes(toLc)) { end = i; break; }
+      }
+    }
+    return lns.slice(start, end)
+      .filter(l => !/^-{3,}$/.test(l.trim()))
+      .join('\n')
+      .trim();
+  }
+
+  const annoScolastico = (() => {
+    const now = new Date();
+    const y   = now.getFullYear();
+    const m2  = now.getMonth();
+    return m2 >= 8 ? `${y}/${y+1}` : `${y-1}/${y}`;
+  })();
+
+  return {
+    nomeStudente,
+    annoScolastico,
+    eta,
+    sesso,
+    grado,
+    istituto: istituto || '',
+    codice:   '',
+    classe:   '',
+    plesso:   '',
+
+    // Sezioni testuali grezze — il docx_builder le formatta
+    sez1a: extract('Sezione 1', 'b) Profilo'),
+    sez1b: extract('b) Profilo', 'Sezione 2'),
+    sez2Raw: extract('Sezione 2', 'Sezione 3'),
+    sez3:  extract('Sezione 3', 'Sezione 4'),
+    sez4a: extract('a) Dimensione della Relazione', 'b) Dimensione della Comunicazione'),
+    sez4b: extract('b) Dimensione della Comunicazione', 'c) Dimensione dell'),
+    sez4c: extract('c) Dimensione dell', 'd) Dimensione Cognitiva'),
+    sez4d: extract('d) Dimensione Cognitiva', 'Sezione 5'),
+    sez5Raw: (() => {
+      const raw = extract('Sezione 5', 'Sezione 6');
+      // Rimuovi blocchi FASE 1/2 che l'AI include nonostante "non mostrare":
+      // cerca il primo "Obiettivo N" e tieni solo da lì in poi.
+      const objIdx = raw.search(/(?:OBIETTIVI EDUCATIVI[^\n]*\n+)?Obiettivo\s+\d/i);
+      if (objIdx > 0) return raw.slice(objIdx).trim();
+      // Fallback: rimuovi singole righe che iniziano con "FASE"
+      return raw.split('\n').filter(l => !/^FASE\s+\d/i.test(l.trim())).join('\n').trim();
+    })(),
+    sez6a1:   extract('Ambito 1', 'Ambito 2'),
+    sez6a2:   extract('Ambito 2', 'Ambito 3'),
+    sez6a3:   extract('Ambito 3', 'Sezione 7'),
+    sez7Raw:  extract('Sezione 7', 'Sezione 8'),
+    sez7cat1: extract('Categoria 1', 'Categoria 2'),
+    sez7cat2: extract('Categoria 2', 'Categoria 3'),
+    sez7cat3: extract('Categoria 3', 'Sezione 8'),
+    sez8Raw:  extract('Sezione 8', 'Sezione 9'),
+    sez9Raw:  extract('Sezione 9', 'Nota Metodologica'),
+    notaMetodologica: extract('Nota Metodologica', ''),
+
+    // Testo completo grezzo (fallback)
+    testoCompleto: text,
+  };
+}
+
+// Elenco istituti superiori per la tendina "Istituto" lato frontend — fonte unica (pei-gradi.js),
+// niente più doppia copia client/server come nel progetto "Generatore PEI" originale.
+app.get("/pei-config", (req, res) => {
+  res.json({ istituti: Object.keys(ISTITUTI_SEC2) });
+});
+
+app.post("/genera-pei", async (req, res) => {
+  if (!anthropicClient) {
+    return res.status(500).json({ error: "ANTHROPIC_API_KEY non configurata sul server." });
+  }
+  try {
+    const { eta, sesso, grado, istituto, icf } = req.body;
+
+    if (!eta || !sesso || !grado) {
+      return res.status(400).json({ error: "Campi obbligatori mancanti: eta, sesso, grado." });
+    }
+    if (!icf || typeof icf !== "object") {
+      return res.status(400).json({ error: "Profilo ICF (campo 'icf') mancante o non valido." });
+    }
+
+    const jsonData = icf;
+
+    const jsonFull = compactIcf(jsonData);            // tutti i codici d*+e* (Part1)
+    const jsonD    = compactIcf(jsonData, /^d/i);     // solo d* attività (Part2)
+    const jsonE    = compactIcf(jsonData, /^e/i);     // solo e* ambientali (Part3)
+    // Part4 (Sez.8+Nota) non richiede codici ICF: solo dati anagrafici
+    const jsonDemo = JSON.stringify((() => {
+      const d = {};
+      for (const k of ['allievo', 'anagrafica', 'nome', 'studente', 'cognome', 'diagnosi', 'diagnosis', 'profilo']) {
+        if (jsonData[k] != null) d[k] = jsonData[k];
+      }
+      return d;
+    })());
+
+    console.log(`[PEI] JSON sizes — full:${jsonFull.length} d:${jsonD.length} e:${jsonE.length} demo:${jsonDemo.length} chars`);
+    console.log(`[PEI] Generazione: grado=${grado} eta=${eta} istituto=${istituto || '-'}`);
+
+    const systemMsg = `Sei un docente esperto nella redazione del PEI ministeriale italiano, orientato al progetto di vita.
+Rispondi sempre in italiano. Scrivi ogni sezione integralmente, senza placeholder "[...]".
+Restituisci SOLO il testo richiesto, senza preamboli o commenti aggiuntivi.`;
+
+    const callOpts = { model: PEI_MODEL, max_tokens: 8000, system: systemMsg };
+
+    const [msg1, msg2, msg3, msg4] = await Promise.all([
+      anthropicClient.messages.create({ ...callOpts, messages: [{ role: 'user', content: buildPromptPart1({ eta, sesso, grado, istituto, jsonData: jsonFull }) }] }),
+      anthropicClient.messages.create({ ...callOpts, messages: [{ role: 'user', content: buildPromptPart2({ eta, sesso, grado, istituto, jsonData: jsonD   }) }] }),
+      anthropicClient.messages.create({ ...callOpts, messages: [{ role: 'user', content: buildPromptPart3({ eta, sesso, grado, istituto, jsonData: jsonE   }) }] }),
+      anthropicClient.messages.create({ ...callOpts, messages: [{ role: 'user', content: buildPromptPart4({ eta, sesso, grado, istituto, jsonData: jsonDemo}) }] }),
+    ]);
+
+    const getText = m => m.content.filter(b => b.type === 'text').map(b => b.text).join('\n');
+    const peiText = getText(msg1) + '\n\n' + getText(msg2) + '\n\n' + getText(msg3) + '\n\n' + getText(msg4);
+
+    const peiData = parsePeiText(peiText, grado, istituto, eta, sesso, jsonData);
+
+    console.log('[PEI] sez7Raw (300):', JSON.stringify((peiData.sez7Raw || '').slice(0, 300)));
+    console.log('[PEI] sez8Raw (500):', JSON.stringify((peiData.sez8Raw || '').slice(0, 500)));
+
+    const doc    = buildDocx(peiData, grado);
+    const buffer = await Packer.toBuffer(doc);
+
+    const nomeFile = `PEI_${peiData.nomeStudente || 'soggetto'}_${grado}_${new Date().getFullYear()}.docx`;
+
+    res.set({
+      'Content-Type':        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'Content-Disposition': `attachment; filename="${nomeFile}"`,
+      'Content-Length':      buffer.length,
+    });
+    res.send(buffer);
+
+    console.log(`[PEI] ✅ Generato: ${nomeFile} (${buffer.length} bytes)`);
+
+  } catch (err) {
+    console.error('[PEI] ❌ Errore:', err.message);
+    res.status(500).json({ error: 'Errore interno nella generazione del PEI.', detail: err.message });
   }
 });
 
