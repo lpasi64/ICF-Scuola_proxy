@@ -17,7 +17,10 @@ const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
 // alzarlo, a scapito di tempi di risposta più lunghi).
 const ZAI_MODEL = "glm-5.3-flash";
 const ZAI_URL = "https://api.z.ai/api/paas/v4/chat/completions";
-const DEEPSEEK_MODEL = "deepseek-chat";
+// "deepseek-chat" (nome storico) è un alias che DeepSeek instrada su deepseek-flash (V4.1 Flash,
+// modalità non-thinking) dall'aprile 2026, ma ne ha annunciato la dismissione dopo il 24/07/2026.
+// Usiamo direttamente il nome ufficiale attuale per non dipendere da un alias a fine vita.
+const DEEPSEEK_MODEL = "deepseek-flash";
 const DEEPSEEK_URL = "https://api.deepseek.com/chat/completions";
 
 app.use(cors());
@@ -232,7 +235,7 @@ app.get("/", (req, res) => {
 
 // Chiama un endpoint chat/completions in stile OpenAI (GLM e DeepSeek sono entrambi compatibili)
 // e restituisce il testo della risposta. Lancia un errore se la chiamata fallisce.
-async function callProvider({ url, apiKey, model, messages, temperature = 0.7, extra = {} }) {
+async function callProvider({ url, apiKey, model, messages, temperature = 0.7, maxTokens = 2048, extra = {} }) {
   const response = await fetch(url, {
     method: "POST",
     headers: {
@@ -242,7 +245,7 @@ async function callProvider({ url, apiKey, model, messages, temperature = 0.7, e
     body: JSON.stringify({
       model,
       messages: [{ role: "system", content: SYSTEM_PROMPT }, ...messages],
-      max_tokens: 2048,
+      max_tokens: maxTokens,
       temperature,
       ...extra
     })
@@ -266,25 +269,28 @@ app.post("/chat", async (req, res) => {
     return res.status(400).json({ error: "Campo 'messages' mancante o non valido." });
   }
 
-  // Provider primario: GLM-4.7 FlashX. In caso di errore (o se non configurato), fallback su DeepSeek.
-  if (ZAI_API_KEY) {
+  // Provider primario: DeepSeek — affidabile e veloce (5-7s/turno) su molte interviste complete
+  // testate dal vivo. Fallback: GLM-5.3-Flash, se DeepSeek non è configurato o la chiamata fallisce.
+  // GLM è più lento (10-20s/turno) e ha mostrato un troncamento JSON su risposte molto dense con
+  // maxTokens basso — per questo qui usa un maxTokens più alto (6000) di DeepSeek (2048).
+  if (DEEPSEEK_API_KEY) {
     try {
-      const text = await callProvider({ url: ZAI_URL, apiKey: ZAI_API_KEY, model: ZAI_MODEL, messages, temperature: 1, extra: { top_p: 0.95 } });
-      return res.json({ text, provider: ZAI_MODEL });
+      const text = await callProvider({ url: DEEPSEEK_URL, apiKey: DEEPSEEK_API_KEY, model: DEEPSEEK_MODEL, messages });
+      return res.json({ text, provider: DEEPSEEK_MODEL });
     } catch (err) {
-      console.error(`${ZAI_MODEL} non disponibile, fallback su DeepSeek:`, err.message);
+      console.error("DeepSeek non disponibile, fallback su GLM:", err.message);
     }
   }
 
-  if (!DEEPSEEK_API_KEY) {
-    return res.status(500).json({ error: "GLM non disponibile e DeepSeek non configurato come fallback." });
+  if (!ZAI_API_KEY) {
+    return res.status(500).json({ error: "DeepSeek non disponibile e GLM non configurato come fallback." });
   }
 
   try {
-    const text = await callProvider({ url: DEEPSEEK_URL, apiKey: DEEPSEEK_API_KEY, model: DEEPSEEK_MODEL, messages });
-    res.json({ text, provider: DEEPSEEK_MODEL });
+    const text = await callProvider({ url: ZAI_URL, apiKey: ZAI_API_KEY, model: ZAI_MODEL, messages, temperature: 1, maxTokens: 6000, extra: { top_p: 0.95 } });
+    res.json({ text, provider: ZAI_MODEL });
   } catch (err) {
-    console.error("Errore proxy (DeepSeek):", err.message);
+    console.error(`Errore proxy (${ZAI_MODEL}):`, err.message);
     res.status(500).json({ error: "Errore interno del proxy: nessun provider disponibile." });
   }
 });
