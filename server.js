@@ -4,7 +4,21 @@ import fetch from "node-fetch";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const ZAI_API_KEY = process.env.ZAI_API_KEY;
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
+
+// Provider primario: GLM-5.3-Flash (Z.ai), modello multimodale (usato qui solo in modalità
+// testo) con contesto 1M token. Fallback automatico su DeepSeek se GLM non è configurato o
+// la chiamata fallisce. ID modello e parametri confermati dalla documentazione ufficiale
+// (docs.z.ai/guides/vlm/glm-5.3-flash): temperature 1 e top_p 0.95 sono i valori consigliati
+// da Z.ai per questo modello. Non impostiamo reasoning_effort (i docs suggeriscono "max" per
+// compiti che richiedono ragionamento approfondito; per un colloquio conversazionale a bassa
+// latenza lasciamo il default — se le risposte risultano poco accurate si può provare ad
+// alzarlo, a scapito di tempi di risposta più lunghi).
+const ZAI_MODEL = "glm-5.3-flash";
+const ZAI_URL = "https://api.z.ai/api/paas/v4/chat/completions";
+const DEEPSEEK_MODEL = "deepseek-chat";
+const DEEPSEEK_URL = "https://api.deepseek.com/chat/completions";
 
 app.use(cors());
 app.use(express.json({ limit: "2mb" }));
@@ -216,10 +230,35 @@ app.get("/", (req, res) => {
   res.json({ status: "ok", service: "ICF-Scuola proxy" });
 });
 
+// Chiama un endpoint chat/completions in stile OpenAI (GLM e DeepSeek sono entrambi compatibili)
+// e restituisce il testo della risposta. Lancia un errore se la chiamata fallisce.
+async function callProvider({ url, apiKey, model, messages, temperature = 0.7, extra = {} }) {
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${apiKey}`
+    },
+    body: JSON.stringify({
+      model,
+      messages: [{ role: "system", content: SYSTEM_PROMPT }, ...messages],
+      max_tokens: 2048,
+      temperature,
+      ...extra
+    })
+  });
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new Error(`HTTP ${response.status}: ${errText}`);
+  }
+  const data = await response.json();
+  return data.choices?.[0]?.message?.content ?? "";
+}
+
 // Proxy endpoint
 app.post("/chat", async (req, res) => {
-  if (!DEEPSEEK_API_KEY) {
-    return res.status(500).json({ error: "API key non configurata sul server." });
+  if (!ZAI_API_KEY && !DEEPSEEK_API_KEY) {
+    return res.status(500).json({ error: "Nessuna API key configurata sul server (ZAI_API_KEY o DEEPSEEK_API_KEY)." });
   }
 
   const { messages } = req.body;
@@ -227,36 +266,26 @@ app.post("/chat", async (req, res) => {
     return res.status(400).json({ error: "Campo 'messages' mancante o non valido." });
   }
 
-  try {
-    const response = await fetch("https://api.deepseek.com/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${DEEPSEEK_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: "deepseek-chat",
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          ...messages
-        ],
-        max_tokens: 2048,
-        temperature: 0.7
-      })
-    });
-
-    if (!response.ok) {
-      const err = await response.text();
-      return res.status(response.status).json({ error: err });
+  // Provider primario: GLM-4.7 FlashX. In caso di errore (o se non configurato), fallback su DeepSeek.
+  if (ZAI_API_KEY) {
+    try {
+      const text = await callProvider({ url: ZAI_URL, apiKey: ZAI_API_KEY, model: ZAI_MODEL, messages, temperature: 1, extra: { top_p: 0.95 } });
+      return res.json({ text, provider: ZAI_MODEL });
+    } catch (err) {
+      console.error(`${ZAI_MODEL} non disponibile, fallback su DeepSeek:`, err.message);
     }
+  }
 
-    const data = await response.json();
-    const text = data.choices?.[0]?.message?.content ?? "";
-    res.json({ text });
+  if (!DEEPSEEK_API_KEY) {
+    return res.status(500).json({ error: "GLM non disponibile e DeepSeek non configurato come fallback." });
+  }
 
+  try {
+    const text = await callProvider({ url: DEEPSEEK_URL, apiKey: DEEPSEEK_API_KEY, model: DEEPSEEK_MODEL, messages });
+    res.json({ text, provider: DEEPSEEK_MODEL });
   } catch (err) {
-    console.error("Errore proxy:", err);
-    res.status(500).json({ error: "Errore interno del proxy." });
+    console.error("Errore proxy (DeepSeek):", err.message);
+    res.status(500).json({ error: "Errore interno del proxy: nessun provider disponibile." });
   }
 });
 
