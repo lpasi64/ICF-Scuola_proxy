@@ -234,6 +234,23 @@ function parseDisciplineMarkers(text) {
   return rows;
 }
 
+// Anno di corso (1-5) per la sec2, stessa formula di calcolaClasse() in pei-prompt.js
+function annoCorsoSec2(eta) {
+  const e = parseInt(eta, 10) || 0;
+  return Math.min(Math.max(e - 13, 1), 5);
+}
+
+// Deriva il riquadro di riepilogo A/B/C dalle opzioni scelte disciplina per disciplina
+// (Linee Guida PEI, Decreto Interm. 153/2023: C se almeno una disciplina è C,
+// altrimenti B se almeno una è B, altrimenti A).
+function riepilogoPercorso(sez82text) {
+  const rows = parseDisciplineMarkers(sez82text);
+  const opzioni = rows.map(r => (r[1] || '').trim().toUpperCase());
+  const esito = opzioni.includes('C') ? 'C' : opzioni.includes('B') ? 'B' : 'A';
+  const box = (letter) => (esito === letter ? '☒' : '☐');
+  return `Lo/a studente/essa segue un percorso didattico di tipo: ${box('A')} A. ordinario  ${box('B')} B. personalizzato (con prove equipollenti)  ${box('C')} C. differenziato`;
+}
+
 // Parser a blocchi per formato multi-riga delle discipline (legacy fallback):
 //   Disciplina: X | Opzione: B | Personalizzazioni: testo
 //   oppure su righe separate:
@@ -749,15 +766,15 @@ function buildDocx(d, grado) {
         ...empty(1),
       );
       if (grado === 'sec2' && sez8.percorsoDifferenziato) {
-        children.push(p(sez8.percorsoDifferenziato, { size: 20, bold: true }), ...empty(1));
+        children.push(p(riepilogoPercorso(sez82text), { size: 20, bold: true }), ...empty(1));
       }
     }
 
-    // 8.3 ASL (solo sec2)
-    if (sez8.haASL) {
+    // 8.3 FSL — solo sec2, solo classi III/IV/V (Linee Guida PEI, Decreto Interm. 153/2023)
+    if (sez8.haFSL && annoCorsoSec2(d.eta) >= 3) {
       children.push(
-        h2('8.3 – ASL – Alternanza Scuola-Lavoro'),
-        p('Obbligatoria dalla classe III (D.Lgs. 77/2005, come mod. dalla L. 107/2015)', { size: 19, italic: true, color: C.DARKGREY }),
+        h2('8.3 – FSL – Formazione Scuola-Lavoro'),
+        p('Obbligatoria dalle classi III, IV e V (D.Lgs. 66/2017 art.7 c.2 lett.e; L. 145/2018 art.1 cc.784-787; Decreto Interm. n.153/2023 art.11; percorso rinominato FSL dalla L. 213/2023)', { size: 19, italic: true, color: C.DARKGREY }),
         ...empty(1),
         twoCol([
           ['Tipologia percorso',       extractPctoField(d.sez8Raw, 'Tipologia') || '□ A – Aziendale  □ B – Scolastico  □ C – Altra tipologia'],

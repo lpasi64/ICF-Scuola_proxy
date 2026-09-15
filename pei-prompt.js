@@ -64,8 +64,8 @@ REGOLE FONDAMENTALI:
 5. VIETATO usare "autonomamente", "in modo autonomo", "uso autonomo" per descrivere P=0.
    In ICF "autonomia" indica la capacità intrinseca (qualifier C), non l'assenza di difficoltà in performance.
    Per P=0 usa: "non presenta difficoltà", "performance ottimale", "svolge senza difficoltà".
-6. Usa SEMPRE "ASL" (Alternanza Scuola-Lavoro) come denominazione nel PEI, mai "PCTO".
-   La sezione 8.3 si chiama ufficialmente "ASL" nel modello PEI ministeriale (D.Lgs. 96/2019).`;
+6. Usa SEMPRE "FSL" (Formazione Scuola-Lavoro) come denominazione nel PEI, mai "PCTO" né "ASL".
+   Il percorso, già "PCTO", è stato rinominato "FSL" dalla L. 213/2023 (legge di bilancio 2024).`;
 }
 
 // ── Analisi ICF (blocco comune a Parte 1 e Parte 2) ──────────────────────────
@@ -435,7 +435,7 @@ ${sez8.certCompetenze}`;
 **${sez8.titolo81}**
 ${std81}
 ⚑ OBBLIGATORIO — scrivi questa riga iniziando con "SPEC81:":
-SPEC81: [2-4 frasi specifiche per QUESTO studente: distribuzione ore sostegno nelle discipline${istituto ? ' di ' + istituto : ''}, raccordo con Sez.5, ruolo assistente scolastico, orientamento ASL]
+SPEC81: [2-4 frasi specifiche per QUESTO studente: distribuzione ore sostegno nelle discipline${istituto ? ' di ' + istituto : ''}, raccordo con Sez.5, ruolo assistente scolastico, orientamento FSL]
 
 **8.2 – Progettazione disciplinare**
 ${sez8.note82}
@@ -444,17 +444,18 @@ Per ogni disciplina scrivi una riga che inizia con "DISC:" (OBBLIGATORIO — nes
 DISC: [nome disciplina] | [A, B o C] | [personalizzazioni se B o C; vuoto se A]
 
 Opzione A: Educazione Fisica e Religione (di default). Opzione B: obiettivi differenziati. Opzione C: percorso differenziato (deliberato dal CdC).
+Per l'opzione B specifica sempre, dentro le personalizzazioni, se le verifiche sono identiche o equipollenti rispetto a quelle della classe (obbligatorio).
 Esempio corretto:
-DISC: Italiano | B | Testi semplificati, verifiche scritte con supporto visivo, meno temi
-DISC: Matematica | B | Esercizi guidati passo-passo, calcolatrice, prove ridotte
+DISC: Italiano | B | Testi semplificati, verifiche scritte equipollenti con supporto visivo, meno temi
+DISC: Matematica | B | Esercizi guidati passo-passo, calcolatrice, verifiche identiche con tempi estesi
 DISC: Educazione Fisica | A |
 
 Discipline: ${discStr}
 
 ${sez8.percorsoDifferenziato}
 
-**8.3 – ASL – Alternanza Scuola-Lavoro**
-Obbligatoria dalla classe III (D.Lgs. 77/2005, come mod. dalla L. 107/2015).
+**8.3 – FSL – Formazione Scuola-Lavoro**
+Obbligatoria dalle classi III, IV e V (D.Lgs. 66/2017 art.7 c.2 lett.e; L. 145/2018 art.1 cc.784-787; Decreto Interm. n.153/2023 art.11; percorso rinominato FSL dalla L. 213/2023).
 
 **Tipologia percorso:** □ A – Aziendale  □ B – Scolastico  □ C – Altra tipologia
 **Ente / Azienda ospitante:** [specificare]

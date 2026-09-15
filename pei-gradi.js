@@ -66,7 +66,7 @@ const STRUTTURA_SEZ8 = {
 
   infanzia: {
     haProgettazioneDisciplinare: false,
-    haASL: false,
+    haFSL: false,
     haPercorsoDifferenziato: false,
     haCertificazioneCompetenze: false,
     haValutazioneComportamento: false,
@@ -78,7 +78,7 @@ const STRUTTURA_SEZ8 = {
 
   primaria: {
     haProgettazioneDisciplinare: true,
-    haASL: false,
+    haFSL: false,
     haPercorsoDifferenziato: false,
     haCertificazioneCompetenze: true,
     haValutazioneComportamento: true,
@@ -92,7 +92,7 @@ const STRUTTURA_SEZ8 = {
 
   sec1: {
     haProgettazioneDisciplinare: true,
-    haASL: false,
+    haFSL: false,
     haPercorsoDifferenziato: false,
     haCertificazioneCompetenze: true,
     haValutazioneComportamento: true,
@@ -109,12 +109,12 @@ const STRUTTURA_SEZ8 = {
 
   sec2: {
     haProgettazioneDisciplinare: true,
-    haASL: true,
+    haFSL: true,
     haPercorsoDifferenziato: true,
     haCertificazioneCompetenze: true,
     haValutazioneComportamento: true,
     titolo81: "8.1 – Modalità di sostegno didattico e ulteriori interventi di inclusione",
-    desc81: "Include indicazioni di orientamento scolastico e raccordo con l'ASL (Alternanza Scuola-Lavoro).",
+    desc81: "Include indicazioni di orientamento scolastico e raccordo con la FSL (Formazione Scuola-Lavoro).",
     opzioni82: [
       "A – Segue la progettazione didattica della classe (stessi criteri di valutazione)",
       "B – Personalizzazioni rispetto alla progettazione della classe (verifiche identiche o equipollenti)",
