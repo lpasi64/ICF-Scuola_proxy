@@ -452,7 +452,7 @@ function parseCells(line) {
     return t.split('|').map(c => c.trim()).filter(Boolean);
   }
   // Formato **Chiave:** valore | **Chiave:** valore
-  if (t.includes('|') && /\*\*[^*]+\*\*\s*:/.test(t)) {
+  if (t.includes('|') && t.includes(':') && /\*\*[^*]+\*\*/.test(t)) {
     return t.split('|').map(s => {
       const ci = s.indexOf(':');
       return ci !== -1 ? s.slice(ci + 1).replace(/\*\*/g, '').trim() : s.replace(/\*\*/g, '').trim();
