@@ -468,7 +468,7 @@ function parsePeiText(text, grado, istituto, eta, sesso, jsonData) {
     plesso:   '',
 
     // Sezioni testuali grezze — il docx_builder le formatta
-    sez1a: extract('Sezione 1', 'b) Profilo'),
+    sez1a: extract('a) Situazione familiare', 'b) Profilo'),
     sez1b: extract('b) Profilo', 'Sezione 2'),
     sez2Raw: extract('Sezione 2', 'Sezione 3'),
     sez3:  extract('Sezione 3', 'Sezione 4'),
