@@ -679,6 +679,10 @@ function buildDocx(d, grado) {
     ...empty(1),
     h2('a) Situazione familiare e contesto', C.BLUE),
     ...lines(d.sez1a), ...empty(1),
+    ...(grado === 'sec2' ? [
+      p([txt('Elementi desunti dalla descrizione di sé dello Studente o della Studentessa, attraverso interviste o colloqui: ', {}), txt('_'.repeat(60), {})]),
+      ...empty(1),
+    ] : []),
     h2('b) Profilo Biografico, Punti di Forza e Personalità', C.BLUE),
     ...lines(d.sez1b), ...empty(1),
   );
