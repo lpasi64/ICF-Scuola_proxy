@@ -5,18 +5,23 @@
 import {
   Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
   AlignmentType, BorderStyle, WidthType, ShadingType,
-  VerticalAlign, PageNumber, Header, Footer, UnderlineType,
+  VerticalAlign, PageNumber, Footer, UnderlineType,
 } from 'docx';
 import { STRUTTURA_SEZ8, TERMINOLOGIA, testoStandard81 } from './pei-gradi.js';
 
 // ── Palette ───────────────────────────────────────────────────────────────────
+// Bianco e nero puro, come i modelli ministeriali ufficiali (Allegati A1-A4, D.I. 182/2020):
+// nessuna colorazione/sfondo in nessuna pagina, solo bordi neri sottili e grassetto per
+// evidenziare intestazioni. I nomi storici (BLUE/MIDBLUE/...) restano per non dover toccare
+// ogni singolo punto del file che li referenzia — solo i valori esadecimali sono cambiati.
 const C = {
-  BLUE:      '1F4E79', MIDBLUE:  '2E75B6',
-  LIGHTBLUE: 'D6E4F0', GREY:     'F2F2F2',
-  DARKGREY:  '595959', WHITE:    'FFFFFF', BLACK: '000000',
+  BLUE:      '000000', MIDBLUE:  '000000',
+  LIGHTBLUE: 'FFFFFF', GREY:     'FFFFFF',
+  DARKGREY:  '000000', WHITE:    'FFFFFF', BLACK: '000000',
 };
-const bGrey = { style: BorderStyle.SINGLE, size: 4, color: 'CCCCCC' };
-const bBlue = { style: BorderStyle.SINGLE, size: 8, color: C.MIDBLUE };
+// Bordi tabella neri sottili (il modello ministeriale non usa mai grigio) — il nome "bGrey"
+// resta per non toccare i molti punti del file che lo referenziano come "allGrey".
+const bGrey = { style: BorderStyle.SINGLE, size: 4, color: C.BLACK };
 const bNone = { style: BorderStyle.NONE,   size: 0, color: C.WHITE };
 const allGrey = { top: bGrey, bottom: bGrey, left: bGrey, right: bGrey };
 const FULL = 9360;
@@ -148,8 +153,10 @@ function cell(content, w, o = {}) {
   });
 }
 
-function hCell(text, w, fill = C.BLUE) {
-  return cell([p(text, { bold: true, color: C.WHITE, size: 20 })], w, { fill, borders: allGrey });
+// Il parametro fill resta nella firma per non dover toccare ogni chiamata esistente,
+// ma viene ignorato: le intestazioni ministeriali sono sempre sfondo bianco, testo nero grassetto.
+function hCell(text, w, fill = C.WHITE) {
+  return cell([p(text, { bold: true, color: C.BLACK, size: 20 })], w, { fill: C.WHITE, borders: allGrey });
 }
 
 // ── Tabelle helper ────────────────────────────────────────────────────────────
@@ -275,8 +282,7 @@ function parseDisciplineBlocks(text, haABC) {
   });
 }
 
-// Colori e label per dimensione ICF (A/B/C/D)
-const DIM_COLOR = { A: '1F4E79', B: '276E2D', C: 'BF360C', D: '4A148C', _: C.DARKGREY };
+// Label per dimensione ICF (A/B/C/D)
 const DIM_LABEL = {
   A: 'A – Relazione, Interazione e Socializzazione',
   B: 'B – Comunicazione e Linguaggio',
@@ -301,9 +307,10 @@ function objectivesBlock(rawText) {
       cur = { num: om[1], title: om[2].replace(/\*\*/g, '').trim(), dim: '_', lines: [] };
     } else if (cur) {
       cur.lines.push(t);
-      // Rileva dimensione — strip ** prima di matchare per gestire "**Dimensione:**"
+      // Rileva dimensione — strip # (l'AI a volte scrive "## Dimensione B – ...") e **
+      // prima di matchare, altrimenti "## Dimensione B" non combacia con "^Dimensione".
       if (cur.dim === '_') {
-        const dm = t.replace(/\*\*/g, '').match(/^Dimensione[\s:]+([A-D])\b/i);
+        const dm = t.replace(/^#{1,4}\s*/, '').replace(/\*\*/g, '').match(/^Dimensione[\s:]+([A-D])\b/i);
         if (dm) cur.dim = dm[1].toUpperCase();
       }
     }
@@ -320,31 +327,32 @@ function objectivesBlock(rawText) {
   }
 
   // ── 3. Rendering: Banner dimensione → obiettivi sotto ────────────────────
+  // Bianco e nero, come il modello ministeriale (nessuno sfondo colorato per le dimensioni,
+  // solo intestazione in grassetto con riga sottostante, coerente con h1()/h2()).
   for (const dim of dimOrder) {
-    const color = DIM_COLOR[dim] || C.MIDBLUE;
-
-    // Banner Dimensione (header colorato pieno)
+    // Banner Dimensione (grassetto, nessuno sfondo)
     result.push(new Paragraph({
-      children: [txt('DIMENSIONE ' + DIM_LABEL[dim], { bold: true, size: 22, color: C.WHITE })],
-      spacing: { before: 300, after: 0 },
-      shading: { fill: color, type: ShadingType.CLEAR },
+      children: [txt('DIMENSIONE ' + DIM_LABEL[dim], { bold: true, size: 22, color: C.BLACK })],
+      spacing: { before: 300, after: 100 },
+      border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: C.BLACK, space: 4 } },
     }));
 
     // Obiettivi sotto questa dimensione
     for (const obj of byDim[dim]) {
-      // Titolo obiettivo con barra colorata a sinistra
+      // Titolo obiettivo
       result.push(new Paragraph({
         children: [
-          txt(`Obiettivo ${obj.num} – `, { bold: true, size: 22, color }),
+          txt(`Obiettivo ${obj.num} – `, { bold: true, size: 22, color: C.BLACK }),
           txt(obj.title, { bold: true, size: 22, color: C.BLACK }),
         ],
         spacing: { before: 160, after: 40 },
-        border: { left: { style: BorderStyle.SINGLE, size: 12, color, space: 8 } },
       }));
 
-      // Corpo obiettivo — salta la riga "Dimensione:" (già nel banner)
+      // Corpo obiettivo — salta la riga "Dimensione:" (già nel banner). Strip # e ** prima
+      // di matchare: l'AI a volte scrive il divisore come intestazione "## Dimensione B – ...",
+      // che altrimenti sopravvive al filtro e duplica il banner colorato sottostante.
       const bodyLines = obj.lines.filter(l => {
-        const clean = l.replace(/\*\*/g, '');
+        const clean = l.replace(/^#{1,4}\s*/, '').replace(/\*\*/g, '');
         return !/^Dimensione[\s:]+[A-D_]/i.test(clean) && l.trim() !== '';
       });
       if (bodyLines.length) result.push(...lines(bodyLines.join('\n')));
@@ -357,7 +365,6 @@ function objectivesBlock(rawText) {
 
 // Render sezione 7: 3 categorie ministeriali con tabella azioni 3 colonne
 function sez7Block(cat1, cat2, cat3, fallbackRaw) {
-  const CAT_COLORS = ['C62828', '1565C0', '2E7D32'];
   const CAT_TITLES = [
     'Categoria 1 – Rimozione delle barriere',
     'Categoria 2 – Facilitatori universali',
@@ -368,12 +375,13 @@ function sez7Block(cat1, cat2, cat3, fallbackRaw) {
 
   const result = [];
 
-  const renderCat = (title, color, rawCat) => {
+  // Bianco e nero, come il modello ministeriale: nessuno sfondo colorato, grassetto con riga
+  // sottostante (coerente con h1()/h2() e con il banner Dimensione della Sezione 5).
+  const renderCat = (title, rawCat) => {
     result.push(new Paragraph({
-      children: [txt(title, { bold: true, size: 21, color: C.WHITE })],
-      spacing: { before: 140, after: 60 },
-      shading: { fill: color, type: ShadingType.CLEAR },
-      indent: { left: 120, right: 120 },
+      children: [txt(title, { bold: true, size: 21, color: C.BLACK })],
+      spacing: { before: 140, after: 80 },
+      border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: C.BLACK, space: 4 } },
     }));
 
     const cols3 = [4400, 2600, 2360];
@@ -394,7 +402,7 @@ function sez7Block(cat1, cat2, cat3, fallbackRaw) {
         width: { size: FULL, type: WidthType.DXA },
         columnWidths: cols3,
         rows: [
-          new TableRow({ children: heads3.map((h, i) => hCell(h, cols3[i], color)) }),
+          new TableRow({ children: heads3.map((h, i) => hCell(h, cols3[i])) }),
           ...rows3.map((row, ri) => new TableRow({
             children: row.map((val, ci) => cell(
               [p(String(val), { size: 19 })], cols3[ci],
@@ -410,7 +418,7 @@ function sez7Block(cat1, cat2, cat3, fallbackRaw) {
   };
 
   if (hasCats) {
-    cats.forEach((c, i) => renderCat(CAT_TITLES[i], CAT_COLORS[i], c));
+    cats.forEach((c, i) => renderCat(CAT_TITLES[i], c));
   } else {
     // Fallback: vecchio formato Ambito 1/2/3 o testo libero
     result.push(...intervTable(fallbackRaw));
@@ -579,32 +587,47 @@ function buildDocx(d, grado) {
   const children = [];
 
   // ── FRONTESPIZIO ─────────────────────────────────────────────────────────
+  // Testo libero con spazi da compilare a mano (trattini bassi), non tabelle — così com'è
+  // impaginato negli Allegati A1-A4 ministeriali (D.I. 182/2020). Ordine e dicitura dei campi
+  // seguono esattamente il modello ufficiale.
   children.push(
     new Paragraph({
-      children: [txt(term.intestazione, { bold: true, size: 30, color: C.BLUE })],
-      alignment: AlignmentType.CENTER, spacing: { before: 200, after: 60 },
+      children: [txt(term.intestazione, { bold: true, size: 20, color: C.BLACK })],
+      alignment: AlignmentType.RIGHT, spacing: { before: 0, after: 200 },
     }),
     new Paragraph({
-      children: [txt('Piano Educativo Individualizzato', { bold: true, size: 40, color: C.MIDBLUE })],
+      children: [txt('[Intestazione della scuola]', { italic: true, size: 24, color: C.BLACK })],
+      alignment: AlignmentType.CENTER, spacing: { before: 100, after: 200 },
+    }),
+    new Paragraph({
+      children: [txt('Piano Educativo Individualizzato', { bold: true, size: 34, color: C.BLACK })],
       alignment: AlignmentType.CENTER, spacing: { before: 60, after: 40 },
     }),
     new Paragraph({
-      children: [txt('Art. 7, D.Lgs. 13 aprile 2017, n. 66 e s.m.i.', { size: 20, italic: true, color: C.DARKGREY })],
-      alignment: AlignmentType.CENTER, spacing: { before: 40, after: 280 },
+      children: [txt('(Art. 7, D.Lgs. 13 aprile 2017, n. 66 e s.m.i.)', { size: 20, italic: true, color: C.BLACK })],
+      alignment: AlignmentType.CENTER, spacing: { before: 40, after: 240 },
     }),
-    twoCol([
-      ['Anno Scolastico',           d.annoScolastico || '___'],
-      [term.soggetto.charAt(0).toUpperCase() + term.soggetto.slice(1), d.nomeStudente || '___'],
-      ['Codice sostitutivo personale', d.codice || '___'],
-      [term.sezione.charAt(0).toUpperCase() + term.sezione.slice(1), d.classe || '___'],
-      ['Plesso / Sede',             d.plesso || '___'],
+    new Paragraph({
+      children: [txt('Anno Scolastico ', { bold: true, size: 22 }), txt(d.annoScolastico || '__________', { size: 22 })],
+      alignment: AlignmentType.CENTER, spacing: { before: 80, after: 240 },
+    }),
+    p([txt('ALUNNO/A ', { bold: true }), txt(d.nomeStudente || '____________________________', {})]),
+    p([txt('codice sostitutivo personale ', {}), txt(d.codice || '____________', {})]),
+    p([
+      txt('Classe ', { bold: true }), txt(d.classe || '________________', {}),
+      txt('     Plesso o sede ', { bold: true }), txt(d.plesso || '________________', {}),
     ]),
     ...empty(1),
-    twoCol([
-      ['Accertamento disabilità rilasciato il', d.dataAccertamento || '___'],
-      ['Profilo di Funzionamento redatto il',   d.dataPDF || '___'],
-      ['Progetto Individuale', '□ da redigere   □ redatto in data ___'],
-    ]),
+    p(`Accertamento della condizione di disabilità in età evolutiva ai fini dell'inclusione scolastica rilasciato in data ${d.dataAccertamento || '_________'}`),
+    p('Data scadenza o rivedibilità:  ☐ ______________     ☐ Non indicata'),
+    ...empty(1),
+    p([txt('Profilo di Funzionamento redatto in data ', { bold: true }), txt(d.dataPDF || '_______________', {})]),
+    p('Nella fase transitoria:'),
+    p('☐ Profilo di Funzionamento non disponibile', { indent: 240 }),
+    p('Diagnosi Funzionale redatta in data ____________________', { indent: 480 }),
+    p('Profilo Dinamico Funzionale approvato in data ______________', { indent: 480 }),
+    ...empty(1),
+    p([txt('Progetto Individuale   ', { bold: true }), txt('☐ redatto in data ___________     ☐ da redigere', {})]),
     ...empty(2),
     // Tabella PEI Provvisorio / Verifiche
     new Table({
@@ -877,57 +900,13 @@ function buildDocx(d, grado) {
           margin: { top: 1020, right: 1020, bottom: 1020, left: 1020 },
         },
       },
-      headers: {
-        default: new Header({
-          children: [
-            new Table({
-              width: { size: FULL, type: WidthType.DXA },
-              columnWidths: [1800, 7560],
-              borders: { top: bNone, bottom: bNone, left: bNone, right: bNone, insideH: bNone, insideV: bNone },
-              rows: [
-                new TableRow({
-                  children: [
-                    new TableCell({
-                      width: { size: 1800, type: WidthType.DXA },
-                      borders: { top: bNone, bottom: bBlue, left: bNone, right: bNone },
-                      margins: { top: 0, bottom: 60, left: 0, right: 60 },
-                      children: [new Paragraph({
-                        children: [txt('ICF-Scuola', { bold: true, color: C.MIDBLUE, size: 18 })],
-                        spacing: { before: 0, after: 60 },
-                      })],
-                    }),
-                    new TableCell({
-                      width: { size: 7560, type: WidthType.DXA },
-                      borders: { top: bNone, bottom: bBlue, left: bNone, right: bNone },
-                      margins: { top: 0, bottom: 60, left: 60, right: 0 },
-                      children: [new Paragraph({
-                        children: [
-                          txt('PEI – ', { bold: true, color: C.MIDBLUE, size: 18 }),
-                          txt(d.nomeStudente || term.soggetto, { bold: true, color: C.BLUE, size: 18 }),
-                          txt(`  |  A.S. ${d.annoScolastico || ''}  |  ${term.intestazione}`, { size: 18, color: C.DARKGREY }),
-                        ],
-                        alignment: AlignmentType.RIGHT,
-                        spacing: { before: 0, after: 60 },
-                      })],
-                    }),
-                  ],
-                }),
-              ],
-            }),
-          ],
-        }),
-      },
+      // Nessuna intestazione/piè di pagina "brandizzati": il modello ministeriale non ne ha —
+      // solo un numero di pagina in basso, senza etichette né bordi.
       footers: {
         default: new Footer({
           children: [new Paragraph({
-            children: [
-              txt('Piano Educativo Individualizzato  |  D.Lgs. 66/2017  |  pag. ', { size: 18, color: C.DARKGREY }),
-              new TextRun({ children: [PageNumber.CURRENT], font: 'Calibri', size: 18, color: C.DARKGREY }),
-              txt(' di ', { size: 18, color: C.DARKGREY }),
-              new TextRun({ children: [PageNumber.TOTAL_PAGES], font: 'Calibri', size: 18, color: C.DARKGREY }),
-            ],
-            border: { top: { style: BorderStyle.SINGLE, size: 4, color: C.MIDBLUE, space: 4 } },
-            alignment: AlignmentType.CENTER, spacing: { before: 60 },
+            children: [new TextRun({ children: [PageNumber.CURRENT], font: 'Calibri', size: 20, color: C.BLACK })],
+            alignment: AlignmentType.RIGHT, spacing: { before: 0 },
           })],
         }),
       },
