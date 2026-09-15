@@ -3,6 +3,7 @@
 // Nessuna modifica di logica — solo require/module.exports -> import/export.
 
 import { getConfig } from './pei-gradi.js';
+import { getProgrammiPerDiscipline } from './pei-programmi.js';
 
 // ── Calcola classe frequentata dall'età ──────────────────────────────────────
 function calcolaClasse(eta, grado) {
@@ -308,7 +309,7 @@ function buildPromptPart4({ eta, sesso, grado, istituto, jsonData }) {
   const discStr    = discipline.join(', ');
   const campoLabel = grado === 'infanzia' ? 'campi di esperienza' : 'discipline';
   const ctx        = buildContext({ eta, sesso, grado, istituto }, term, discStr, campoLabel);
-  const bloccoSez8 = buildSez8Block(grado, sez8, std81, discStr, istituto, term, eta);
+  const bloccoSez8 = buildSez8Block(grado, sez8, std81, discStr, istituto, term, eta, discipline);
 
   const notaLabel = grado === 'infanzia'
     ? 'Nota Metodologica per il team di sezione'
@@ -349,9 +350,11 @@ ${jsonData}`;
 }
 
 // ── Blocco sezione 8 calibrato per grado ─────────────────────────────────────
-function buildSez8Block(grado, sez8, std81, discStr, istituto, term, eta = '') {
+function buildSez8Block(grado, sez8, std81, discStr, istituto, term, eta = '', discipline = []) {
   const classe   = calcolaClasse(eta, grado);
   const refProgr = labelProgrammi(grado, istituto);
+  const programmiBlock = getProgrammiPerDiscipline(grado, discipline, istituto);
+  const programmiSection = programmiBlock ? `${programmiBlock}\n\n` : '';
 
   if (grado === 'infanzia') {
     return `## Sezione 8 – Interventi sul percorso educativo nei Campi di Esperienza
@@ -359,7 +362,7 @@ function buildSez8Block(grado, sez8, std81, discStr, istituto, term, eta = '') {
 **${sez8.titolo81}**
 ${std81}
 
-Per ciascuno dei 5 campi di esperienza scrivi:
+${programmiSection}Per ciascuno dei 5 campi di esperienza scrivi:
 **Campo:** Il sé e l'altro | **Attività:** [specificare] | **Strategie e Strumenti:** [specificare]
 **Campo:** Il corpo e il movimento | **Attività:** [specificare] | **Strategie e Strumenti:** [specificare]
 **Campo:** Immagini, suoni, colori | **Attività:** [specificare] | **Strategie e Strumenti:** [specificare]
@@ -381,7 +384,7 @@ SPEC81: [2-4 frasi specifiche per QUESTO studente: distribuzione ore sostegno ne
 **8.2 – Progettazione disciplinare**
 ${sez8.note82}
 
-Per ogni disciplina scrivi una riga che inizia con "DISC:" (OBBLIGATORIO — nessun altro formato):
+${programmiSection}Per ogni disciplina scrivi una riga che inizia con "DISC:" (OBBLIGATORIO — nessun altro formato):
 DISC: [nome disciplina] | [personalizzazioni: obiettivi calibrati sui programmi della ${classe} (${refProgr}), ridotti/semplificati; strategie; verifica; criteri di valutazione]
 
 Esempio corretto:
@@ -410,7 +413,7 @@ SPEC81: [2-4 frasi specifiche per QUESTO studente: ore di sostegno nelle discipl
 **8.2 – Progettazione disciplinare**
 ${sez8.note82}
 
-Per ogni disciplina scrivi una riga che inizia con "DISC:" (OBBLIGATORIO — nessun altro formato):
+${programmiSection}Per ogni disciplina scrivi una riga che inizia con "DISC:" (OBBLIGATORIO — nessun altro formato):
 DISC: [nome disciplina] | [A o B] | [personalizzazioni se B; vuoto se A]
 
 Opzione A: Educazione Fisica e Religione. Opzione B: tutte le altre discipline.
@@ -440,7 +443,7 @@ SPEC81: [2-4 frasi specifiche per QUESTO studente: distribuzione ore sostegno ne
 **8.2 – Progettazione disciplinare**
 ${sez8.note82}
 
-Per ogni disciplina scrivi una riga che inizia con "DISC:" (OBBLIGATORIO — nessun altro formato):
+${programmiSection}Per ogni disciplina scrivi una riga che inizia con "DISC:" (OBBLIGATORIO — nessun altro formato):
 DISC: [nome disciplina] | [A, B o C] | [personalizzazioni se B o C; vuoto se A]
 
 Opzione A: Educazione Fisica e Religione (di default). Opzione B: obiettivi differenziati. Opzione C: percorso differenziato (deliberato dal CdC).

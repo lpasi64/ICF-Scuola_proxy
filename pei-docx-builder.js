@@ -769,6 +769,15 @@ function buildDocx(d, grado) {
         disciplineTable(sez82text, grado),
         ...empty(1),
       );
+      // I programmi ministeriali di riferimento per i Licei (pei-programmi.js) sono basati
+      // sulla bozza delle nuove Indicazioni Nazionali (MIM 22/04/2026), non ancora adottata
+      // in via definitiva — segnalarlo in ogni PEI liceale generato, non solo nel codice.
+      if (grado === 'sec2' && (d.istituto || '').startsWith('Liceo')) {
+        children.push(
+          p('Nota: i programmi ministeriali di riferimento per questo indirizzo liceale sono basati sulla bozza delle nuove Indicazioni Nazionali per i Licei (MIM, 22/04/2026), non ancora adottata in via definitiva — verificare eventuali aggiornamenti al momento della revisione del PEI.', { size: 17, italic: true, color: C.DARKGREY }),
+          ...empty(1),
+        );
+      }
       if (grado === 'sec2' && sez8.percorsoDifferenziato) {
         children.push(p(riepilogoPercorso(sez82text), { size: 20, bold: true }), ...empty(1));
       }
