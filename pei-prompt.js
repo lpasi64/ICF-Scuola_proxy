@@ -389,7 +389,7 @@ DISC: [nome disciplina] | [personalizzazioni: obiettivi calibrati sui programmi 
 
 Esempio corretto:
 DISC: Italiano | Testi semplificati, verifiche con supporto visivo, produzione guidata
-DISC: Educazione Fisica | Nessuna modifica al programma ordinario
+DISC: Educazione motoria | Nessuna modifica al programma ordinario
 
 Discipline: ${discStr}
 
@@ -446,12 +446,12 @@ ${sez8.note82}
 ${programmiSection}Per ogni disciplina scrivi una riga che inizia con "DISC:" (OBBLIGATORIO — nessun altro formato):
 DISC: [nome disciplina] | [A, B o C] | [personalizzazioni se B o C; vuoto se A]
 
-Opzione A: Educazione Fisica e Religione (di default). Opzione B: obiettivi differenziati. Opzione C: percorso differenziato (deliberato dal CdC).
+Opzione A: Scienze Motorie e Sportive e Religione (di default). Opzione B: obiettivi differenziati. Opzione C: percorso differenziato (deliberato dal CdC).
 Per l'opzione B specifica sempre, dentro le personalizzazioni, se le verifiche sono identiche o equipollenti rispetto a quelle della classe (obbligatorio).
 Esempio corretto:
 DISC: Italiano | B | Testi semplificati, verifiche scritte equipollenti con supporto visivo, meno temi
 DISC: Matematica | B | Esercizi guidati passo-passo, calcolatrice, verifiche identiche con tempi estesi
-DISC: Educazione Fisica | A |
+DISC: Scienze Motorie e Sportive | A |
 
 Discipline: ${discStr}
 

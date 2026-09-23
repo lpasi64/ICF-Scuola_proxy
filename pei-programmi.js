@@ -18,9 +18,9 @@
 // con quelli in CAMPI_ESPERIENZA / DISCIPLINE_PRIMARIA / DISCIPLINE_SEC1 / ISTITUTI_SEC2 di
 // pei-gradi.js). Per la sec2: PROGRAMMI_SEC2_BASE per nome disciplina condiviso tra indirizzi
 // + PROGRAMMI_SEC2_OVERRIDE[istituto][nome] solo dove l'indirizzo cambia sostanzialmente il
-// programma (Approccio C, concordato con l'utente) — override non usato finora, 0 voci.
+// programma (Approccio C, concordato con l'utente) — 1 override: Liceo Scienze Umane / Diritto ed Economia.
 //
-// COMPLETO (2026-09-15): 102 voci su 103, tutti i 32 indirizzi sec2 coperti al 100%
+// COMPLETO (2026-09-23): 102 voci base + 2 override, tutti i 32 indirizzi sec2 coperti al 100%
 // (verificato con checkCoverage/test-programmi-coverage.js). Unica esclusione voluta:
 // "Religione / Attività alternativa" in ogni grado (traguardi fissati dal DPR 11/02/2010
 // per l'IRC, fonte diversa dalle Indicazioni Nazionali/Linee Guida laiche — non curata).
@@ -179,8 +179,8 @@ const PROGRAMMI_PRIMARIA = {
       "Tutela e rispetto dei beni artistici",
     ],
   },
-  "Educazione Fisica": {
-    competenze: "Consapevolezza della propria corporeità in relazione a spazio e tempo (le Indicazioni 2025 la chiamano 'Educazione motoria' in primaria); partecipazione al gioco rispettando regole e fair play; comportamenti di sicurezza e stili di vita sani.",
+  "Educazione motoria": {
+    competenze: "Consapevolezza della propria corporeità in relazione a spazio e tempo; partecipazione al gioco rispettando regole e fair play; comportamenti di sicurezza e stili di vita sani.",
     nuclei: [
       "Padronanza dei movimenti e percezione del corpo",
       "Gioco e regole (fair play)",
@@ -334,7 +334,7 @@ const PROGRAMMI_SEC1 = {
 // (primo biennio) — curate una sola volta ciascuna.
 //
 // Voci "fuse" per i licei che accorpano più materie in un'unica cattedra (es. "Storia e
-// Filosofia", "Matematica e Fisica", "Discipline Pittoriche / Plastiche / Geometriche"):
+// Filosofia", "Discipline Pittoriche / Plastiche / Geometriche"):
 // contenuto sintetizzato a partire dai capitoli separati delle fonti ufficiali.
 // Due voci (Made in Italy/Musicale) segnalate come non sourced direttamente nel testo
 // stesso della voce: "Design e Progettazione" (il documento tratta il design solo dentro
@@ -382,14 +382,14 @@ const PROGRAMMI_SEC2_BASE = {
       "Nessi interdisciplinari tra filosofia e discipline scientifiche/artistiche/economiche",
     ],
   },
-  "Geostoria / Storia / Filosofia": {
-    competenze: "Come 'Storia e Filosofia' (stessi nuclei di fondo), con l'aggiunta della dimensione geografica accorpata nell'insegnamento storico nel primo biennio (denominazione 'Geostoria' preesistente alla separazione Storia/Geografia introdotta dalla riforma 2025-2026 — nessuna fonte specifica sulla Geografia liceale curata in questa voce).",
+  "Geografia": {
+    competenze: "Primo biennio (bozza Indicazioni Licei 2026: Storia e Geografia sono due discipline distinte, affidate a un unico docente). Geografia umana e culturale come scienza della rappresentazione e delle relazioni tra sistemi umani e naturali alle diverse scale; analisi critica dei cambiamenti ambientali, politici, economici e sociali; lettura di carte, dati statistici e paesaggi (art. 9 Costituzione) con approccio critico alle rappresentazioni digitali e generate da IA; sostenibilità e uso equo dei beni ambientali come beni comuni.",
     nuclei: [
-      "Cronologia, quadri di riferimento storico e dimensione geografica (primo biennio)",
-      "Costituzione, cittadinanza e ordinamento giuridico",
-      "Autori e correnti filosofiche in approccio sia diacronico sia tematico",
-      "Lettura diretta di testi filosofici e lessico specifico della disciplina",
-      "Nessi interdisciplinari tra filosofia e discipline scientifiche/artistiche/economiche",
+      "Sistemi naturali e umani e loro interazioni (Antropocene, cambiamento climatico)",
+      "Lettura e interpretazione di carte, dati statistici e rappresentazioni geografiche (anche digitali/IA)",
+      "Popolazione, migrazioni, urbanizzazione e diversità culturale",
+      "Organizzazione politica del territorio e geografia economica: Italia, Unione Europea, area mediterranea",
+      "Paesaggio come patrimonio e sviluppo sostenibile; continenti extraeuropei (secondo anno)",
     ],
   },
   "Matematica": {
@@ -410,16 +410,6 @@ const PROGRAMMI_SEC2_BASE = {
       "Formulazione di ipotesi con modelli, analogie e leggi",
       "Collegamenti interdisciplinari (storia, filosofia, matematica, tecnologia)",
       "Metodo sperimentale e attività di laboratorio",
-    ],
-  },
-  "Matematica e Fisica": {
-    competenze: "Sintesi dei nuclei di Matematica (linguaggio, rappresentazione, argomentazione, modellizzazione, informatica) e Fisica (concetti della fisica classica, metodo sperimentale, nessi storico-filosofici), con enfasi sui collegamenti reciproci tra le due discipline, per i licei che le accorpano in un'unica cattedra.",
-    nuclei: [
-      "Rappresentazione matematica e modellizzazione di fenomeni fisici",
-      "Argomentazione, dimostrazione e metodo sperimentale",
-      "Concetti fondamentali della fisica classica",
-      "Lettura critica di dati e grafici",
-      "Informatica: elementi di base per analizzare fenomeni",
     ],
   },
   "Scienze Naturali": {
@@ -452,8 +442,8 @@ const PROGRAMMI_SEC2_BASE = {
       "Arte contemporanea e nuovi linguaggi visivi",
     ],
   },
-  "Educazione Fisica": {
-    competenze: "Consapevolezza del significato personale e sociale della pratica motoria/sportiva; capacità di progettare e realizzare azioni, interventi e programmi anche in autonomia; sviluppo di 5 dimensioni interconnesse (stili di vita attivi e sani, motoria, cognitiva, sociale, emotivo-relazionale) con uso consapevole di tecnologie digitali/IA per monitorare la performance.",
+  "Scienze Motorie e Sportive": {
+    competenze: "Consapevolezza del significato personale e sociale della pratica motoria/sportiva; capacità di progettare e realizzare azioni, interventi e programmi anche in autonomia; sviluppo di 5 dimensioni interconnesse (stili di vita attivi e sani, motoria, cognitiva, sociale, emotivo-relazionale) con uso consapevole di tecnologie digitali/IA per monitorare la performance. Nel Liceo scientifico a indirizzo sportivo l'enfasi è maggiore su pianificazione di piani di attività personali e su tecniche, tattiche e strategie sportive a livello avanzato.",
     nuclei: [
       "Stili di vita attivi e sani, cultura del movimento e della salute",
       "Competenze motorie e sportive avanzate (tecniche, tattiche, strategie)",
@@ -462,14 +452,24 @@ const PROGRAMMI_SEC2_BASE = {
       "Uso di strumenti digitali/IA per la performance e il benessere",
     ],
   },
-  "Scienze Motorie e Sportive": {
-    competenze: "Come 'Educazione Fisica' (stessa impostazione a 5 dimensioni), con enfasi maggiore su pianificazione di piani di attività personali, tecniche/tattiche/strategie sportive a livello elevato e valorizzazione delle competenze individuali.",
+  "Laboratorio di Musica d'Insieme": {
+    competenze: "Pratica musicale d'insieme come modalità di apprendimento collaborativo (bozza Indicazioni Licei 2026): esecuzione in ensemble, coro e orchestra con ascolto reciproco, coordinazione e responsabilità individuale/collettiva; padronanza delle tecniche esecutive vocali e strumentali in contesti performativi (gesto, postura, sicurezza scenica); uso di tecnologie musicali e strumenti di IA a supporto dell'esecuzione; valore inclusivo del fare musica insieme.",
     nuclei: [
-      "Alfabetizzazione motoria evoluta e cultura del movimento",
-      "Pianificazione e progettazione di attività motorie/sportive",
-      "Tecniche, tattiche e strategie sportive a livello avanzato",
-      "Competenze sociali, emotive e funzioni esecutive nello sport",
-      "Uso di strumenti digitali/IA per la performance",
+      "Esecuzione collettiva di repertori di generi, stili e tradizioni diversi (ensemble, coro, orchestra)",
+      "Ascolto reciproco, concertazione e problem solving per il risultato collettivo",
+      "Tecniche esecutive vocali e strumentali, postura, gesto e sicurezza scenica",
+      "Studio delle partiture e integrazione di aspetti stilistici e culturali",
+      "Cooperazione, inclusione e valorizzazione del contributo individuale nel gruppo",
+    ],
+  },
+  "Tecnologie Musicali": {
+    competenze: "Processi tecnologici applicati alla musica (bozza Indicazioni Licei 2026): uso di software e hardware per produzione, registrazione ed editing del suono (DAW, MIDI, sintetizzatori, campionatori), notazione digitale, sperimentazione sonora e ambienti sonori interattivi; ascolto critico della musica elettronica; principi e uso etico degli strumenti di IA applicati alla musica, con attenzione a proprietà intellettuale e diritto d'autore (AI Act).",
+    nuclei: [
+      "Audio digitale, MIDI, DAW e registrazione/editing del suono",
+      "Sintesi e manipolazione del suono; sperimentazione di nuovi linguaggi musicali",
+      "Software di notazione: lettura, scrittura e interpretazione digitale delle partiture",
+      "Ambienti sonori interattivi, colonne sonore e progetti multimediali con altre arti",
+      "IA applicata alla musica, proprietà intellettuale e impatto culturale delle tecnologie",
     ],
   },
   "Greco": {
@@ -1363,7 +1363,34 @@ const PROGRAMMI_SEC2_BASE = {
     ],
   },
 };
-const PROGRAMMI_SEC2_OVERRIDE = {};
+// Override per indirizzo: Diritto ed Economia del Liceo delle Scienze Umane (bozza Indicazioni
+// Licei, primo biennio) ha impostazione propria, diversa dalla voce base comune a professionali/tecnici.
+const PROGRAMMI_SEC2_OVERRIDE = {
+  "Liceo Linguistico": {
+    "Latino": {
+      competenze: "Solo primo biennio (bozza Indicazioni Licei 2026), in chiave comparativa con italiano e lingue moderne studiate: competenze morfosintattiche, lessicali e semantiche essenziali per comprendere e tradurre testi latini semplici, prevalentemente in prosa, di argomento storico e narrativo; lessico di base (almeno 600 parole) come accesso alle lingue e culture europee; livello atteso indicativamente A1; uso critico di strumenti multimediali e IA.",
+      nuclei: [
+        "Fonetica e morfologia essenziali (nome, aggettivo, pronome, verbo)",
+        "Lessico latino di base e confronto con italiano e lingue moderne curricolari",
+        "Lettura e comprensione di testi semplici, poi originali annotati e contestualizzati",
+        "Traduzione come metodo di lettura e riflessione metalinguistica; confronto tra traduzioni in più lingue",
+        "Latino come eredità comune delle culture europee e sua ricezione",
+      ],
+    },
+  },
+  "Liceo delle Scienze Umane": {
+    "Diritto ed Economia": {
+      competenze: "Primo biennio (bozza Indicazioni Licei 2026). Diritto ed economia per interpretare le strutture della vita sociale: funzione delle norme e Costituzione (dignità, libertà, uguaglianza, solidarietà), istituzioni della Repubblica e dell'Unione Europea; linguaggio e categorie di base dell'economia (bisogni, risorse, soggetti economici, circuito economico semplice, reddito/consumo/risparmio/investimento); nessi con persona, famiglia, relazioni educative, tutela di minori e soggetti fragili; uso critico e responsabile dei sistemi di IA.",
+      nuclei: [
+        "Norme giuridiche, ordinamento e Costituzione (principi fondamentali, diritti e doveri)",
+        "Istituzioni della Repubblica e dell'Unione Europea, forme di Stato",
+        "Diritto e persona: famiglia, relazioni educative, protezione dei minori e dei soggetti fragili",
+        "Bisogni, risorse, soggetti economici, circuito economico semplice e forme elementari di mercato",
+        "Disuguaglianze, sostenibilità e uso critico di dati e sistemi di IA",
+      ],
+    },
+  },
+};
 
 const PROGRAMMI_PER_GRADO = {
   infanzia: PROGRAMMI_INFANZIA,
