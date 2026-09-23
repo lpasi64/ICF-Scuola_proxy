@@ -459,6 +459,11 @@ function parsePeiText(text, grado, istituto, eta, sesso, jsonData) {
       .trim();
   }
 
+  // Marcatori di ripiego: l'AI a volte omette il titolo "Sezione N" a inizio di un blocco (Parti 2, 3, 4
+  // della generazione). In quel caso il blocco si riconosce dalla sua prima riga caratteristica.
+  const S6_END   = ['Sezione 6', 'Ambito 1'];
+  const S8_START = ['Sezione 8', '8.1'];
+
   const annoScolastico = (() => {
     const now = new Date();
     const y   = now.getFullYear();
@@ -488,7 +493,7 @@ function parsePeiText(text, grado, istituto, eta, sesso, jsonData) {
     sez4d: extract('d) Dimensione Cognitiva', ['Sezione 5', 'Obiettivo 1']),
     sez5Raw: (() => {
       // Se l'AI omette il titolo "Sezione 5", il blocco parte dalla riga "Obiettivo 1".
-      const raw = extract('Sezione 5', 'Sezione 6') || extract('Obiettivo 1', 'Sezione 6', true);
+      const raw = extract('Sezione 5', S6_END) || extract('Obiettivo 1', S6_END, true);
       // Rimuovi blocchi FASE 1/2 che l'AI include nonostante "non mostrare":
       // cerca il primo "Obiettivo N" e tieni solo da lì in poi.
       const objIdx = raw.search(/(?:OBIETTIVI EDUCATIVI[^\n]*\n+)?Obiettivo\s+\d/i);
@@ -498,12 +503,12 @@ function parsePeiText(text, grado, istituto, eta, sesso, jsonData) {
     })(),
     sez6a1:   extract('Ambito 1', 'Ambito 2'),
     sez6a2:   extract('Ambito 2', 'Ambito 3'),
-    sez6a3:   extract('Ambito 3', 'Sezione 7'),
-    sez7Raw:  extract('Sezione 7', 'Sezione 8'),
+    sez6a3:   extract('Ambito 3', ['Sezione 7', 'Categoria 1']),
+    sez7Raw:  extract('Sezione 7', S8_START) || extract('Categoria 1', S8_START, true),
     sez7cat1: extract('Categoria 1', 'Categoria 2'),
     sez7cat2: extract('Categoria 2', 'Categoria 3'),
-    sez7cat3: extract('Categoria 3', 'Sezione 8'),
-    sez8Raw:  extract('Sezione 8', 'Sezione 9'),
+    sez7cat3: extract('Categoria 3', S8_START),
+    sez8Raw:  extract('Sezione 8', 'Sezione 9') || extract('8.1', 'Sezione 9', true),
     sez9Raw:  extract('Sezione 9', 'Nota Metodologica'),
     notaMetodologica: extract('Nota Metodologica', ''),
 
