@@ -66,7 +66,11 @@ REGOLE FONDAMENTALI:
    In ICF "autonomia" indica la capacità intrinseca (qualifier C), non l'assenza di difficoltà in performance.
    Per P=0 usa: "non presenta difficoltà", "performance ottimale", "svolge senza difficoltà".
 6. Usa SEMPRE "FSL" (Formazione Scuola-Lavoro) come denominazione nel PEI, mai "PCTO" né "ASL".
-   Il percorso, già "PCTO", è stato rinominato "FSL" dalla L. 213/2023 (legge di bilancio 2024).`;
+   Il percorso, già "PCTO", è stato rinominato "FSL" dalla L. 213/2023 (legge di bilancio 2024).
+7. NON inventare MAI nomi propri di persone, aziende, enti o strutture (tutor, referenti, docenti, sedi di FSL, ecc.):
+   indica solo il ruolo o la tipologia generica (es. "docente referente FSL del Consiglio di classe",
+   "azienda del settore meccanico convenzionata con l'istituto"). Se un dato non è desumibile scrivi "da definire".
+   Gli unici nomi propri ammessi sono quelli presenti nel JSON (il/la ${term.soggetto}).`;
 }
 
 // ── Analisi ICF (blocco comune a Parte 1 e Parte 2) ──────────────────────────
@@ -461,9 +465,9 @@ ${sez8.percorsoDifferenziato}
 Obbligatoria dalle classi III, IV e V (D.Lgs. 66/2017 art.7 c.2 lett.e; L. 145/2018 art.1 cc.784-787; Decreto Interm. n.153/2023 art.11; percorso rinominato FSL dalla L. 213/2023).
 
 **Tipologia percorso:** □ A – Aziendale  □ B – Scolastico  □ C – Altra tipologia
-**Ente / Azienda ospitante:** [specificare]
-**Tutor scolastico (interno):** [nome e ruolo]
-**Tutor aziendale (esterno):** [nome e ruolo]
+**Ente / Azienda ospitante:** [tipologia di ente/azienda coerente con l'indirizzo, SENZA nome proprio; se non noto: "da definire"]
+**Tutor scolastico (interno):** [solo il ruolo, senza nome e cognome; se non noto: "da definire"]
+**Tutor aziendale (esterno):** [solo il ruolo, senza nome e cognome; se non noto: "da definire"]
 **Durata e organizzazione temporale:** [ore totali, periodo]
 **Obiettivi di competenza:** [elencare]
 **Barriere e facilitatori nel contesto:** [specificare]
