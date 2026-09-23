@@ -424,23 +424,33 @@ function parsePeiText(text, grado, istituto, eta, sesso, jsonData) {
     nomeStudente = j?.allievo?.nome || j?.anagrafica?.nome || j?.nome || j?.studente || '';
   } catch {}
 
-  // Helper: estrae il contenuto tra due heading (approccio riga per riga, più robusto)
-  // Gestisce: ## Titolo, **Titolo**, * Titolo, o testo semplice
-  function extract(from, to) {
-    // Rimuove formattazione markdown dalla riga solo per il confronto
-    const bare   = l => l.replace(/\*\*/g, '').replace(/^[#*>\-\s]+/, '').toLowerCase();
-    const lns    = text.split('\n');
-    const fromLc = from.toLowerCase();
-    let start    = -1;
-    for (let i = 0; i < lns.length; i++) {
-      if (bare(lns[i]).includes(fromLc)) { start = i + 1; break; }
-    }
-    if (start === -1) return '';
+  // Helper: estrae il contenuto tra due heading (approccio riga per riga, più robusto).
+  // Gestisce: ## Titolo, **Titolo**, * Titolo, o testo semplice.
+  // Un heading è una riga che INIZIA con il marcatore (tolto il markdown) oppure una riga di
+  // heading markdown ("#…") che lo contiene: le semplici citazioni nel corpo del testo (es.
+  // "…rilevato nella Sezione 5…") NON valgono. In passato una citazione in 8.1 faceva estrarre le
+  // sezioni successive nel posto sbagliato (blocchi grezzi duplicati nel .docx).
+  const lns  = text.split('\n');
+  const bare = l => l.replace(/\*\*/g, '').replace(/^[#*>\-\s]+/, '').toLowerCase();
+  const isHeading = (l, marker) => {
+    const m = marker.toLowerCase();
+    return bare(l).startsWith(m) || (/^\s*#/.test(l) && bare(l).includes(m));
+  };
+  function findLine(marker, fromIdx) {
+    for (let i = fromIdx; i < lns.length; i++) if (isHeading(lns[i], marker)) return i;
+    return -1;
+  }
+  // to: marcatore o array di marcatori (vale il primo trovato);
+  // include: se true la riga del marcatore 'from' fa parte del contenuto estratto.
+  function extract(from, to, include = false) {
+    const fi = findLine(from, 0);
+    if (fi === -1) return '';
+    const start = include ? fi : fi + 1;
     let end = lns.length;
     if (to) {
-      const toLc = to.toLowerCase();
-      for (let i = start; i < lns.length; i++) {
-        if (bare(lns[i]).includes(toLc)) { end = i; break; }
+      for (const t of (Array.isArray(to) ? to : [to])) {
+        const ti = findLine(t, fi + 1);
+        if (ti !== -1 && ti < end) end = ti;
       }
     }
     return lns.slice(start, end)
@@ -475,9 +485,10 @@ function parsePeiText(text, grado, istituto, eta, sesso, jsonData) {
     sez4a: extract('a) Dimensione della Relazione', 'b) Dimensione della Comunicazione'),
     sez4b: extract('b) Dimensione della Comunicazione', 'c) Dimensione dell'),
     sez4c: extract('c) Dimensione dell', 'd) Dimensione Cognitiva'),
-    sez4d: extract('d) Dimensione Cognitiva', 'Sezione 5'),
+    sez4d: extract('d) Dimensione Cognitiva', ['Sezione 5', 'Obiettivo 1']),
     sez5Raw: (() => {
-      const raw = extract('Sezione 5', 'Sezione 6');
+      // Se l'AI omette il titolo "Sezione 5", il blocco parte dalla riga "Obiettivo 1".
+      const raw = extract('Sezione 5', 'Sezione 6') || extract('Obiettivo 1', 'Sezione 6', true);
       // Rimuovi blocchi FASE 1/2 che l'AI include nonostante "non mostrare":
       // cerca il primo "Obiettivo N" e tieni solo da lì in poi.
       const objIdx = raw.search(/(?:OBIETTIVI EDUCATIVI[^\n]*\n+)?Obiettivo\s+\d/i);
