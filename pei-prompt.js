@@ -29,11 +29,11 @@ function calcolaClasse(eta, grado) {
 
 // ── Etichetta riferimento programmi ──────────────────────────────────────────
 function labelProgrammi(grado, istituto) {
-  if (grado === 'infanzia')  return 'Indicazioni Nazionali per il curricolo (MIUR 2012) – traguardi di sviluppo';
-  if (grado === 'primaria')  return 'Indicazioni Nazionali per il curricolo (MIUR 2012) – scuola primaria';
-  if (grado === 'sec1')      return 'Indicazioni Nazionali per il curricolo (MIUR 2012) – scuola secondaria di primo grado';
+  if (grado === 'infanzia')  return 'Indicazioni Nazionali per il curricolo 2025 (D.M. 221/2025) – traguardi di sviluppo';
+  if (grado === 'primaria')  return 'Indicazioni Nazionali per il curricolo 2025 (D.M. 221/2025) – scuola primaria';
+  if (grado === 'sec1')      return 'Indicazioni Nazionali per il curricolo 2025 (D.M. 221/2025) – scuola secondaria di primo grado';
   if (!istituto)             return 'Linee Guida per il secondo ciclo (DPR 15/03/2010)';
-  if (istituto.startsWith('Liceo')) return `Indicazioni Nazionali per i Licei (DPR 89/2010) – ${istituto}`;
+  if (istituto.startsWith('Liceo')) return `Indicazioni Nazionali per i Licei (DPR 89/2010; bozza nuove Indicazioni MIM 22/04/2026) – ${istituto}`;
   if (istituto.startsWith('IT'))   return `Linee Guida Istituti Tecnici (DPR 88/2010) – ${istituto}`;
   if (istituto.startsWith('IP'))   return `Linee Guida Istituti Professionali (D.Lgs. 61/2017) – ${istituto}`;
   return `Linee Guida per il secondo ciclo – ${istituto}`;
@@ -200,7 +200,7 @@ function buildPromptPart2({ eta, sesso, grado, istituto, jsonData }) {
   const refProgr   = labelProgrammi(grado, istituto);
 
   const obiettiviFmt = grado === 'infanzia'
-    ? `I traguardi devono fare riferimento alle Indicazioni Nazionali 2012 per il ${classe}.`
+    ? `I traguardi devono fare riferimento alle Indicazioni Nazionali per il curricolo 2025 (D.M. 221/2025) per il ${classe}.`
     : `Calibra gli obiettivi sui programmi della ${classe} (${refProgr}). Usa gli interessi del/della ${term.soggetto} come gancio motivazionale.`;
 
   return `Sei un docente esperto nella redazione del PEI ministeriale italiano (${term.intestazione}).
