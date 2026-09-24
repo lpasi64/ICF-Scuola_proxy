@@ -41,9 +41,13 @@ function TableRow(o) { return new DocxTableRow({ cantSplit: true, ...o }); }
 const _NOUN = '(?:studente\\/essa|alunno\\/a|bambino\\/a)';
 const _RX_SOGG = new RegExp("\\b(dello|del|dell'|allo|al|all'|sullo|sul|sull'|dallo|dal|dall'|nello|nel|nell'|lo|il|l')(?:\\/(?:della|alla|sulla|dalla|nella|la|a))?\\s*(" + _NOUN + ')', 'gi');
 function normalizzaSoggetto(text, nome, sesso) {
-  const n = String(nome || '').trim().split(/\s+/)[0];
+  const completo = String(nome || '').trim().replace(/\s+/g, ' ');
+  const n = completo.split(' ')[0];
   if (!n) return text;
-  return String(text)
+  // Il campo con il nome completo (es. "Giulia Conti" accanto a "ALUNNO/A") resta intero; nel testo si usa il solo nome di battesimo
+  const soloNome = completo.includes(' ') && String(text).trim() !== completo
+    ? (t) => t.split(completo).join(n) : (t) => t;
+  return soloNome(String(text))
     .replace(_RX_SOGG, (m, art) => {
       const a = art.toLowerCase();
       if (a.startsWith('del')) return 'di ' + n;
