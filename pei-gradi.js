@@ -167,7 +167,25 @@ const DISCIPLINE_SEC1 = [
 ];
 
 // ── Istituti Sec. 2° grado con discipline ─────────────────────────────────────
-const ISTITUTI_SEC2 = {
+// ── Quadri orari sec. 2° grado ────────────────────────────────────────────────
+// Ogni indirizzo ha un elenco di discipline per il BIENNIO (classi 1ª-2ª) e uno per il TRIENNIO (3ª-5ª).
+// Forma "legacy": un semplice array = stesso elenco per tutte le classi (indirizzi non ancora migrati).
+// Forma per anno (Professionali, migrati da D.M. 33/2020 – Quadri orari nuovi istituti professionali):
+//   ip(biennioIndirizzo, triennioIndirizzo, triennioOpzionali)
+// Le discipline "opzionali" sono quelle con soglia minima 0 ore nel quadro orario: alternative tra
+// loro secondo la caratterizzazione dell'istituto (art. 3 c. 5 D.Lgs. 61/2017). Sono incluse nell'elenco
+// del triennio ma segnalate a parte (v. getOpzionaliSec2) perché l'istituto potrebbe non attivarle.
+const IP_GEN_BIENNIO = ["Italiano","Storia","Geografia","Matematica","Lingua Straniera (Inglese)","Diritto ed Economia","Scienze Motorie e Sportive","Religione / Attività alternativa"];
+const IP_GEN_TRIENNIO = ["Italiano","Storia","Matematica","Lingua Straniera (Inglese)","Scienze Motorie e Sportive","Religione / Attività alternativa"];
+function ip(biennioInd, triennioInd, opz = []) {
+  return {
+    biennio: [...IP_GEN_BIENNIO, ...biennioInd],
+    triennio: [...IP_GEN_TRIENNIO, ...triennioInd, ...opz],
+    triennioOpzionali: [...opz],
+  };
+}
+
+const QUADRI_ORARI_SEC2 = {
   "Liceo Classico": [
     "Italiano","Latino","Greco","Storia e Filosofia","Geografia",
     "Matematica","Fisica","Scienze Naturali","Storia dell'Arte",
@@ -299,96 +317,93 @@ const ISTITUTI_SEC2 = {
     "Gestione del Cantiere e Sicurezza dell'Ambiente di Lavoro",
     "Scienze Motorie e Sportive","Religione / Attività alternativa",
   ],
-  "IP – Agricoltura, sviluppo rurale, valorizzazione dei prodotti del territorio e gestione delle risorse forestali e montane": [
-    "Italiano","Storia","Matematica","Lingua Straniera (Inglese)",
-    "Scienze Integrate","Diritto ed Economia",
-    "Scienze e Tecnologie Agrarie","Produzioni Vegetali e Animali",
-    "Laboratori Tecnologici ed Esercitazioni",
-    "Scienze Motorie e Sportive","Religione / Attività alternativa",
-  ],
-  "IP – Pesca commerciale e produzioni ittiche": [
-    "Italiano","Storia","Matematica","Lingua Straniera (Inglese)",
-    "Scienze Integrate","Diritto ed Economia",
-    "Biologia Marina e Acquacoltura","Tecnologie della Pesca",
-    "Laboratori Tecnologici ed Esercitazioni",
-    "Scienze Motorie e Sportive","Religione / Attività alternativa",
-  ],
-  "IP – Industria e artigianato per il Made in Italy": [
-    "Italiano","Storia","Matematica","Lingua Straniera (Inglese)",
-    "Scienze Integrate","Diritto ed Economia",
-    "Tecnologie Applicate ai Materiali e ai Processi Produttivi",
-    "Progettazione e Rappresentazione Grafica",
-    "Laboratori Tecnologici ed Esercitazioni",
-    "Scienze Motorie e Sportive","Religione / Attività alternativa",
-  ],
-  "IP – Manutenzione e assistenza tecnica": [
-    "Italiano","Storia","Matematica","Lingua Straniera (Inglese)",
-    "Scienze Integrate","Diritto ed Economia",
-    "Tecnologie Meccaniche, Elettriche ed Elettroniche",
-    "Manutenzione di Impianti e Apparati",
-    "Laboratori Tecnologici ed Esercitazioni",
-    "Scienze Motorie e Sportive","Religione / Attività alternativa",
-  ],
-  "IP – Gestione delle acque e risanamento ambientale": [
-    "Italiano","Storia","Matematica","Lingua Straniera (Inglese)",
-    "Scienze Integrate","Diritto ed Economia",
-    "Tecnologie Ambientali","Gestione e Trattamento delle Acque",
-    "Laboratori Tecnologici ed Esercitazioni",
-    "Scienze Motorie e Sportive","Religione / Attività alternativa",
-  ],
-  "IP – Servizi commerciali": [
-    "Italiano","Storia","Matematica","Lingua Straniera (Inglese)",
-    "Seconda Lingua Straniera","Diritto ed Economia",
-    "Economia Aziendale","Tecniche di Comunicazione",
-    "Informatica e Laboratorio",
-    "Scienze Motorie e Sportive","Religione / Attività alternativa",
-  ],
-  "IP – Enogastronomia e ospitalità alberghiera": [
-    "Italiano","Storia","Matematica","Lingua Straniera (Inglese)",
-    "Seconda Lingua Straniera","Diritto e Tecniche Amministrative",
-    "Scienze e Culture dell'Alimentazione",
-    "Laboratorio di Cucina / Sala e Vendita / Accoglienza Turistica",
-    "Scienze Motorie e Sportive","Religione / Attività alternativa",
-  ],
-  "IP – Servizi culturali e dello spettacolo": [
-    "Italiano","Storia","Matematica","Lingua Straniera (Inglese)",
-    "Scienze Integrate","Diritto ed Economia",
-    "Storia dell'Arte e del Territorio",
-    "Tecniche di Comunicazione e Promozione Culturale",
-    "Laboratori Tecnologici ed Esercitazioni",
-    "Scienze Motorie e Sportive","Religione / Attività alternativa",
-  ],
-  "IP – Servizi per la sanità e l'assistenza sociale": [
-    "Italiano","Storia","Matematica","Lingua Straniera (Inglese)",
-    "Scienze Integrate","Diritto ed Economia",
-    "Psicologia Generale ed Applicata",
-    "Igiene e Cultura Medico-Sanitaria",
-    "Metodologie Operative","Tecnica Amministrativa ed Economia Sociale",
-    "Scienze Motorie e Sportive","Religione / Attività alternativa",
-  ],
-  "IP – Arti ausiliarie delle professioni sanitarie: odontotecnico": [
-    "Italiano","Storia","Matematica","Lingua Straniera (Inglese)",
-    "Scienze Integrate","Diritto ed Economia",
-    "Scienze dei Materiali Dentali","Gnatologia",
-    "Rappresentazione e Modellazione Odontotecnica",
-    "Esercitazioni di Laboratorio Odontotecnico",
-    "Scienze Motorie e Sportive","Religione / Attività alternativa",
-  ],
-  "IP – Arti ausiliarie delle professioni sanitarie: ottico": [
-    "Italiano","Storia","Matematica","Lingua Straniera (Inglese)",
-    "Scienze Integrate","Diritto ed Economia",
-    "Fisica Applicata (Ottica)","Optometria",
-    "Contattologia","Esercitazioni di Laboratorio di Optometria",
-    "Scienze Motorie e Sportive","Religione / Attività alternativa",
-  ],
+  "IP – Agricoltura, sviluppo rurale, valorizzazione dei prodotti del territorio e gestione delle risorse forestali e montane": ip(
+    ["Scienze Integrate","Ecologia e Pedologia","Tecnologie dell'Informazione e della Comunicazione (TIC)","Laboratorio di Scienze e Tecnologie Agrarie"],
+    ["Laboratorio di Biologia e di Chimica Applicata ai Processi di Trasformazione","Agronomia del Territorio Agrario e Forestale","Tecniche delle Produzioni Vegetali e Zootecniche","Economia Agraria e Legislazione di Settore Agraria e Forestale","Gestione e Valorizzazione delle Attività Produttive e Sviluppo del Territorio e Sociologia Rurale"],
+    ["Logistica e Marketing dei Prodotti Agroalimentari","Agricoltura Sostenibile e Biologica","Selvicoltura, Dendrometria e Utilizzazioni Forestali","Assestamento Forestale, Gestione Parchi, Aree Protette e Fauna Selvatica"]
+  ),
+  "IP – Pesca commerciale e produzioni ittiche": ip(
+    ["Scienze Integrate","Tecnologie dell'Informazione e della Comunicazione (TIC)","Laboratori Tecnologici ed Esercitazioni","Ecologia Applicata alla Pesca e all'Acquacoltura"],
+    ["Ecologia Applicata alla Pesca e all'Acquacoltura","Tecnologie e Tecniche di Gestione e Conduzione delle Imbarcazioni da Pesca","Tecnologie e Tecniche di Pesca ed Acquacoltura Sostenibili","Diritto ed Economia della Filiera Ittica","Tecnologie e Tecniche di Conduzione e Manutenzione di Apparati ed Impianti"],
+    []
+  ),
+  "IP – Industria e artigianato per il Made in Italy": ip(
+    ["Scienze Integrate","Tecnologie dell'Informazione e della Comunicazione (TIC)","Laboratori Tecnologici ed Esercitazioni","Tecnologie, Disegno e Progettazione"],
+    ["Laboratori Tecnologici ed Esercitazioni","Tecnologie Applicate ai Materiali e ai Processi Produttivi","Progettazione e Produzione"],
+    ["Tecniche di Gestione e Organizzazione del Processo Produttivo","Tecniche di Distribuzione e Marketing","Storia delle Arti Applicate"]
+  ),
+  "IP – Manutenzione e assistenza tecnica": ip(
+    ["Scienze Integrate","Tecnologie dell'Informazione e della Comunicazione (TIC)","Tecnologie e Tecniche di Rappresentazione Grafica","Laboratori Tecnologici ed Esercitazioni"],
+    ["Tecnologie Meccaniche e Applicazioni","Tecnologie Elettriche-Elettroniche e Applicazioni","Tecnologie e Tecniche di Installazione e di Manutenzione e di Diagnostica","Laboratori Tecnologici ed Esercitazioni"],
+    []
+  ),
+  "IP – Gestione delle acque e risanamento ambientale": ip(
+    ["Scienze Integrate","Tecnologie dell'Informazione e della Comunicazione (TIC)","Laboratori Tecnologici ed Esercitazioni","Tecnologie delle Risorse Idriche e Geologiche"],
+    ["Tecnologie delle Risorse Idriche e Geologiche","Chimica Applicata alla Gestione delle Risorse Idriche e Risanamento Ambientale","Microbiologia Applicata alla Gestione e Risanamento Ambientale","Tecniche di Gestione e Controllo delle Reti ed Impianti Civili ed Industriali"],
+    []
+  ),
+  "IP – Servizi commerciali": ip(
+    ["Scienze Integrate","Tecnologie dell'Informazione e della Comunicazione (TIC)","Seconda Lingua Straniera","Tecniche Professionali dei Servizi Commerciali","Laboratorio di Espressioni Grafico-Artistiche"],
+    ["Seconda Lingua Straniera","Tecniche Professionali dei Servizi Commerciali"],
+    ["Diritto/Economia","Tecniche di Comunicazione","Informatica","Economia Aziendale","Storia dell'Arte ed Espressioni Grafico-Artistiche"]
+  ),
+  "IP – Enogastronomia e ospitalità alberghiera": ip(
+    ["Seconda Lingua Straniera","Scienze Integrate","Tecnologie dell'Informazione e della Comunicazione (TIC)","Scienza degli Alimenti","Laboratorio dei Servizi Enogastronomici – Cucina","Laboratorio dei Servizi Enogastronomici – Bar, Sala e Vendita","Laboratorio dei Servizi di Accoglienza Turistica"],
+    ["Seconda Lingua Straniera","Diritto e Tecniche Amministrative"],
+    ["Scienza e Cultura dell'Alimentazione","Laboratorio Enogastronomia – Cucina","Laboratorio Enogastronomia – Bar, Sala e Vendita","Laboratorio di Accoglienza Turistica","Laboratorio di Arte Bianca e Pasticceria","Tecniche di Comunicazione","Arte e Territorio","Tecniche di Organizzazione e Gestione dei Processi Produttivi"]
+  ),
+  "IP – Servizi culturali e dello spettacolo": ip(
+    ["Scienze Integrate","Tecnologie dell'Informazione e della Comunicazione (TIC)","Tecniche e Tecnologie della Comunicazione Visiva","Linguaggi Fotografici e dell'Audiovisivo","Laboratori Tecnologici ed Esercitazioni"],
+    ["Laboratori Tecnologici ed Esercitazioni","Tecnologie della Fotografia e degli Audiovisivi","Progettazione e Realizzazione del Prodotto Fotografico e Audiovisivo","Storia delle Arti Visive","Linguaggi e Tecniche della Fotografia e dell'Audiovisivo"],
+    []
+  ),
+  "IP – Servizi per la sanità e l'assistenza sociale": ip(
+    ["Seconda Lingua Straniera","Tecnologie dell'Informazione e della Comunicazione (TIC)","Scienze Integrate","Metodologie Operative","Scienze Umane e Sociali"],
+    ["Seconda Lingua Straniera","Metodologie Operative","Igiene e Cultura Medico-Sanitaria","Psicologia Generale e Applicata","Diritto, Economia e Tecnica Amministrativa del Settore Socio-Sanitario"],
+    []
+  ),
+  "IP – Arti ausiliarie delle professioni sanitarie: odontotecnico": ip(
+    ["Scienze Integrate","Tecnologie dell'Informazione e della Comunicazione (TIC)","Anatomia Fisiologia Igiene","Rappresentazione e Modellazione Odontotecnica","Esercitazioni di Laboratorio di Odontotecnica"],
+    ["Anatomia Fisiologia Igiene","Gnatologia","Rappresentazione e Modellazione Odontotecnica","Esercitazioni di Laboratorio di Odontotecnica","Scienze dei Materiali Dentali","Diritto e Legislazione Socio-Sanitaria"],
+    []
+  ),
+  "IP – Arti ausiliarie delle professioni sanitarie: ottico": ip(
+    ["Scienze Integrate","Tecnologie dell'Informazione e della Comunicazione (TIC)","Discipline Sanitarie","Ottica, Ottica Applicata","Esercitazioni di Lenti Oftalmiche"],
+    ["Discipline Sanitarie","Ottica, Ottica Applicata","Esercitazioni di Lenti Oftalmiche","Esercitazioni di Optometria","Esercitazioni di Contattologia","Diritto e Legislazione Socio-Sanitaria"],
+    []
+  ),
 };
+
+const _unione = v => Array.isArray(v) ? v : [...new Set([...v.biennio, ...v.triennio])];
+// Elenco piatto (unione biennio+triennio) per compatibilità: chiavi = indirizzi, valori = tutte le discipline
+const ISTITUTI_SEC2 = Object.fromEntries(Object.entries(QUADRI_ORARI_SEC2).map(([k, v]) => [k, _unione(v)]));
+
+// Anno di corso (1-5) dall'età, stessa formula di calcolaClasse() in pei-prompt.js
+function annoCorsoSec2(eta) {
+  const e = parseInt(eta, 10) || 0;
+  return Math.min(Math.max(e - 13, 1), 5);
+}
+// Discipline di un indirizzo sec2 per la classe corrispondente all'età (biennio se 1ª-2ª, triennio altrimenti)
+function getDisciplineSec2(istituto, eta) {
+  const v = QUADRI_ORARI_SEC2[istituto];
+  if (!v) return [];
+  if (Array.isArray(v)) return v;
+  return annoCorsoSec2(eta) <= 2 ? v.biennio : v.triennio;
+}
+// Discipline opzionali/alternative presenti nell'elenco per la classe (solo triennio, solo se definite)
+function getOpzionaliSec2(istituto, eta) {
+  const v = QUADRI_ORARI_SEC2[istituto];
+  if (!v || Array.isArray(v) || annoCorsoSec2(eta) <= 2) return [];
+  return v.triennioOpzionali || [];
+}
 
 /**
  * Ritorna la configurazione completa per un grado scolastico dato.
  * @param {string} grado  "infanzia" | "primaria" | "sec1" | "sec2"
  * @param {string} [istituto]  solo per sec2
+ * @param {number|string} [eta]  solo per sec2: seleziona l'elenco del biennio o del triennio
  */
-function getConfig(grado, istituto = null) {
+function getConfig(grado, istituto = null, eta = null) {
   const term   = TERMINOLOGIA[grado];
   const sez8   = STRUTTURA_SEZ8[grado];
   const std81  = testoStandard81(term);
@@ -397,7 +412,7 @@ function getConfig(grado, istituto = null) {
   if (grado === 'infanzia') discipline = CAMPI_ESPERIENZA;
   else if (grado === 'primaria') discipline = DISCIPLINE_PRIMARIA;
   else if (grado === 'sec1') discipline = DISCIPLINE_SEC1;
-  else if (grado === 'sec2' && istituto) discipline = ISTITUTI_SEC2[istituto] || [];
+  else if (grado === 'sec2' && istituto) discipline = getDisciplineSec2(istituto, eta);
 
   return { term, sez8, std81, discipline, istituti: grado === 'sec2' ? ISTITUTI_SEC2 : null };
 }
@@ -409,6 +424,10 @@ export {
   DISCIPLINE_PRIMARIA,
   DISCIPLINE_SEC1,
   ISTITUTI_SEC2,
+  QUADRI_ORARI_SEC2,
+  getDisciplineSec2,
+  getOpzionaliSec2,
+  annoCorsoSec2,
   testoStandard81,
   getConfig,
 };

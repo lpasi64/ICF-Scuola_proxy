@@ -114,7 +114,7 @@ INTERPRETAZIONE P vs C (obbligatoria nella narrativa della Sezione 4):
 
 // ── PARTE 1: Sezioni 1–4 ─────────────────────────────────────────────────────
 function buildPromptPart1({ eta, sesso, grado, istituto, jsonData }) {
-  const { term, discipline } = getConfig(grado, istituto);
+  const { term, discipline } = getConfig(grado, istituto, eta);
   const discStr    = discipline.join(', ');
   const campoLabel = grado === 'infanzia' ? 'campi di esperienza' : 'discipline';
   const ctx        = buildContext({ eta, sesso, grado, istituto }, term, discStr, campoLabel);
@@ -196,7 +196,7 @@ ${jsonData}`;
 
 // ── PARTE 2: Sezione 5 (obiettivi) ───────────────────────────────────────────
 function buildPromptPart2({ eta, sesso, grado, istituto, jsonData }) {
-  const { term, discipline } = getConfig(grado, istituto);
+  const { term, discipline } = getConfig(grado, istituto, eta);
   const discStr    = discipline.join(', ');
   const campoLabel = grado === 'infanzia' ? 'campi di esperienza' : 'discipline';
   const ctx        = buildContext({ eta, sesso, grado, istituto }, term, discStr, campoLabel);
@@ -248,7 +248,7 @@ ${jsonData}`;
 
 // ── PARTE 3: Sezioni 6–7 (contesto) ──────────────────────────────────────────
 function buildPromptPart3({ eta, sesso, grado, istituto, jsonData }) {
-  const { term, discipline } = getConfig(grado, istituto);
+  const { term, discipline } = getConfig(grado, istituto, eta);
   const discStr    = discipline.join(', ');
   const campoLabel = grado === 'infanzia' ? 'campi di esperienza' : 'discipline';
   const ctx        = buildContext({ eta, sesso, grado, istituto }, term, discStr, campoLabel);
@@ -309,7 +309,7 @@ ${jsonData}`;
 
 // ── PARTE 4: Sezione 8 + Nota Metodologica ───────────────────────────────────
 function buildPromptPart4({ eta, sesso, grado, istituto, jsonData }) {
-  const { term, sez8, std81, discipline } = getConfig(grado, istituto);
+  const { term, sez8, std81, discipline } = getConfig(grado, istituto, eta);
   const discStr    = discipline.join(', ');
   const campoLabel = grado === 'infanzia' ? 'campi di esperienza' : 'discipline';
   const ctx        = buildContext({ eta, sesso, grado, istituto }, term, discStr, campoLabel);
