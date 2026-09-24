@@ -20,7 +20,7 @@
 // + PROGRAMMI_SEC2_OVERRIDE[istituto][nome] solo dove l'indirizzo cambia sostanzialmente il
 // programma (Approccio C, concordato con l'utente) — 1 override: Liceo Scienze Umane / Diritto ed Economia.
 //
-// COMPLETO (2026-09-23): 102 voci base + 2 override, tutti i 32 indirizzi sec2 coperti al 100%
+// COMPLETO (2026-09-23): 101 voci base + 8 override (6 Laboratori Tecnologici per indirizzo), tutti i 32 indirizzi sec2 coperti al 100%
 // (verificato con checkCoverage/test-programmi-coverage.js). Unica esclusione voluta:
 // "Religione / Attività alternativa" in ogni grado (traguardi fissati dal DPR 11/02/2010
 // per l'IRC, fonte diversa dalle Indicazioni Nazionali/Linee Guida laiche — non curata).
@@ -433,13 +433,13 @@ const PROGRAMMI_SEC2_BASE = {
     ],
   },
   "Storia dell'Arte": {
-    competenze: "Approssimazione dal programma di 'Disegno e Storia dell'Arte' (voce non sourced separatamente): sviluppo dello sguardo storico-critico sull'arte (architettura e arti figurative) dall'antichità al contemporaneo, senza la componente grafico-progettuale/CAD prevista dove la materia include anche il disegno.",
+    competenze: "Bozza Indicazioni Licei 2026 (capitolo Storia dell'arte, comune ai licei): disciplina storica e critica che studia opere figurative, architettoniche e visive come documenti della cultura; competenze storico-critica (inquadrare autori, opere e movimenti nel contesto), di lettura e analisi (aspetti materiali, tecnici, formali, iconografici e stilistici con terminologia appropriata), interpretativa e di giudizio, e di cittadinanza attiva (tutela e valorizzazione del patrimonio, lettura critica delle immagini anche generate da IA). Secondo biennio: dalle origini classiche al Settecento; quinto anno: dall'Ottocento al contemporaneo. Nel Classico maggiore attenzione ai nessi con filosofia e fonti letterarie.",
     nuclei: [
-      "Storia dell'arte antica e medievale",
-      "Storia dell'arte dal Rinascimento all'Ottocento",
-      "Lettura critica e contestualizzazione delle opere",
-      "Confronto tra linguaggi artistici di epoche diverse",
-      "Arte contemporanea e nuovi linguaggi visivi",
+      "Lettura e analisi dell'opera: aspetti materiali, tecnici, formali, iconografici e stilistici",
+      "Contestualizzazione storico-critica di autori, opere e movimenti; percorso cronologico e tematico",
+      "Sviluppo del linguaggio artistico occidentale: dalle origini classiche al Settecento (secondo biennio)",
+      "Ottocento, Novecento e contemporaneo: crisi della rappresentazione, nuovi media, sistema dell'arte (quinto anno)",
+      "Patrimonio del territorio, tutela e valorizzazione; lettura critica delle immagini, anche generate da IA",
     ],
   },
   "Scienze Motorie e Sportive": {
@@ -1082,16 +1082,6 @@ const PROGRAMMI_SEC2_BASE = {
       "Filiera agroalimentare e tecniche di trasformazione",
     ],
   },
-  "Laboratori Tecnologici ed Esercitazioni": {
-    competenze: "Sintetizzato dal Regolamento D.Lgs. 61/2017: attività laboratoriali (biologia e chimica applicata ai processi di trasformazione, scienze e tecnologie agrarie) a supporto delle competenze tecnico-professionali; analisi chimico-fisiche sugli alimenti e riconoscimento delle tecniche di trasformazione/condizionamento dei prodotti.",
-    nuclei: [
-      "Analisi chimico-fisiche e organolettiche di materie prime e prodotti trasformati",
-      "Tecniche di trasformazione e condizionamento dei prodotti",
-      "Attività sperimentali di biologia e chimica applicata",
-      "Sicurezza e norme igienico-sanitarie in laboratorio",
-      "Supporto pratico alle discipline tecnico-professionali dell'indirizzo",
-    ],
-  },
   "Biologia Marina e Acquacoltura": {
     competenze: "Sintetizzato dal Profilo Educativo Culturale e Professionale (P.E.Cu.P.) D.Lgs. 61/2017: conoscenza della biologia delle specie ittiche e della chimica delle acque; tecniche di allevamento, conservazione e trasformazione dei prodotti ittici; normativa internazionale/comunitaria/nazionale su pesca marittima e acquacoltura.",
     nuclei: [
@@ -1366,6 +1356,78 @@ const PROGRAMMI_SEC2_BASE = {
 // Override per indirizzo: Diritto ed Economia del Liceo delle Scienze Umane (bozza Indicazioni
 // Licei, primo biennio) ha impostazione propria, diversa dalla voce base comune a professionali/tecnici.
 const PROGRAMMI_SEC2_OVERRIDE = {
+  "IP – Pesca commerciale e produzioni ittiche": {
+    "Laboratori Tecnologici ed Esercitazioni": {
+      competenze: "Sintetizzato dalle competenze dell'indirizzo (P.E.Cu.P. D.Lgs. 61/2017, già curate nelle altre voci di questo indirizzo): non esiste una fonte ministeriale dedicata alla singola disciplina di laboratorio. Attività pratiche a supporto di biologia marina e tecnologie della pesca: uso e manutenzione di attrezzature e imbarcazione, trattamento e conservazione dei prodotti ittici, sicurezza a bordo e in laboratorio.",
+      nuclei: [
+        "Uso e manutenzione di attrezzature e impianti per la pesca",
+        "Tecniche di trattamento, conservazione e trasformazione dei prodotti ittici",
+        "Analisi e rilevazione di parametri delle acque e delle specie ittiche",
+        "Sicurezza a bordo e norme igienico-sanitarie in laboratorio",
+        "Supporto pratico alle discipline tecnico-professionali dell'indirizzo",
+      ],
+    },
+  },
+  "IP – Industria e artigianato per il Made in Italy": {
+    "Laboratori Tecnologici ed Esercitazioni": {
+      competenze: "Sintetizzato dalle competenze dell'indirizzo (P.E.Cu.P. D.Lgs. 61/2017, già curate nelle altre voci di questo indirizzo): non esiste una fonte ministeriale dedicata alla singola disciplina di laboratorio. Attività pratiche a supporto di tecnologie dei materiali e progettazione: lavorazione, realizzazione e assemblaggio di prodotti industriali/artigianali del Made in Italy, uso di strumenti e macchine, disegno tecnico e strumenti digitali, controllo di qualità.",
+      nuclei: [
+        "Lavorazione e assemblaggio di prodotti industriali/artigianali",
+        "Uso di strumenti, utensili e macchine di laboratorio",
+        "Disegno tecnico e strumenti digitali di progettazione applicati al prodotto",
+        "Controllo di qualità del prodotto finito",
+        "Sicurezza e norme tecniche nei processi produttivi",
+      ],
+    },
+  },
+  "IP – Manutenzione e assistenza tecnica": {
+    "Laboratori Tecnologici ed Esercitazioni": {
+      competenze: "Sintetizzato dalle competenze dell'indirizzo (P.E.Cu.P. D.Lgs. 61/2017, già curate nelle altre voci di questo indirizzo): non esiste una fonte ministeriale dedicata alla singola disciplina di laboratorio. Attività pratiche a supporto di tecnologie e manutenzione: installazione, montaggio e sostituzione di componenti, uso di strumenti di misura, controllo e diagnosi, collaudo e messa a punto di apparecchiature e impianti, uso della documentazione tecnica nel rispetto delle norme di sicurezza.",
+      nuclei: [
+        "Installazione, montaggio e sostituzione di componenti e apparecchiature",
+        "Uso di strumenti di misura, controllo e diagnosi",
+        "Collaudo e messa a punto di impianti e macchine",
+        "Lettura e uso della documentazione tecnica",
+        "Sicurezza nei luoghi di lavoro e in laboratorio",
+      ],
+    },
+  },
+  "IP – Gestione delle acque e risanamento ambientale": {
+    "Laboratori Tecnologici ed Esercitazioni": {
+      competenze: "Sintetizzato dalle competenze dell'indirizzo (P.E.Cu.P. D.Lgs. 61/2017, già curate nelle altre voci di questo indirizzo): non esiste una fonte ministeriale dedicata alla singola disciplina di laboratorio. Attività pratiche a supporto di tecnologie ambientali e gestione delle acque: campionamento e rilevazione di parametri delle risorse idriche, operazioni su reti e impianti di depurazione, tecniche di controllo ambientale, nel rispetto delle norme di sicurezza.",
+      nuclei: [
+        "Campionamento e rilevazione di parametri delle acque",
+        "Operazioni su reti idriche e impianti di depurazione/trattamento",
+        "Tecniche di controllo e prevenzione ambientale",
+        "Sicurezza nella gestione delle acque e degli impianti",
+        "Supporto pratico alle discipline tecnico-professionali dell'indirizzo",
+      ],
+    },
+  },
+  "IP – Servizi culturali e dello spettacolo": {
+    "Laboratori Tecnologici ed Esercitazioni": {
+      competenze: "Sintetizzato dalle competenze dell'indirizzo (P.E.Cu.P. D.Lgs. 61/2017, già curate nelle altre voci di questo indirizzo): non esiste una fonte ministeriale dedicata alla singola disciplina di laboratorio. Attività pratiche a supporto di comunicazione e promozione culturale: realizzazione di prodotti e materiali di comunicazione visiva, multimediale e digitale, allestimento e documentazione di eventi e beni culturali, uso di strumenti tecnologici per la valorizzazione del patrimonio.",
+      nuclei: [
+        "Realizzazione di prodotti di comunicazione visiva, multimediale e digitale",
+        "Allestimento e documentazione di eventi e beni culturali",
+        "Uso di strumenti digitali e tecnologici per la valorizzazione del patrimonio",
+        "Lavoro di gruppo e organizzazione delle attività di progetto",
+        "Supporto pratico alle discipline tecnico-professionali dell'indirizzo",
+      ],
+    },
+  },
+  "IP – Agricoltura, sviluppo rurale, valorizzazione dei prodotti del territorio e gestione delle risorse forestali e montane": {
+    "Laboratori Tecnologici ed Esercitazioni": {
+      competenze: "Sintetizzato dalle competenze dell'indirizzo (P.E.Cu.P. D.Lgs. 61/2017, già curate nelle altre voci di questo indirizzo): non esiste una fonte ministeriale dedicata alla singola disciplina di laboratorio. Attività pratiche a supporto delle discipline agrarie: attività laboratoriali (biologia e chimica applicata ai processi di trasformazione, scienze e tecnologie agrarie) a supporto delle competenze tecnico-professionali; analisi chimico-fisiche sugli alimenti e riconoscimento delle tecniche di trasformazione/condizionamento dei prodotti.",
+      nuclei: [
+        "Analisi chimico-fisiche e organolettiche di materie prime e prodotti trasformati",
+        "Tecniche di trasformazione e condizionamento dei prodotti",
+        "Attività sperimentali di biologia e chimica applicata",
+        "Sicurezza e norme igienico-sanitarie in laboratorio",
+        "Supporto pratico alle discipline tecnico-professionali dell'indirizzo",
+      ],
+    },
+  },
   "Liceo Linguistico": {
     "Latino": {
       competenze: "Solo primo biennio (bozza Indicazioni Licei 2026), in chiave comparativa con italiano e lingue moderne studiate: competenze morfosintattiche, lessicali e semantiche essenziali per comprendere e tradurre testi latini semplici, prevalentemente in prosa, di argomento storico e narrativo; lessico di base (almeno 600 parole) come accesso alle lingue e culture europee; livello atteso indicativamente A1; uso critico di strumenti multimediali e IA.",
