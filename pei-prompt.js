@@ -58,10 +58,10 @@ function buildContext({ eta, sesso, grado, istituto }, term, discStr, campoLabel
 - ${campoLabel === 'campi di esperienza' ? 'Campi di esperienza' : 'Discipline'}: ${discStr}
 
 TERMINOLOGIA OBBLIGATORIA:
-- Soggetto: "${term.soggetto}"
+- Soggetto: "${sessoLabel}" (il sesso è noto: MAI forme con la barra come "${term.soggetto}", "Lo/la", "il/la", "del/della")
 - Unità scolastica: "${term.sezione}"
 - Organo collegiale: "${term.organo}"
-- Usa sempre il nome proprio rilevato dal JSON (mai ID numerici)
+- Usa sempre il nome proprio rilevato dal JSON (mai ID numerici); nelle frasi, anche negli obiettivi, nei punti di forza e negli esiti attesi della Sezione 5, apri con il nome proprio e non con "Lo/la ${term.soggetto}"
 
 REGOLE FONDAMENTALI:
 1. Sezione 1: ZERO codici ICF, ZERO diagnosi cliniche, linguaggio positivo e narrativo.

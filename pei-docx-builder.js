@@ -35,10 +35,34 @@ function keepTogether(fn) { const prev = _keepAll; _keepAll = true; try { return
 const _kn = () => (_keepAll ? { keepNext: true } : {});
 function TableRow(o) { return new DocxTableRow({ cantSplit: true, ...o }); }
 
+// ── Forma del soggetto ────────────────────────────────────────────────────────
+// Il sesso e il nome sono noti: le forme generiche con la barra ("Lo/la studente/essa", "del/della studente/essa",
+// "sul/sulla alunno/a"…) prodotte dall'AI o presenti nei moduli vengono rese col nome proprio ("Giulia", "di Giulia", "su Giulia").
+const _NOUN = '(?:studente\\/essa|alunno\\/a|bambino\\/a)';
+const _RX_SOGG = new RegExp("\\b(dello|del|dell'|allo|al|all'|sullo|sul|sull'|dallo|dal|dall'|nello|nel|nell'|lo|il|l')(?:\\/(?:della|alla|sulla|dalla|nella|la|a))?\\s*(" + _NOUN + ')', 'gi');
+function normalizzaSoggetto(text, nome, sesso) {
+  const n = String(nome || '').trim().split(/\s+/)[0];
+  if (!n) return text;
+  return String(text)
+    .replace(_RX_SOGG, (m, art) => {
+      const a = art.toLowerCase();
+      if (a.startsWith('del')) return 'di ' + n;
+      if (a.startsWith('al')) return 'a ' + n;
+      if (a.startsWith('sul')) return 'su ' + n;
+      if (a.startsWith('dal')) return 'da ' + n;
+      if (a.startsWith('nel')) return 'in ' + n;
+      return n;
+    })
+    .replace(/\bstudente\/essa\b/g, sesso === 'F' ? 'studentessa' : 'studente')
+    .replace(/\balunno\/a\b/g, sesso === 'F' ? 'alunna' : 'alunno')
+    .replace(/\bbambino\/a\b/g, sesso === 'F' ? 'bambina' : 'bambino');
+}
+let _soggetto = { nome: '', sesso: '' };
+
 // ── Primitivi ─────────────────────────────────────────────────────────────────
 function txt(t, o = {}) {
   return new TextRun({
-    text: String(t ?? ''), font: 'Calibri',
+    text: normalizzaSoggetto(String(t ?? ''), _soggetto.nome, _soggetto.sesso), font: 'Calibri',
     size: o.size || 22, bold: !!o.bold, italics: !!o.italic,
     color: o.color || C.BLACK,
     underline: o.underline ? { type: UnderlineType.SINGLE } : undefined,
@@ -655,6 +679,7 @@ const sez7Block = (...a) => keepTogether(() => _sez7Block(...a));
 
 // ── BUILDER PRINCIPALE ────────────────────────────────────────────────────────
 function buildDocx(d, grado) {
+  _soggetto = { nome: d.nomeStudente, sesso: d.sesso };
   const term  = TERMINOLOGIA[grado];
   const sez8  = STRUTTURA_SEZ8[grado];
   const std81 = testoStandard81(term);
@@ -794,12 +819,18 @@ function buildDocx(d, grado) {
   );
 
   // ── SEZ. 8 (differenziata per grado) ─────────────────────────────────────
+  // Nota metodologica per il Consiglio di classe / team: nel modello ministeriale non ha una sezione propria, quindi
+  // viene inserita nella 8.1 come testo continuo, senza titolo
+  const notaMetod = lines(d.notaMetodologica);
+  const notaIn81 = notaMetod.length ? [p(''), ...notaMetod] : [];
+
   children.push(h1('Sezione 8 – Interventi sul percorso ' + (grado === 'infanzia' ? 'educativo' : 'curricolare')));
 
   if (grado === 'infanzia') {
     children.push(
       h2(sez8.titolo81),
       ...lines(std81),
+      ...notaIn81,
       ...emptyK(1),
       ...disciplineTable(d.sez8Raw, grado),
       ...empty(1),
@@ -813,6 +844,7 @@ function buildDocx(d, grado) {
       h2(sez8.titolo81),
       ...lines(std81),
       ...(spec81 ? [p(''), ...lines(spec81)] : []),
+      ...notaIn81,
       ...empty(1),
     );
 
@@ -986,16 +1018,6 @@ function buildDocx(d, grado) {
     ...empty(2),
   );
 
-  // ── NOTA METODOLOGICA ────────────────────────────────────────────────────
-  const notaLabel = grado === 'infanzia'
-    ? 'Nota Metodologica per il team di sezione'
-    : 'Nota Metodologica per il Consiglio di Classe / Team dei docenti';
-
-  children.push(
-    h1(notaLabel),
-    ...lines(d.notaMetodologica), ...empty(2),
-  );
-
   // ── FIRME GLO ────────────────────────────────────────────────────────────
   children.push(
     h1('Approvazione finale – Firme del GLO'),
@@ -1056,4 +1078,4 @@ function extractPctoField(text, field) {
   return m2 ? m2[1].trim() : '';
 }
 
-export { buildDocx };
+export { buildDocx, normalizzaSoggetto };
