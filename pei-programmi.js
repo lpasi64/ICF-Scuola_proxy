@@ -1390,6 +1390,8 @@ function _risolviSec2(nome, istituto, eta = null) {
   if (ov?.[nome]) return ov[nome];
   const chiave = PROGRAMMI_SEC2_ALIAS[nome] || nome;
   if (ov?.[chiave]) return ov[chiave];
+  // Istituti Professionali: area generale dal D.I. 92/2018 All. 1 (mai le voci base, che derivano dalla bozza dei licei)
+  if (istituto && istituto.startsWith('IP') && PROGRAMMI_PROFESSIONALI_AREA_GENERALE[chiave]) return PROGRAMMI_PROFESSIONALI_AREA_GENERALE[chiave];
   const base = PROGRAMMI_SEC2_BASE[chiave];
   return base && _applicabile(base, istituto) ? base : null;
 }
@@ -2779,6 +2781,120 @@ const PROGRAMMI_TECNICI_VIGENTE_TRIENNIO = {
   },
 };
 
+// ── Istituti Professionali: area di istruzione generale (D.I. 92/2018, Allegato 1) ──────────────────
+// Fonte: Allegato 1 del Regolamento D.I. 24 maggio 2018 n. 92 "Il profilo di uscita dei percorsi di istruzione professionale
+// per le attività e gli insegnamenti di area generale" (nuoviprofessionali.indire.it). ATTENZIONE: il Ministero declina abilità e
+// conoscenze per ASSE CULTURALE (linguaggi, storico-sociale, matematico, scientifico-tecnologico) a partire dalle competenze del
+// PECUP e dichiara di NON collegarle alle singole discipline. Ogni voce qui sotto è quindi ricavata dalle righe dell'asse pertinente
+// e lo dichiara nel campo "competenze". Sostituisce, per gli istituti "IP – …", le voci base che derivavano dalla bozza dei licei.
+const _AG = "Il Ministero declina queste competenze per asse culturale e non per singola disciplina: voce ricavata dalle indicazioni dell'asse pertinente (D.I. 92/2018, Allegato 1).";
+const PROGRAMMI_PROFESSIONALI_AREA_GENERALE = {
+  "Italiano": {
+    competenze: `Utilizzare il patrimonio lessicale ed espressivo della lingua italiana secondo le esigenze comunicative dei vari contesti (sociali, culturali, scientifici, economici, tecnologici e professionali); individuare e utilizzare le moderne forme di comunicazione visiva e multimediale. ${_AG}`,
+    nuclei: [
+      "Ascolto e comprensione di testi prodotti da più canali; esposizione e argomentazione con registro adeguato allo scopo e alla situazione",
+      "Sistema e strutture della lingua italiana (fonologia, ortografia, morfologia, sintassi, lessico) e repertori di termini tecnici e scientifici",
+      "Strutture dei testi funzionali (descrittivi, espositivi, espressivi, valutativo-interpretativi, argomentativi, regolativi) e tecniche compositive anche professionali",
+      "Scrittura di testi di forma diversa (istruzioni, lettera formale, CV europeo, articoli, relazioni) e riscrittura: sintesi, parafrasi, passaggio tra testo, grafici e tabelle",
+      "Interpretazione di testi della tradizione letteraria e confronto tematico tra epoche e autori; testi di studio e di ambito tecnico come occasione di riflessione sulla lingua",
+      "Ricerca e valutazione di fonti sul web; ideazione di semplici testi multimediali e loro uso nella comunicazione professionale",
+    ],
+  },
+  "Storia": {
+    competenze: `Riconoscere le origini storiche delle principali istituzioni politiche, economiche e religiose e le loro interconnessioni; collocare gli eventi nella successione cronologica e nelle aree geografiche; discutere e confrontare interpretazioni di fatti storici, sociali ed economici; leggere criticamente le fonti di informazione. ${_AG}`,
+    nuclei: [
+      "Diffusione della specie umana nel pianeta; tipologie di civiltà e periodizzazioni fondamentali della storia mondiale",
+      "Civiltà antiche e alto-medievali, con riferimenti a civiltà coeve diverse da quelle occidentali",
+      "Principali persistenze e processi di trasformazione tra l'XI e il XXI secolo in Italia, in Europa e nel mondo",
+      "Evoluzione dei sistemi politico-istituzionali ed economico-produttivi, con aspetti demografici, sociali e culturali",
+      "Il territorio come fonte storica (tessuto sociale e produttivo); innovazioni scientifiche e tecnologiche e loro impatto su settori produttivi, servizi e condizioni economiche",
+    ],
+  },
+  "Geografia": {
+    competenze: `Riconoscere gli aspetti geografici, ecologici e territoriali dell'ambiente naturale e antropico, le connessioni con le strutture demografiche, economiche, sociali e culturali e le trasformazioni nel tempo. ${_AG}`,
+    nuclei: [
+      "Metodi e strumenti di rappresentazione degli aspetti spaziali: reticolato geografico, carte, sistemi informativi geografici",
+      "Formazione, evoluzione e percezione dei paesaggi naturali e antropici",
+      "Relazioni tra sviluppo economico del territorio, caratteristiche geo-morfologiche e trasformazioni nel tempo",
+      "Dinamica endogena ed esogena della Terra, fattori del clima, rapporto tra cambiamenti climatici e azione antropica",
+      "Uso razionale delle risorse naturali e sviluppo responsabile; ruolo della ricerca e delle tecnologie",
+    ],
+  },
+  "Matematica": {
+    competenze: `Utilizzare i concetti e i fondamentali strumenti dell'asse matematico per comprendere la realtà e operare in campi applicativi, con uso di strumenti di calcolo e informatici. ${_AG}`,
+    nuclei: [
+      "Insiemi numerici N, Z, Q, R e loro rappresentazione; calcolo percentuale; espressioni algebriche e polinomi",
+      "Equazioni e disequazioni di primo e secondo grado; sistemi di equazioni e disequazioni, anche per via grafica",
+      "Geometria del piano e dello spazio: relazioni tra rette, poligoni, circonferenza, isometrie, teoremi di Euclide e di Pitagora, misure di perimetro, area e volume",
+      "Funzioni e loro rappresentazione (numerica, funzionale, grafica) nel piano cartesiano: lineari, paraboliche, razionali, periodiche; uso di modelli per descrivere fenomeni",
+      "Statistica descrittiva (frequenze, media, mediana, moda, varianza e deviazione standard), probabilità e calcolo combinatorio",
+      "Linguaggio matematico nei processi produttivi: variabili e funzioni, elementi di matematica finanziaria, algoritmi",
+    ],
+  },
+  "Lingua Straniera (Inglese)": {
+    competenze: `Utilizzare i linguaggi settoriali delle lingue straniere previste dal percorso per interagire in diversi ambiti e contesti di studio e di lavoro; stabilire collegamenti tra tradizioni culturali locali, nazionali e internazionali, anche ai fini della mobilità di studio e di lavoro. ${_AG}`,
+    nuclei: [
+      "Comprensione orale dei punti principali di testi in lingua standard abbastanza complessi, su temi generali, di attualità e di microlingua professionale",
+      "Comprensione scritta globale e analitica di testi relativamente complessi, di diversa tipologia e genere",
+      "Interazione e conversazione con lessico specifico e registri diversi in rapporto alla situazione",
+      "Descrizioni e presentazioni ordinate, con materiali di supporto (presentazioni multimediali, tabelle, grafici, mappe)",
+      "Produzione scritta di testi chiari, coerenti e coesi, adeguati allo scopo e al destinatario",
+      "Aspetti grammaticali, lessicali, fonologici e pragmatici, compresa la microlingua professionale; aspetti interculturali e socio-linguistici",
+    ],
+  },
+  "Seconda Lingua Straniera": {
+    competenze: `Utilizzare i linguaggi settoriali delle lingue straniere previste dal percorso per interagire in diversi ambiti e contesti di studio e di lavoro. Il documento non distingue tra prima e seconda lingua straniera né fissa un livello di uscita per la seconda: voce ricavata dall'asse dei linguaggi (D.I. 92/2018, Allegato 1).`,
+    nuclei: [
+      "Comprensione orale e scritta di testi su temi generali, di attualità e di microlingua professionale",
+      "Interazione, descrizione e presentazione con lessico specifico e registri adeguati alla situazione",
+      "Produzione scritta di testi chiari e coerenti, adeguati allo scopo e al destinatario",
+      "Aspetti grammaticali, lessicali, fonologici e pragmatici, compresa la microlingua professionale",
+      "Aspetti interculturali e socio-linguistici delle culture della lingua oggetto di studio",
+    ],
+  },
+  "Diritto ed Economia": {
+    competenze: `Agire in riferimento a un sistema di valori coerenti con i principi della Costituzione, valutando fatti e orientando i propri comportamenti personali, sociali e professionali; comprendere i principali concetti relativi all'economia e al mercato del lavoro. ${_AG}`,
+    nuclei: [
+      "Quadro storico nel quale è nata la Costituzione; Principi fondamentali e Parte I (diritti e doveri)",
+      "Principi basilari dell'ordinamento giuridico, con attenzione al lessico giuridico",
+      "Parte II della Costituzione: organizzazione dello Stato e ruolo del cittadino; Stato italiano nell'Unione europea e nelle istituzioni internazionali",
+      "Regole che governano l'economia e principali soggetti del sistema economico; tessuto produttivo e dei servizi del proprio territorio",
+      "Caratteri fondamentali del mercato del lavoro nazionale e internazionale; principi e norme su salute e sicurezza nel lavoro",
+    ],
+  },
+  "Scienze Integrate": {
+    competenze: `Cogliere il ruolo della scienza e della tecnologia nella società e il loro impatto sulla vita sociale e dei singoli, sulla base di conoscenze scientifiche di base (composizione della materia, viventi, clima e ambiente, energia). ${_AG}`,
+    nuclei: [
+      "Basi fondamentali della composizione della materia e delle sue trasformazioni",
+      "Struttura degli esseri viventi e loro interazione con l'ambiente; significato di ecosistema e cicli biogeochimici (acqua, carbonio)",
+      "Clima, ambiente naturale e principali effetti dell'interazione con le attività umane; dinamica endogena ed esogena della Terra",
+      "Principali forme di energia, leggi delle trasformazioni energetiche, energie rinnovabili",
+      "Salute e ambiente: agenti patogeni (batteri, virus), principali inquinanti e loro origine, elementi di profilassi",
+    ],
+  },
+  "Tecnologie dell'Informazione e della Comunicazione (TIC)": {
+    competenze: `Utilizzare le reti e gli strumenti informatici nelle attività di studio, ricerca e approfondimento; raccogliere, organizzare, rappresentare e trasmettere informazioni in modo efficace e sicuro. ${_AG}`,
+    nuclei: [
+      "Informazioni, dati e loro codifica; algoritmi e loro risoluzione",
+      "Sistemi di documentazione, archiviazione e trasmissione delle informazioni; salvataggio e ripristino, compressione, archiviazione in cloud",
+      "Foglio elettronico e database: struttura e uso per accedere, modificare ed estrarre informazioni",
+      "Rete Internet: funzioni e servizi, motori di ricerca, strumenti di comunicazione (e-mail, social network, forum, blog); limiti e rischi dell'uso della rete",
+      "Utilizzo sicuro della rete (firewall, antivirus, crittografia, protezione dell'identità); privacy e diritto d'autore",
+      "Applicazioni di scrittura, calcolo, grafica e presentazione multimediale",
+    ],
+  },
+  "Scienze Motorie e Sportive": {
+    competenze: `Riconoscere i principali aspetti comunicativi, culturali e relazionali dell'espressività corporea ed esercitare in modo efficace la pratica sportiva per il benessere individuale e collettivo. Il documento declina questa competenza solo negli aspetti espressivi e culturali dello sport. ${_AG}`,
+    nuclei: [
+      "Espressività corporea e linguaggi non verbali: comprensione e produzione consapevole",
+      "Elementi tecnico-scientifici di base delle principali tecniche espressive",
+      "Differenza tra movimento biomeccanico e gesto espressivo; caratteristiche ritmiche del movimento",
+      "Sequenze motorie a carattere ritmico con finalità espressiva, nel rispetto delle strutture spaziali e temporali",
+      "Evoluzione dei giochi e degli sport nella cultura e nella tradizione delle diverse civiltà",
+    ],
+  },
+};
+
 const PROGRAMMI_PER_GRADO = {
   infanzia: PROGRAMMI_INFANZIA,
   primaria: PROGRAMMI_PRIMARIA,
@@ -2815,9 +2931,12 @@ function _intestazioneProgrammi(grado, istituto, eta = null) {
   }
   if (grado === 'sec2' && istituto && istituto.startsWith('IT')) {
     if (eta != null && getOrdinamentoSec2(istituto, eta) === 'nuovo') {
-      return 'Programmi di riferimento (Linee guida degli istituti tecnici, Direttive MIUR 57/2010 e 4/2012, DPR 88/2010; per le classi del nuovo ordinamento valgono le nuove Linee guida del D.M. 29/2026, non ancora consultate: le discipline che mantengono il nome sono desunte dalle Linee guida del 2010, da verificare):';
+      return 'Programmi di riferimento (Linee guida degli istituti tecnici, Direttive MIUR 57/2010 e 4/2012, DPR 88/2010; per le classi del nuovo ordinamento (D.M. 29/2026) gli obiettivi per disciplina non sono ancora stati pubblicati dal Ministero: le discipline che mantengono il nome sono desunte dalle Linee guida del 2010, da verificare):';
     }
     return 'Programmi ministeriali di riferimento (Linee guida degli istituti tecnici, Direttive MIUR 57/2010 e 4/2012, DPR 88/2010; vigenti):';
+  }
+  if (grado === 'sec2' && istituto && istituto.startsWith('IP')) {
+    return 'Programmi ministeriali di riferimento (Istituti professionali, D.Lgs. 61/2017 e D.I. 92/2018; area generale da Allegato 1, declinato per asse culturale e non per disciplina):';
   }
   return 'Programmi ministeriali di riferimento (Indicazioni Nazionali 2025 / Linee Guida):';
 }
@@ -2868,6 +2987,7 @@ export {
   PROGRAMMI_SEC2_OVERRIDE,
   PROGRAMMI_SEC2_ALIAS,
   PROGRAMMI_TECNICI_VIGENTE,
+  PROGRAMMI_PROFESSIONALI_AREA_GENERALE,
   PROGRAMMI_TECNICI_VIGENTE_OVERRIDE,
   PROGRAMMI_TECNICI_VIGENTE_TRIENNIO,
   PROGRAMMI_LICEI_2010,

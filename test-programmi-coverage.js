@@ -17,7 +17,7 @@ import {
   getOrdinamentoSec2,
   annoCorsoSec2,
 } from './pei-gradi.js';
-import { riferimentoLiceo, checkCoverage, getProgrammiPerDiscipline, getProgrammaDisciplina, PROGRAMMI_SEC2_ALIAS, PROGRAMMI_SEC2_BASE, LICEI_2010_MIGRATI, PROGRAMMI_LICEI_2010, PROGRAMMI_TECNICI_VIGENTE } from './pei-programmi.js';
+import { riferimentoLiceo, checkCoverage, getProgrammiPerDiscipline, getProgrammaDisciplina, PROGRAMMI_SEC2_ALIAS, PROGRAMMI_SEC2_BASE, LICEI_2010_MIGRATI, PROGRAMMI_LICEI_2010, PROGRAMMI_TECNICI_VIGENTE, PROGRAMMI_PROFESSIONALI_AREA_GENERALE } from './pei-programmi.js';
 
 let passed = 0;
 let failed = 0;
@@ -128,7 +128,7 @@ test('Tecnici: elenchi coerenti con i due ordinamenti (1ª nuovo, 3ª vigente)',
 test('voci scritte per un solo tipo di scuola non vengono iniettate negli altri (soloPer)', () => {
   const man = 'IP – Manutenzione e assistenza tecnica', mec = 'IT – Meccanica, meccatronica ed energia', cla = 'Liceo Classico', su = 'Liceo Classico';
   assert(!getProgrammaDisciplina('sec2', 'Geografia', cla), 'Geografia della bozza non deve raggiungere i licei migrati');
-  assert(!getProgrammaDisciplina('sec2', 'Geografia', man), 'Geografia dei licei non deve arrivare agli IP');
+  assert(getProgrammaDisciplina('sec2', 'Geografia', man) === PROGRAMMI_PROFESSIONALI_AREA_GENERALE['Geografia'], 'per gli IP Geografia deve essere la voce di Allegato 1, non quella dei licei');
   assert(getProgrammaDisciplina('sec2', 'Geografia', mec) === PROGRAMMI_TECNICI_VIGENTE['Geografia'], 'per gli IT Geografia deve essere la voce delle Linee guida tecniche, non quella dei licei');
   assert(getProgrammaDisciplina('sec2', 'Diritto ed Economia', man), 'Diritto ed Economia (professionali) deve valere per gli IP');
   assert(getProgrammaDisciplina('sec2', 'Diritto ed Economia', mec) === PROGRAMMI_TECNICI_VIGENTE['Diritto ed Economia'] && getProgrammaDisciplina('sec2', 'Diritto ed Economia', mec) !== getProgrammaDisciplina('sec2', 'Diritto ed Economia', man), 'Diritto ed Economia dei professionali non deve arrivare agli IT');
@@ -294,9 +294,36 @@ test('Tecnici: intestazione con riferimento alle Linee guida; nota di cautela so
   const k = 'IT – Meccanica, meccatronica ed energia';
   const vig = getProgrammiPerDiscipline('sec2', getDisciplineSec2(k, 17), k, 17);
   assert(vig.startsWith('Programmi ministeriali di riferimento (Linee guida degli istituti tecnici'), 'intestazione vigente errata');
-  assert(!vig.includes('non ancora consultate'), 'nota di cautela non attesa per il vigente');
+  assert(!vig.includes('non sono ancora stati pubblicati'), 'nota di cautela non attesa per il vigente');
   const nuovo = getProgrammiPerDiscipline('sec2', getDisciplineSec2(k, 14), k, 14);
-  assert(nuovo.includes('D.M. 29/2026') && nuovo.includes('non ancora consultate'), 'nota di cautela mancante per il nuovo ordinamento');
+  assert(nuovo.includes('D.M. 29/2026') && nuovo.includes('non sono ancora stati pubblicati'), 'nota di cautela mancante per il nuovo ordinamento');
+});
+
+// ── Istituti Professionali: area generale da D.I. 92/2018, Allegato 1 ──
+const PROFESSIONALI = Object.keys(QUADRI_ORARI_SEC2).filter(k => k.startsWith('IP'));
+const AREA_GEN_IP = ['Italiano', 'Storia', 'Geografia', 'Matematica', 'Lingua Straniera (Inglese)', 'Seconda Lingua Straniera', 'Diritto ed Economia', 'Scienze Integrate', "Tecnologie dell'Informazione e della Comunicazione (TIC)", 'Scienze Motorie e Sportive'];
+
+test('Professionali: le discipline di area generale usano il D.I. 92/2018 All. 1, mai la bozza dei licei; TIC e Geografia ora coperte', () => {
+  for (const k of PROFESSIONALI) {
+    const q = QUADRI_ORARI_SEC2[k];
+    for (const nome of [...q.biennio, ...q.triennio].filter(n => AREA_GEN_IP.includes(n))) {
+      const v = getProgrammaDisciplina('sec2', nome, k);
+      assert(v === PROGRAMMI_PROFESSIONALI_AREA_GENERALE[nome], `${k}: ${nome} non risolto sull'Allegato 1`);
+      assert(v.competenze.includes('D.I. 92/2018'), `${k}: ${nome} non dichiara la fonte`);
+    }
+  }
+});
+
+test('Professionali: le voci di area generale non arrivano a Tecnici e Licei', () => {
+  assert(getProgrammaDisciplina('sec2', 'Italiano', 'IT – Turismo') === PROGRAMMI_TECNICI_VIGENTE['Italiano'], 'Tecnici: Italiano errato');
+  assert(getProgrammaDisciplina('sec2', "Tecnologie dell'Informazione e della Comunicazione (TIC)", 'IT – Turismo') === null, 'TIC dei professionali non deve valere per i Tecnici');
+  assert(getProgrammaDisciplina('sec2', 'Geografia', 'Liceo Classico') === null, 'Geografia dei professionali non deve valere per i licei');
+});
+
+test('Professionali: intestazione con riferimento al D.I. 92/2018', () => {
+  const k = 'IP – Manutenzione e assistenza tecnica';
+  const t = getProgrammiPerDiscipline('sec2', getDisciplineSec2(k, 14), k, 14);
+  assert(t.startsWith('Programmi ministeriali di riferimento (Istituti professionali') && t.includes('D.I. 92/2018'), 'intestazione IP errata');
 });
 
 test('Religione / Attività alternativa in sec2: nessun errore, degrado silenzioso voluto', () => {
