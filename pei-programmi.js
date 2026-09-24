@@ -36,6 +36,8 @@
 // più specifica. Voci "fuse" per i licei con cattedre unificate (es. "Storia e Filosofia",
 // "Matematica e Fisica"): contenuto sintetizzato dai capitoli separati delle fonti ufficiali.
 
+import { annoCorsoSec2, getOrdinamentoSec2 } from './pei-gradi.js';
+
 // ── Infanzia — 5 campi di esperienza ──────────────────────────────────────────
 const PROGRAMMI_INFANZIA = {
   "Il sé e l'altro": {
@@ -1371,7 +1373,15 @@ const PROGRAMMI_SEC2_ALIAS = {
 };
 // Una voce base con "soloPer" vale solo per gli istituti il cui nome inizia con uno dei prefissi indicati
 const _applicabile = (voce, istituto) => !voce.soloPer || (istituto && voce.soloPer.some(p => istituto.startsWith(p)));
-function _risolviSec2(nome, istituto) {
+function _risolviSec2(nome, istituto, eta = null) {
+  // Istituti Tecnici: Linee guida DPR 88/2010 (voce per indirizzo > voce del triennio > voce comune); se assente, si ricade sulle voci base
+  if (istituto && istituto.startsWith('IT')) {
+    const triennio = eta != null && annoCorsoSec2(eta) >= 3;
+    const t = (triennio && PROGRAMMI_TECNICI_VIGENTE_TRIENNIO[istituto]?.[nome])
+      || PROGRAMMI_TECNICI_VIGENTE_OVERRIDE[istituto]?.[nome]
+      || PROGRAMMI_TECNICI_VIGENTE[nome];
+    if (t) return t;
+  }
   // Licei già migrati alle Indicazioni nazionali vigenti (D.M. 211/2010): solo le voci del 2010, mai la bozza 2026
   if (istituto && LICEI_2010_MIGRATI.has(istituto)) {
     return PROGRAMMI_LICEI_2010_OVERRIDE[istituto]?.[nome] || PROGRAMMI_LICEI_2010[nome] || null;
@@ -2243,6 +2253,532 @@ const LICEI_RIFERIMENTO_SPECIALE = {
   },
 };
 
+// ── Istituti Tecnici, ordinamento vigente (DPR 88/2010) ─────────────────────────────────────────────
+// Fonte: Linee guida per il passaggio al nuovo ordinamento degli istituti tecnici — Direttiva MIUR 57/2010
+// (primo biennio) e Direttiva 4/2012 (secondo biennio e quinto anno), con gli allegati per indirizzo/articolazione.
+// Ogni voce riassume, con parole nostre, i "risultati di apprendimento" (competenze) e le "conoscenze" della disciplina.
+// Usata per gli istituti "IT – …" al posto delle voci BASE comuni (che per Italiano/Matematica/Inglese derivano
+// dalla bozza dei licei). Le voci che il documento ufficiale declina per indirizzo hanno un override dedicato.
+const PROGRAMMI_TECNICI_VIGENTE = {
+  // ── Area di istruzione generale ──
+  "Italiano": {
+    competenze: "Padroneggiare il patrimonio lessicale ed espressivo della lingua italiana nei diversi contesti (sociali, culturali, scientifici, economici, tecnologici); riconoscere le linee essenziali della storia delle idee, della cultura, della letteratura e delle arti, orientandosi tra testi e autori fondamentali con particolare riferimento a tematiche scientifiche, tecnologiche ed economiche; utilizzare le moderne forme di comunicazione visiva e multimediale.",
+    nuclei: [
+      "Evoluzione storica della lingua italiana dal Medioevo all'Unità nazionale e rapporto tra lingua e letteratura",
+      "Lingua letteraria e linguaggi della scienza e della tecnologia",
+      "Linee di evoluzione della cultura e del sistema letterario italiano, con testi e autori fondamentali delle varie epoche",
+      "Redazione di rapporti e relazioni; struttura dei testi scritti e specialistici; tecniche della comunicazione",
+      "Testi multimediali e rapporti tra letteratura e altre espressioni artistiche",
+    ],
+  },
+  "Matematica": {
+    competenze: "Padroneggiare il linguaggio formale e i procedimenti dimostrativi della matematica; possedere gli strumenti matematici, statistici e del calcolo delle probabilità necessari per comprendere le discipline scientifiche e operare nel campo delle scienze applicate; collocare il pensiero matematico nella storia delle idee e delle invenzioni tecnologiche.",
+    nuclei: [
+      "Aritmetica e algebra: numeri interi, razionali e reali, potenze e radici, polinomi, equazioni e disequazioni, sistemi (primo biennio)",
+      "Geometria del piano e dello spazio, trasformazioni geometriche e piano cartesiano (primo biennio)",
+      "Funzioni e loro rappresentazione numerica, algebrica e grafica; funzioni di uso comune nelle scienze applicate",
+      "Analisi (secondo biennio e quinto anno): limiti e continuità, derivata, integrale indefinito e definito, con applicazioni tecniche o economiche secondo l'indirizzo",
+      "Statistica e probabilità: indicatori statistici, dipendenza, correlazione e regressione, basi dell'inferenza",
+    ],
+  },
+  "Lingua Straniera (Inglese)": {
+    competenze: "Utilizzare i linguaggi settoriali della lingua straniera per interagire in diversi ambiti e contesti di studio e di lavoro; stabilire collegamenti tra le tradizioni culturali locali, nazionali e internazionali, anche ai fini della mobilità di studio e di lavoro; utilizzare le moderne forme di comunicazione visiva e multimediale.",
+    nuclei: [
+      "Interazione e produzione orale adeguate a contesto e interlocutori, con strategie compensative",
+      "Comprensione globale e selettiva di testi scritti, orali e multimediali relativamente complessi",
+      "Tipologie testuali, comprese quelle tecnico-professionali; coesione e coerenza del discorso",
+      "Lessico e fraseologia idiomatica di interesse generale, di studio e di lavoro; varietà di registro",
+      "Uso di dizionari anche settoriali e multimediali; strutture morfosintattiche adeguate al contesto",
+    ],
+  },
+
+  // ── Primo biennio, comune ai settori (Direttiva 57/2010) ──
+  "Diritto ed Economia": {
+    competenze: "Analizzare la realtà e i fatti concreti della vita quotidiana in chiave economica; riconoscere la varietà e lo sviluppo storico delle forme economiche, sociali e istituzionali attraverso le categorie di economia e diritto; riconoscere l'interdipendenza tra fenomeni economici, sociali, istituzionali e tecnologici, nella dimensione locale e globale; orientarsi nella normativa pubblicistica, civilistica e fiscale.",
+    nuclei: [
+      "Fondamenti dell'attività economica e soggetti economici (consumatore, impresa, pubblica amministrazione, enti no profit)",
+      "Fonti normative e loro gerarchia; Costituzione e cittadinanza: principi, libertà, diritti e doveri",
+      "Stato, forme di stato e di governo; istituzioni locali, nazionali e internazionali",
+      "Fattori della produzione, forme di mercato, mercato della moneta e sistemi economici",
+      "Conoscenze essenziali per l'accesso al lavoro: curriculum europeo e tipologie di colloquio",
+    ],
+  },
+  "Scienze Integrate (Scienze della Terra e Biologia)": {
+    competenze: "Osservare, descrivere e analizzare fenomeni della realtà naturale e artificiale, riconoscendo i concetti di sistema e di complessità; utilizzare modelli appropriati per investigare fenomeni e interpretare dati sperimentali; riconoscere i criteri scientifici di affidabilità delle conoscenze; essere consapevole delle potenzialità e dei limiti delle tecnologie nel contesto culturale e sociale.",
+    nuclei: [
+      "Sistema solare e Terra; dinamicità della litosfera, fenomeni sismici e vulcanici",
+      "Minerali e rocce (magmatiche, sedimentarie, metamorfiche) e ciclo delle rocce",
+      "Idrosfera e atmosfera; clima e conseguenze delle modificazioni climatiche",
+      "Origine della vita: livelli di organizzazione della materia vivente, cellula procariota ed eucariota; teorie dell'evoluzione",
+      "Ecosistemi e cicli biogeochimici; processi metabolici (fotosintesi, respirazione cellulare); genetica e biotecnologie",
+    ],
+  },
+  "Scienze Integrate (Fisica)": {
+    competenze: "Analizzare qualitativamente e quantitativamente fenomeni legati alle trasformazioni di energia a partire dall'esperienza; utilizzare modelli appropriati per investigare fenomeni e interpretare dati sperimentali; padroneggiare l'uso di strumenti tecnologici con attenzione alla sicurezza e alla tutela della persona e dell'ambiente.",
+    nuclei: [
+      "Grandezze fisiche, unità di misura del Sistema Internazionale, notazione scientifica e cifre significative",
+      "Equilibrio in meccanica: forza, momento, pressione; campo gravitazionale",
+      "Moti del punto materiale, leggi della dinamica, quantità di moto; energia, lavoro, potenza e loro conservazione",
+      "Onde e suono; temperatura, energia interna e calore",
+      "Elettricità e magnetismo: carica e campo elettrico, corrente e circuiti, effetto Joule, campo magnetico, induzione, onde elettromagnetiche",
+    ],
+  },
+  "Scienze Integrate (Chimica)": {
+    competenze: "Analizzare qualitativamente e quantitativamente fenomeni legati alle trasformazioni della materia e dell'energia; utilizzare modelli appropriati per investigare fenomeni e interpretare dati sperimentali; padroneggiare l'uso di strumenti tecnologici e di laboratorio con attenzione alla sicurezza e alla tutela di persona e ambiente.",
+    nuclei: [
+      "Sistemi omogenei ed eterogenei e tecniche di separazione (filtrazione, distillazione, cristallizzazione, cromatografia)",
+      "Elementi, composti, atomi, molecole e ioni; stati della materia e passaggi di stato",
+      "Quantità chimica: massa atomica e molecolare, mole, costante di Avogadro; modello atomico e sistema periodico",
+      "Legami chimici e forma delle molecole; nomenclatura e bilanciamento delle equazioni di reazione",
+      "Concentrazione delle soluzioni, equilibrio chimico e principio di Le Chatelier, acidi e basi e pH",
+    ],
+  },
+  "Geografia": {
+    competenze: "Riconoscere gli aspetti geografici, ecologici e territoriali dell'ambiente naturale e antropico, le connessioni con le strutture demografiche, economiche, sociali e culturali e le trasformazioni nel tempo; riconoscere l'interdipendenza tra fenomeni economici, sociali, istituzionali e culturali nella dimensione locale e globale; riconoscere il valore dei beni culturali e ambientali per una corretta fruizione e valorizzazione.",
+    nuclei: [
+      "Metodi e strumenti di rappresentazione dello spazio: reticolato geografico, carte, sistemi informativi geografici",
+      "Formazione ed evoluzione dei paesaggi naturali e antropici; beni culturali e ambientali",
+      "Classificazione dei climi e ruolo dell'uomo nei cambiamenti climatici; squilibrio ambientale, sostenibilità e biodiversità",
+      "Processi del pianeta contemporaneo: globalizzazione, fattori demografici ed ecologici, flussi di persone, prodotti e innovazione",
+      "Caratteristiche fisico-ambientali, socio-culturali, economiche e geopolitiche di regioni italiane, Europa e continenti extraeuropei",
+    ],
+  },
+  "Tecnologie e Tecniche di Rappresentazione Grafica": {
+    competenze: "Utilizzare le reti e gli strumenti informatici nello studio e nell'approfondimento disciplinare; padroneggiare l'uso di strumenti tecnologici con attenzione alla sicurezza e alla tutela di persona e ambiente; utilizzare procedure e tecniche per trovare soluzioni innovative in contesti di ricerca applicata.",
+    nuclei: [
+      "Leggi della teoria della percezione e linguaggi grafico, infografico e multimediale",
+      "Norme, metodi e strumenti tradizionali e informatici per la rappresentazione grafica",
+      "Principi di modellazione informatica in 2D e 3D",
+      "Teorie e metodi per il rilevamento manuale e strumentale e restituzione grafica di oggetti complessi",
+      "Analisi progettuale formale e progettazione spaziale di oggetti complessi",
+    ],
+  },
+  "Tecnologie Informatiche": {
+    competenze: "Individuare strategie appropriate per la soluzione di problemi; analizzare e interpretare dati anche con rappresentazioni grafiche e strumenti informatici; essere consapevole delle potenzialità e dei limiti delle tecnologie nel contesto culturale e sociale; utilizzare reti e strumenti informatici nello studio e nella ricerca.",
+    nuclei: [
+      "Informazioni, dati e loro codifica",
+      "Architettura e componenti di un computer; funzioni di un sistema operativo; software di utilità e applicativi",
+      "Concetto di algoritmo e fasi risolutive di un problema e loro rappresentazione",
+      "Fondamenti di programmazione",
+      "Rete Internet: funzioni e caratteristiche; normativa su privacy e diritto d'autore",
+    ],
+  },
+  "Scienze e Tecnologie Applicate": {
+    competenze: "Individuare strategie appropriate per la soluzione di problemi; osservare, descrivere e analizzare fenomeni della realtà naturale e artificiale; padroneggiare l'uso di strumenti tecnologici con attenzione alla sicurezza sui luoghi di vita e di lavoro e alla tutela di persona e ambiente; essere consapevole delle potenzialità e dei limiti delle tecnologie. L'insegnamento è declinato sull'indirizzo e sull'articolazione frequentati.",
+    nuclei: [
+      "Materiali e loro caratteristiche fisiche, chimiche e tecnologiche",
+      "Caratteristiche dei componenti e dei sistemi di interesse dell'indirizzo",
+      "Strumentazioni di laboratorio e metodologie di misura",
+      "Filiera dei processi caratterizzanti l'indirizzo e l'articolazione",
+      "Figure professionali caratterizzanti i vari settori tecnologici",
+    ],
+  },
+
+  // ── Secondo biennio e quinto anno: discipline comuni a più indirizzi ──
+  "Complementi di Matematica": {
+    competenze: "Padroneggiare il linguaggio formale e i procedimenti dimostrativi della matematica; possedere gli strumenti matematici, statistici e del calcolo delle probabilità necessari per le discipline scientifiche e le scienze applicate; collocare il pensiero matematico nella storia delle idee e delle invenzioni tecnologiche. I contenuti di analisi variano per indirizzo; la statistica è comune.",
+    nuclei: [
+      "Approfondimenti di analisi funzionali all'indirizzo (numeri complessi, derivate parziali e differenziale totale, analisi di Fourier, equazioni differenziali)",
+      "Statistica inferenziale: popolazione e campione, statistiche, distribuzioni campionarie e stimatori",
+      "Verifica di ipotesi statistiche e indagine campionaria",
+      "Applicazione degli strumenti matematici alle discipline di indirizzo",
+    ],
+  },
+
+  // ── Settore economico ──
+  "Economia Aziendale e Geo-politica": {
+    competenze: "Riconoscere e interpretare le tendenze dei mercati locali, nazionali e globali e i macrofenomeni economici, anche confrontando aree geografiche e culture diverse; interpretare i sistemi aziendali nei loro modelli, processi e flussi informativi; riconoscere i modelli organizzativi aziendali e ricercare soluzioni efficaci a situazioni date; intervenire nella gestione delle risorse umane nel rispetto del mercato del lavoro.",
+    nuclei: [
+      "Fabbisogno finanziario e fonti di finanziamento nelle diverse forme giuridiche d'impresa",
+      "Teoria e principi di organizzazione aziendale; modelli organizzativi delle aziende che operano nei mercati nazionali e internazionali",
+      "Caratteristiche del mercato del lavoro; struttura, contenuto e aspetti economici dei contratti di lavoro",
+      "Politiche, strategie e amministrazione nella gestione delle risorse umane",
+    ],
+  },
+  "Relazioni Internazionali": {
+    competenze: "Analizzare fatti concreti in chiave economica, riconoscendone lo sviluppo storico e la dimensione locale e globale; interpretare il sistema economico nazionale e internazionale, i processi di globalizzazione e le politiche di mercato, in particolare l'internazionalizzazione delle imprese.",
+    nuclei: [
+      "Fonti di informazione economica, anche in lingua straniera, e loro rappresentazione",
+      "Funzionamento e trasformazioni storiche del sistema economico locale, nazionale e internazionale; intervento pubblico nell'economia",
+      "Processi di globalizzazione e loro effetti; caratteristiche del mercato globale e scambi internazionali",
+      "Soggetti, mercati e prodotti del sistema commerciale e del mercato finanziario; internazionalizzazione delle imprese",
+      "Etica e cultura delle imprese che operano nei mercati internazionali",
+    ],
+  },
+  "Tecnologie della Comunicazione": {
+    competenze: "Individuare e utilizzare le moderne forme di comunicazione visiva e multimediale, con riferimento alle strategie espressive e agli strumenti tecnici della comunicazione in rete; utilizzare reti e strumenti informatici nello studio e nella ricerca.",
+    nuclei: [
+      "Sistema informativo e sistema informatico; funzioni di un DBMS",
+      "Forme e tecniche di comunicazione e loro evoluzione tecnologica",
+      "Etica e disciplina giuridica della comunicazione; comunicazione economico-societaria e d'impresa",
+      "Servizi di rete a supporto della comunicazione aziendale",
+      "Software di utilità per la rappresentazione sintetico-grafica di dati e per il marketing; editor per oggetti multimediali e pagine web",
+    ],
+  },
+  "Geografia Turistica": {
+    competenze: "Riconoscere gli aspetti geografici, ecologici e territoriali dell'ambiente naturale e antropico e le trasformazioni nel tempo; stabilire collegamenti tra tradizioni culturali locali, nazionali e internazionali; valorizzare il patrimonio culturale e ambientale ai fini turistici.",
+    nuclei: [
+      "Fattori geografici per lo sviluppo delle attività turistiche; localizzazione e valorizzazione turistica del territorio",
+      "Paesaggi italiani ed europei; spazi urbani e rurali nel mondo; categorie di beni e distribuzione geografica del patrimonio culturale",
+      "Modelli di turismo sostenibile; turismo naturalistico, storico-culturale e di nicchia; sviluppo locale delle aree marginali",
+      "Fonti statistiche, cartografiche e bibliografiche, anche digitali, per l'analisi dei flussi e dei territori turistici",
+      "Reti di trasporto e percorsi, aree e luoghi di attrazione turistica a scala locale, nazionale ed europea",
+    ],
+  },
+
+  // ── Meccanica, meccatronica ed energia ──
+  "Impianti Energetici, Disegno e Progettazione": {
+    competenze: "Padroneggiare l'uso di strumenti tecnologici con attenzione alla sicurezza e alla tutela di persona, ambiente e territorio; utilizzare procedure e tecniche innovative in contesti di ricerca applicata; progettare e rappresentare componenti e impianti energetici, con conoscenza delle basi di organizzazione d'impresa.",
+    nuclei: [
+      "Regole di rappresentazione grafica, tolleranze, elementi meccanici e di trasmissione del moto; CAD 2D/3D e modellazione solida",
+      "Impianti termotecnici e termici: componenti, centrali termiche, reti di distribuzione dei fluidi, teleriscaldamento",
+      "Impianti di climatizzazione e gruppi frigoriferi (evaporatori e condensatori)",
+      "Risorse energetiche rinnovabili e ad esaurimento (geotermia, solare, eolica, accumulo termico); normative di taratura e collaudo",
+      "Elementi di organizzazione d'impresa: vision e mission, modelli organizzativi, risorse umane, contratti di lavoro",
+    ],
+  },
+
+  // ── Trasporti e logistica ──
+  "Elettrotecnica, Elettronica e Automazione": {
+    competenze: "Utilizzare modelli appropriati per investigare fenomeni e interpretare dati sperimentali; padroneggiare strumenti tecnologici con attenzione alla sicurezza sui luoghi di lavoro e alla tutela di persona, ambiente e territorio; applicare le conoscenze di elettrotecnica, elettronica e automazione ai mezzi di trasporto e ai loro impianti.",
+    nuclei: [
+      "Elettrologia ed elettromagnetismo; metodi e strumenti di misura",
+      "Analisi circuitale in continua e in alternata; macchine e apparecchiature elettriche; impianti elettrici, protezione e sicurezza",
+      "Principi di elettronica: componenti, amplificatori operazionali, circuiti integrati; elementi di tecniche digitali",
+      "Comunicazioni: segnali, modulazioni e mezzi trasmissivi",
+      "Rischi nei luoghi di lavoro, prevenzione e sistemi di qualità e sicurezza",
+    ],
+  },
+  "Struttura, Costruzione, Sistemi e Impianti del Mezzo": {
+    competenze: "Utilizzare modelli appropriati per investigare fenomeni e interpretare dati sperimentali; padroneggiare strumenti tecnologici con attenzione alla sicurezza e alla tutela di persona e ambiente; conoscere e gestire struttura, costruzione, sistemi e impianti del mezzo di trasporto.",
+    nuclei: [
+      "Tipologie e prestazioni dei mezzi di trasporto; strutture, processi produttivi e costruttivi, dinamica dei mezzi",
+      "Configurazione del mezzo in funzione dell'utilizzo e dell'ambiente fluidodinamico in cui si muove",
+      "Norme per il disegno tecnico e software per la schematizzazione e la progettazione",
+      "Materiali ingegneristici, componenti e parti del mezzo; prove strutturali, test e collaudi",
+      "Lavorazione, costruzione, montaggio, smontaggio e regolazione di strutture e sistemi secondo le norme di settore",
+    ],
+  },
+  "Meccanica, Macchine e Sistemi Propulsivi": {
+    competenze: "Utilizzare modelli appropriati per investigare fenomeni e interpretare dati sperimentali; padroneggiare strumenti tecnologici con attenzione alla sicurezza e alla tutela di persona e ambiente; applicare meccanica, macchine e sistemi propulsivi al mezzo di trasporto.",
+    nuclei: [
+      "Principi di cinematica, statica, dinamica e termodinamica applicati al mezzo di trasporto; cicli teorici e resistenze passive",
+      "Dimensionamento e progettazione di organi e apparati; materiali per la costruzione e la manutenzione del mezzo",
+      "Lavorazioni meccaniche e trattamenti; macchine utensili anche a controllo numerico; tolleranze e accoppiamenti",
+      "Lubrificazione e impianti di lubrificazione",
+      "Norme e tecnologie per la riduzione dell'impatto ambientale dei mezzi; lessico di settore anche in inglese",
+    ],
+  },
+  "Scienze della Navigazione e Struttura dei Mezzi di Trasporto": {
+    competenze: "Utilizzare modelli appropriati per investigare fenomeni e interpretare dati sperimentali; padroneggiare strumenti tecnologici con attenzione alla sicurezza e alla tutela di persona e ambiente; pianificare e condurre la navigazione conoscendo struttura, caratteristiche e infrastrutture del mezzo di trasporto.",
+    nuclei: [
+      "Variabili del processo di navigazione; geometria dell'ambiente fisico; cartografia e rappresentazione del territorio",
+      "Definizione di posizione e direzione del mezzo; traiettorie sulla sfera terrestre; pianificazione della traversata; localizzazione con riferimenti terrestri",
+      "Elementi strutturali e di costruzione del mezzo; caratteristiche giuridico-amministrative; servizi ausiliari di bordo",
+      "Convenzioni internazionali e regolamenti su sicurezza del lavoro, degli operatori, del mezzo e dell'ambiente",
+      "Infrastrutture di trasporto modali, multimodali e intermodali; interazione tra mezzo e infrastruttura",
+    ],
+  },
+
+  // ── Informatica e telecomunicazioni ──
+  "Gestione Progetto, Organizzazione d'Impresa": {
+    competenze: "Orientarsi nella normativa dei processi produttivi del settore, con attenzione alla sicurezza sui luoghi di vita e di lavoro e alla tutela dell'ambiente; gestire progetti informatici e conoscere l'organizzazione d'impresa nel settore ICT.",
+    nuclei: [
+      "Pianificazione, previsione e controllo di costi e risorse; software per lo sviluppo di un progetto",
+      "Documentazione di progetto: manualistica e strumenti per generarla",
+      "Testing di componenti e sistemi; norme e standard per verifica e validazione",
+      "Normativa su sicurezza e prevenzione degli infortuni",
+      "Economia e organizzazione d'impresa nel settore ICT: processi aziendali, ciclo di vita del prodotto/servizio, assicurazione della qualità",
+    ],
+  },
+
+  // ── Grafica e comunicazione ──
+  "Teoria della Comunicazione": {
+    competenze: "Riconoscere le implicazioni etiche, sociali, produttive, economiche e ambientali dell'innovazione tecnologica; analizzare criticamente il contributo di scienza e tecnologia al cambiamento delle condizioni di vita; utilizzare i linguaggi settoriali delle lingue straniere.",
+    nuclei: [
+      "Linguaggi verbali e non verbali",
+      "Sistemi e modelli della comunicazione interpersonale e di massa",
+      "Network di comunicazione audiovisiva e a stampa; tecnologie innovative e nuovi modelli di comunicazione",
+      "Stili comunicativi e loro evoluzione in rapporto allo sviluppo tecnologico",
+      "Valutazione dei prodotti della comunicazione e studi di caso; tipologie dei messaggi visivi e audiovisivi; lessico di settore anche in inglese",
+    ],
+  },
+  "Laboratori Tecnici": {
+    competenze: "Progettare e realizzare prodotti di comunicazione fruibili attraverso differenti canali, scegliendo strumenti e materiali in relazione a contesti d'uso e tecniche di produzione; utilizzare pacchetti informatici dedicati; progettare, realizzare e pubblicare contenuti per il web; programmare ed eseguire le fasi dei processi produttivi.",
+    nuclei: [
+      "Strumenti e programmi per acquisire ed elaborare testi e immagini per prodotti grafici; tipometria e lettering",
+      "Impianti e strumenti per la riproduzione a stampa e la poststampa",
+      "Produzione di immagini fotografiche, filmati e audiovisivi; tecniche di ripresa e allestimento di un set",
+      "Programmi e macchine per l'output digitale di prodotti grafici e audiovisivi; strumenti di comunicazione in rete",
+      "Variabili dei processi di produzione, misurazione dei risultati rispetto a uno standard; normative su sicurezza e tutela ambientale",
+    ],
+  },
+
+  // ── Chimica, materiali e biotecnologie ──
+  "Tecnologie Chimiche Industriali": {
+    competenze: "Utilizzare modelli appropriati per investigare fenomeni e interpretare dati sperimentali; utilizzare procedure e tecniche in contesti di ricerca applicata; gestire e controllare processi chimici industriali nel rispetto di sicurezza e ambiente.",
+    nuclei: [
+      "Trasporto di materia ed energia; regimi di moto dei liquidi; termodinamica ed equilibri",
+      "Modelli cinetici dei reattori e cinetica chimica; operazioni unitarie e cicli di lavorazione",
+      "Bilanci di materia ed energia applicati alle operazioni unitarie; funzioni delle apparecchiature di processo",
+      "Regolazione e controllo dei processi; software per acquisizione dati, controllo e simulazione",
+      "Sostenibilità ambientale, analisi del ciclo di vita, norme di sicurezza e smaltimento dei reflui",
+    ],
+  },
+  "Fisica Ambientale": {
+    competenze: "Riconoscere gli aspetti geografici, ecologici e territoriali dell'ambiente naturale e antropico; applicare le conoscenze fisiche allo studio dell'energia e dell'inquinamento in ambito ambientale.",
+    nuclei: [
+      "Grandezze fisiche, energia, potenza, lavoro, macchine termiche",
+      "Energia solare, eolica, idroelettrica, geotermica e biomasse",
+      "Risparmio energetico, etichettatura energetica e norme di riferimento",
+      "Onde sonore e inquinamento acustico",
+    ],
+  },
+  "Biologia, Microbiologia e Tecnologie di Controllo Sanitario": {
+    competenze: "Riconoscere gli aspetti ecologici e territoriali dell'ambiente naturale e antropico; padroneggiare strumenti tecnologici con attenzione alla sicurezza e alla tutela della persona; intervenire nelle diverse fasi dei processi di controllo sanitario, secondo le norme di settore.",
+    nuclei: [
+      "Norme di sicurezza e prevenzione, operazioni di base in laboratorio, smaltimento dei rifiuti",
+      "Cellule procariote ed eucariote e loro organizzazione; elementi di biochimica",
+      "Il mondo microbico: batteri gram positivi e gram negativi, saprofiti e patogeni; terreni di coltura e colorazioni",
+      "Ciclo cellulare, duplicazione del DNA, mitosi e meiosi, analisi mendeliana",
+      "Sintesi delle proteine e controllo dell'espressione genica; mutazioni e genetica batterica; terapia genica",
+    ],
+  },
+  "Igiene, Anatomia, Fisiologia, Patologia": {
+    competenze: "Riconoscere gli aspetti ecologici e territoriali dell'ambiente naturale e antropico; comprendere i fondamenti di igiene, anatomia, fisiologia e patologia utili alle attività di controllo sanitario e alla prevenzione.",
+    nuclei: [
+      "Metodologia epidemiologica e profilassi delle malattie infettive e non infettive",
+      "Epidemiologia delle malattie genetiche",
+      "Organizzazione macroscopica del corpo umano e organizzazione tissutale (istologia)",
+      "Omeostasi cellulare e sistemica e sue alterazioni",
+      "Anatomia, fisiologia e principali patologie degli apparati del corpo umano",
+    ],
+  },
+  "Legislazione Sanitaria": {
+    competenze: "Orientarsi nella normativa che disciplina i processi produttivi del settore di riferimento, con particolare attenzione alla sicurezza e alla tutela della salute.",
+    nuclei: [
+      "Norme giuridiche e legislative italiane",
+      "Organizzazione sanitaria italiana",
+      "Legislazione sanitaria europea",
+    ],
+  },
+
+  // ── Sistema moda ──
+  "Chimica Applicata e Nobilitazione dei Materiali per i Prodotti Moda": {
+    competenze: "Utilizzare i linguaggi settoriali delle lingue straniere per interagire in contesti di studio e di lavoro; conoscere composizione, proprietà e trattamenti di fibre e materiali tessili nel rispetto di sicurezza e ambiente.",
+    nuclei: [
+      "Atomo di carbonio, idrocarburi, composti organici ossigenati e azotati",
+      "Struttura e proprietà dei polimeri",
+      "Proprietà morfologiche, fisiche e chimiche delle fibre tessili naturali e chimiche; settori d'impiego",
+      "Tessili tecnici e fibre innovative",
+      "Normativa nazionale e comunitaria su sicurezza e tutela ambientale",
+    ],
+  },
+  "Tecnologie dei Materiali e dei Processi Produttivi e Organizzativi della Moda": {
+    competenze: "Utilizzare i linguaggi settoriali delle lingue straniere per interagire in contesti di studio e di lavoro; conoscere materiali, macchine e cicli tecnologici del sistema moda e i relativi dati produttivi.",
+    nuclei: [
+      "Tipologie e caratteristiche delle fibre; titolazione e lavorazione dei filati",
+      "Caratteristiche e proprietà dei tessuti in relazione a struttura e composizione",
+      "Macchine per filatura, tessitura e maglieria",
+      "Macchine per confezione, stiro e finissaggio del capo finito",
+      "Cicli tecnologici di produzione; dati e parametri produttivi",
+    ],
+  },
+  "Ideazione, Progettazione e Industrializzazione dei Prodotti Moda": {
+    competenze: "Utilizzare i linguaggi settoriali delle lingue straniere per interagire in contesti di studio e di lavoro; ideare, progettare e industrializzare prodotti moda con strumenti grafici e CAD, tenendo conto di storia e tendenze del settore.",
+    nuclei: [
+      "Evoluzione storica della moda (in particolare la prima metà del Novecento); strategie e tecniche di comunicazione",
+      "Simbologia tessile e rappresentazione grafica del tessuto; struttura tecnica di tessuti ortogonali e a maglia",
+      "Progettazione al CAD; tecniche di disegno e rappresentazione grafica",
+      "Tendenze moda e progettazione di collezioni",
+      "Lessico e terminologia tecnica di settore anche in inglese",
+    ],
+  },
+
+  // ── Agraria, agroalimentare e agroindustria ──
+  "Economia, Estimo, Marketing e Legislazione": {
+    competenze: "Utilizzare modelli appropriati per investigare fenomeni e interpretare dati; adattare metodologie contabili ed economiche alle realtà aziendali concrete, distinguere i tipi di costo ed esprimere giudizi di convenienza in relazione a figure economiche e rapporti contrattuali.",
+    nuclei: [
+      "Impresa e azienda, fattori della produzione, principi di analisi economica delle attività produttive",
+      "Metodi e strumenti della contabilità aziendale; bilanci preventivi, parziali e consuntivi",
+      "Tipologie di contratto e redditi degli imprenditori",
+      "Giudizi di convenienza",
+      "Indici di efficienza aziendale",
+    ],
+  },
+  "Genio Rurale": {
+    competenze: "Riconoscere gli aspetti geografici, ecologici e territoriali dell'ambiente naturale e antropico; progettare e valutare strutture e interventi rurali, interpretando carte tematiche e situazioni di rischio.",
+    nuclei: [
+      "Sistemi di rilievo: misure di angoli, distanze, dislivelli, aree; rilevamenti plano-altimetrici",
+      "Fotogrammetria, rilevazione satellitare e GPS; sistemi informativi territoriali",
+      "Materiali da costruzione ed elementi di statica",
+      "Tipologia e dimensionamento delle strutture aziendali e delle costruzioni rurali; abitazione aziendale",
+      "Risorse idriche e loro tutela; catasto",
+    ],
+  },
+  "Biotecnologie Agrarie": {
+    competenze: "Utilizzare modelli appropriati per investigare fenomeni e interpretare dati sperimentali; padroneggiare strumenti tecnologici con attenzione alla sicurezza e alla tutela di persona e ambiente; distinguere il miglioramento genetico tradizionale dagli interventi sul DNA e identificare i parassiti dannosi alle colture.",
+    nuclei: [
+      "Struttura del materiale ereditario e codice genetico",
+      "Tecniche dell'ingegneria genetica e ibridomi",
+      "Miglioramento genetico tradizionale e con interventi sul DNA",
+      "Caratteri sistematici, morfologici e biologici degli organismi nocivi alle colture agrarie",
+      "Processi biotecnologici nelle industrie agroalimentari",
+    ],
+  },
+  "Viticoltura e Difesa della Vite": {
+    competenze: "Riconoscere gli aspetti geografici, ecologici e territoriali dell'ambiente naturale e antropico; gestire la coltivazione della vite, organizzando il calendario degli interventi colturali e fitoiatrici.",
+    nuclei: [
+      "Caratteri anatomici, morfologici e fisiologici del genere Vitis; differenze ampelografiche",
+      "Fasi fenologiche e biologia della vite; miglioramento genetico",
+      "Ambienti della viticoltura; impianto, gestione del suolo e della chioma",
+      "Raccolta e qualità del prodotto; uve da tavola",
+      "Difesa da avversità e parassiti; fillossera e problemi connessi",
+    ],
+  },
+  "Enologia": {
+    competenze: "Utilizzare modelli appropriati per investigare fenomeni e interpretare dati; padroneggiare strumenti tecnologici con attenzione alla sicurezza e alla tutela di persona e ambiente; mettere in relazione qualità dei vitigni e tecnologie di trasformazione e controllare i processi di vinificazione.",
+    nuclei: [
+      "Evoluzione dei componenti del mosto nella maturazione; riscontri chimico-analitici sul mosto",
+      "Linee di trasformazione; aspetti fisici, chimici e microbiologici della fermentazione e suo controllo",
+      "Processi di stabilizzazione, conservazione e invecchiamento",
+      "Riscontro analitico e organolettico dei principali costituenti dei vini",
+    ],
+  },
+  "Biotecnologie Vitivinicole": {
+    competenze: "Utilizzare modelli appropriati per investigare fenomeni e interpretare dati; padroneggiare strumenti tecnologici con attenzione alla sicurezza; riconoscere e gestire i microrganismi responsabili delle trasformazioni e delle alterazioni di mosti e vini.",
+    nuclei: [
+      "Microrganismi e trasformazioni dei mosti e dei vini",
+      "Sistematica dei lieviti e dei batteri; lieviti selezionati",
+      "Agenti della fermentazione primaria e secondaria; colture starter",
+      "Agenti responsabili delle alterazioni di mosti e vini; riconoscimento al microscopio",
+    ],
+  },
+
+  // ── Costruzioni, ambiente e territorio ──
+  "Geologia e Geologia Applicata": {
+    competenze: "Riconoscere gli aspetti geografici, ecologici e territoriali dell'ambiente naturale e antropico; utilizzare modelli appropriati per investigare fenomeni geologici e interpretare dati sperimentali.",
+    nuclei: [
+      "Strutture cristalline, classificazione chimico-strutturale e proprietà fisiche dei minerali",
+      "Composizione mineralogica, ciclo e classificazione delle rocce (magmatiche, sedimentarie, metamorfiche)",
+      "Tecniche di rilievo dei terreni e di realizzazione di una carta geologica; stratigrafia e giacitura",
+      "Principi di geologia regionale",
+      "Idrologia e idrogeologia: ciclo dell'acqua e fonti di approvvigionamento idrico",
+    ],
+  },
+  "Topografia e Costruzioni": {
+    competenze: "Padroneggiare il linguaggio formale della matematica e gli strumenti matematici e statistici per operare nelle scienze applicate; applicare idraulica, statica e topografia alla progettazione e al rilievo.",
+    nuclei: [
+      "Idraulica: pressione idrostatica, portata ed equazione di continuità, teorema di Bernoulli, perdite di carico nelle condotte",
+      "Statica e resistenza dei materiali: sollecitazioni, travi e strutture, dimensionamento di travi e pilastri",
+      "Classificazione sismica del territorio italiano",
+      "Sistemi di riferimento e coordinate; angoli azimutali e zenitali",
+      "Strumentazione topografica ordinaria e stazioni totali; metodi e tecniche di rilievo",
+    ],
+  },
+  "Tecnologie per la Gestione del Territorio e dell'Ambiente": {
+    competenze: "Riconoscere i criteri scientifici di affidabilità delle conoscenze e gli aspetti geografici, ecologici e territoriali dell'ambiente; applicare le tecniche di perforazione del sottosuolo e di scavo alla gestione del territorio.",
+    nuclei: [
+      "Campi d'impiego, scopi e metodi di perforazione del sottosuolo; perforazione a mare",
+      "Tecniche e strumenti di perforazione; utensili e carotieri",
+      "Fluidi di perforazione e apparecchi per misurare le caratteristiche di un fango",
+      "Cause e conseguenze della deviazione dei fori; perforazione orientata",
+      "Esplosivi: classificazione, caratteristiche tecniche, scavo e abbattimento e loro controllo",
+    ],
+  },
+};
+
+// Complementi di Matematica: i contenuti di analisi sono declinati dalle Linee guida per ciascun indirizzo
+const _COMPL_COMP = "Padroneggiare il linguaggio formale e i procedimenti dimostrativi della matematica; possedere gli strumenti matematici, statistici e del calcolo delle probabilità necessari per le discipline scientifiche e le scienze applicate dell'indirizzo; collocare il pensiero matematico nella storia delle idee e delle invenzioni tecnologiche.";
+const PROGRAMMI_TECNICI_VIGENTE_OVERRIDE = {
+  "IT – Meccanica, meccatronica ed energia": {
+    "Complementi di Matematica": { competenze: _COMPL_COMP, nuclei: [
+      "Operazioni e trasformazioni vettoriali; luoghi geometrici, coniche e altre curve notevoli, forme parametriche",
+      "Analisi di Fourier delle funzioni periodiche; rappresentazioni polari e logaritmiche",
+      "Equazioni differenziali lineari; derivate parziali e differenziale totale",
+      "Metodo dei minimi quadrati",
+      "Popolazione e campione: statistiche, distribuzioni campionarie e stimatori",
+    ] },
+  },
+  "IT – Trasporti e logistica": {
+    "Complementi di Matematica": { competenze: _COMPL_COMP, nuclei: [
+      "Numeri complessi; derivate parziali e differenziale totale; equazioni differenziali",
+      "Integrali curvilinei e metodi di quadratura approssimati",
+      "Trigonometria sferica (teorema di Eulero, dei seni, regole di Viete e di Nepero)",
+      "Ricerca operativa: problema delle scorte, PERT, programmazione lineare in due incognite; criteri di scelta in condizioni d'incertezza",
+      "Popolazione e campione; distribuzioni campionarie; verifica di ipotesi statistiche",
+    ] },
+  },
+  "IT – Elettronica ed elettrotecnica": {
+    "Complementi di Matematica": { competenze: _COMPL_COMP, nuclei: [
+      "Potenze ad esponente reale e logaritmi in base e",
+      "Numeri complessi",
+      "Analisi di Fourier delle funzioni periodiche",
+      "Derivate parziali e differenziale totale",
+      "Popolazione e campione: statistiche, distribuzioni campionarie e stimatori; distribuzione di Poisson",
+    ] },
+  },
+  "IT – Informatica e telecomunicazioni": {
+    "Complementi di Matematica": { competenze: _COMPL_COMP, nuclei: [
+      "Potenze ad esponente reale e logaritmi in base e; numeri complessi",
+      "Analisi di Fourier delle funzioni periodiche",
+      "Modelli e metodi matematici discreti: calcolo con matrici, sistemi lineari, soluzione approssimata di equazioni, interpolazione, successioni, ricerca operativa",
+      "Derivate parziali e differenziale totale",
+      "Statistica: popolazione e campione, distribuzioni campionarie, stimatori e algoritmi statistici",
+    ] },
+  },
+  "IT – Grafica e comunicazione": {
+    "Complementi di Matematica": { competenze: _COMPL_COMP, nuclei: [
+      "Costruzione grafica delle coniche",
+      "Proprietà invarianti per trasformazioni di figure nel piano",
+      "Popolazione e campione",
+      "Indagine campionaria",
+    ] },
+  },
+  "IT – Chimica, materiali e biotecnologie": {
+    "Complementi di Matematica": { competenze: _COMPL_COMP, nuclei: [
+      "Potenze ad esponente reale e logaritmi in base e; numeri complessi",
+      "Derivate parziali e differenziale totale",
+      "Integrazione di funzioni e equazioni differenziali d'interesse per la chimica",
+      "Popolazione e campione: statistiche, distribuzioni campionarie e stimatori",
+      "Verifica di ipotesi statistiche per valutare l'efficacia di un nuovo prodotto o servizio",
+    ] },
+  },
+  "IT – Sistema moda": {
+    "Complementi di Matematica": { competenze: _COMPL_COMP, nuclei: [
+      "Teorema del limite centrale",
+      "Enti geometrici dello spazio; poliedri e solidi di rotazione (cilindro, cono, sfera)",
+      "Popolazione e campione; stime dei parametri di una popolazione e per intervalli (t di Student)",
+      "Verifica delle ipotesi e test di significatività per la media",
+      "Indagine campionaria",
+    ] },
+  },
+  "IT – Costruzioni, ambiente e territorio": {
+    "Complementi di Matematica": { competenze: _COMPL_COMP, nuclei: [
+      "Vettori e operazioni vettoriali; luoghi geometrici, coniche e altre curve notevoli",
+      "Analisi di Fourier; rappresentazioni polari e logaritmiche",
+      "Applicazioni delle equazioni differenziali lineari, delle derivate parziali e del differenziale totale",
+      "Metodo dei minimi quadrati",
+      "Popolazione e campione; distribuzioni campionarie e stimatori; verifica di ipotesi statistiche",
+    ] },
+  },
+};
+// Diritto ed Economia del secondo biennio/quinto anno del settore Trasporti e logistica: declinato sul diritto dei trasporti e della navigazione
+const PROGRAMMI_TECNICI_VIGENTE_TRIENNIO = {
+  "IT – Trasporti e logistica": {
+    "Diritto ed Economia": {
+      competenze: "Analizzare fatti e comportamenti in chiave economica e riconoscere l'interdipendenza tra fenomeni economici, sociali, istituzionali e tecnologici, locali e globali; orientarsi nella normativa che disciplina i trasporti, la navigazione e l'impresa di settore.",
+      nuclei: [
+        "Disciplina giuridica del contratto e di particolari tipologie contrattuali; diritto di proprietà e diritti reali",
+        "Impresa e imprenditore; diritto commerciale e societario di settore",
+        "Fonti del diritto internazionale del sistema dei trasporti e della navigazione; Codici della navigazione",
+        "Organismi nazionali e internazionali; convenzioni, leggi comunitarie e nazionali di settore; organizzazione giuridica della navigazione",
+        "Strutture e correlazioni tra porti, aeroporti e interporti; regolamentazioni territoriali dei trasporti",
+      ],
+    },
+  },
+};
+
 const PROGRAMMI_PER_GRADO = {
   infanzia: PROGRAMMI_INFANZIA,
   primaria: PROGRAMMI_PRIMARIA,
@@ -2254,8 +2790,8 @@ const PROGRAMMI_PER_GRADO = {
  * Per sec2: override[istituto][nome] -> base[nome] -> null.
  * Per gli altri gradi: mappa[nome] -> null.
  */
-function getProgrammaDisciplina(grado, nomeDisciplina, istituto = null) {
-  if (grado === 'sec2') return _risolviSec2(nomeDisciplina, istituto);
+function getProgrammaDisciplina(grado, nomeDisciplina, istituto = null, eta = null) {
+  if (grado === 'sec2') return _risolviSec2(nomeDisciplina, istituto, eta);
   return PROGRAMMI_PER_GRADO[grado]?.[nomeDisciplina] || null;
 }
 
@@ -2273,21 +2809,27 @@ function riferimentoLiceo(istituto) {
     nota: 'Nota: i programmi ministeriali di riferimento sono le Indicazioni nazionali per i licei vigenti (D.M. 211/2010) e il piano degli studi del DPR 89/2010; le nuove Indicazioni per i licei sono previste dal 2027/28, per le sole classi prime.',
   };
 }
-function _intestazioneProgrammi(grado, istituto) {
+function _intestazioneProgrammi(grado, istituto, eta = null) {
   if (grado === 'sec2' && istituto && LICEI_2010_MIGRATI.has(istituto)) {
     return riferimentoLiceo(istituto).intestazione;
   }
+  if (grado === 'sec2' && istituto && istituto.startsWith('IT')) {
+    if (eta != null && getOrdinamentoSec2(istituto, eta) === 'nuovo') {
+      return 'Programmi di riferimento (Linee guida degli istituti tecnici, Direttive MIUR 57/2010 e 4/2012, DPR 88/2010; per le classi del nuovo ordinamento valgono le nuove Linee guida del D.M. 29/2026, non ancora consultate: le discipline che mantengono il nome sono desunte dalle Linee guida del 2010, da verificare):';
+    }
+    return 'Programmi ministeriali di riferimento (Linee guida degli istituti tecnici, Direttive MIUR 57/2010 e 4/2012, DPR 88/2010; vigenti):';
+  }
   return 'Programmi ministeriali di riferimento (Indicazioni Nazionali 2025 / Linee Guida):';
 }
-function getProgrammiPerDiscipline(grado, nomiDiscipline, istituto = null) {
+function getProgrammiPerDiscipline(grado, nomiDiscipline, istituto = null, eta = null) {
   const righe = [];
   for (const nome of nomiDiscipline) {
-    const prog = getProgrammaDisciplina(grado, nome, istituto);
+    const prog = getProgrammaDisciplina(grado, nome, istituto, eta);
     if (!prog || !prog.nuclei || prog.nuclei.length === 0) continue;
     righe.push(`- ${nome}: ${prog.competenze} Nuclei: ${prog.nuclei.join('; ')}.`);
   }
   if (righe.length === 0) return '';
-  return `${_intestazioneProgrammi(grado, istituto)}\n${righe.join('\n')}`;
+  return `${_intestazioneProgrammi(grado, istituto, eta)}\n${righe.join('\n')}`;
 }
 
 /**
@@ -2325,6 +2867,9 @@ export {
   PROGRAMMI_SEC2_BASE,
   PROGRAMMI_SEC2_OVERRIDE,
   PROGRAMMI_SEC2_ALIAS,
+  PROGRAMMI_TECNICI_VIGENTE,
+  PROGRAMMI_TECNICI_VIGENTE_OVERRIDE,
+  PROGRAMMI_TECNICI_VIGENTE_TRIENNIO,
   PROGRAMMI_LICEI_2010,
   PROGRAMMI_LICEI_2010_OVERRIDE,
   LICEI_2010_MIGRATI,

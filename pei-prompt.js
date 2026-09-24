@@ -363,7 +363,7 @@ ${jsonData}`;
 function buildSez8Block(grado, sez8, std81, discStr, istituto, term, eta = '', discipline = []) {
   const classe   = calcolaClasse(eta, grado);
   const refProgr = labelProgrammi(grado, istituto, eta);
-  const programmiBlock = getProgrammiPerDiscipline(grado, discipline, istituto);
+  const programmiBlock = getProgrammiPerDiscipline(grado, discipline, istituto, eta);
   const programmiSection = programmiBlock ? `${programmiBlock}\n\n` : '';
 
   if (grado === 'infanzia') {

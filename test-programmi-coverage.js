@@ -17,7 +17,7 @@ import {
   getOrdinamentoSec2,
   annoCorsoSec2,
 } from './pei-gradi.js';
-import { riferimentoLiceo, checkCoverage, getProgrammiPerDiscipline, getProgrammaDisciplina, PROGRAMMI_SEC2_ALIAS, PROGRAMMI_SEC2_BASE, LICEI_2010_MIGRATI, PROGRAMMI_LICEI_2010 } from './pei-programmi.js';
+import { riferimentoLiceo, checkCoverage, getProgrammiPerDiscipline, getProgrammaDisciplina, PROGRAMMI_SEC2_ALIAS, PROGRAMMI_SEC2_BASE, LICEI_2010_MIGRATI, PROGRAMMI_LICEI_2010, PROGRAMMI_TECNICI_VIGENTE } from './pei-programmi.js';
 
 let passed = 0;
 let failed = 0;
@@ -128,10 +128,11 @@ test('Tecnici: elenchi coerenti con i due ordinamenti (1ª nuovo, 3ª vigente)',
 test('voci scritte per un solo tipo di scuola non vengono iniettate negli altri (soloPer)', () => {
   const man = 'IP – Manutenzione e assistenza tecnica', mec = 'IT – Meccanica, meccatronica ed energia', cla = 'Liceo Classico', su = 'Liceo Classico';
   assert(!getProgrammaDisciplina('sec2', 'Geografia', cla), 'Geografia della bozza non deve raggiungere i licei migrati');
-  assert(!getProgrammaDisciplina('sec2', 'Geografia', man) && !getProgrammaDisciplina('sec2', 'Geografia', mec), 'Geografia dei licei non deve arrivare a IP/IT');
+  assert(!getProgrammaDisciplina('sec2', 'Geografia', man), 'Geografia dei licei non deve arrivare agli IP');
+  assert(getProgrammaDisciplina('sec2', 'Geografia', mec) === PROGRAMMI_TECNICI_VIGENTE['Geografia'], 'per gli IT Geografia deve essere la voce delle Linee guida tecniche, non quella dei licei');
   assert(getProgrammaDisciplina('sec2', 'Diritto ed Economia', man), 'Diritto ed Economia (professionali) deve valere per gli IP');
-  assert(!getProgrammaDisciplina('sec2', 'Diritto ed Economia', mec), 'Diritto ed Economia dei professionali non deve arrivare agli IT');
-  assert(getProgrammaDisciplina('sec2', 'Scienze Integrate', man) && !getProgrammaDisciplina('sec2', 'Scienze Integrate', mec), 'Scienze Integrate: solo IP');
+  assert(getProgrammaDisciplina('sec2', 'Diritto ed Economia', mec) === PROGRAMMI_TECNICI_VIGENTE['Diritto ed Economia'] && getProgrammaDisciplina('sec2', 'Diritto ed Economia', mec) !== getProgrammaDisciplina('sec2', 'Diritto ed Economia', man), 'Diritto ed Economia dei professionali non deve arrivare agli IT');
+  assert(getProgrammaDisciplina('sec2', 'Scienze Integrate', man) && !getProgrammaDisciplina('sec2', 'Scienze Integrate', mec), 'Scienze Integrate (voce generica): solo IP; gli IT hanno le tre voci per materia');
 });
 
 test('Licei migrati (Lotto 1): programmi vigenti D.M. 211/2010, copertura completa in biennio e triennio, mai la bozza 2026', () => {
@@ -245,6 +246,57 @@ test('sec2 migrati: sia il biennio sia il triennio producono un blocco non vuoto
       assert(testo.length > 0, `blocco vuoto: ${k} età ${eta}`);
     }
   }
+});
+
+// ── Istituti Tecnici, ordinamento vigente (Linee guida DPR 88/2010) ──
+const TECNICI = Object.keys(QUADRI_ORARI_SEC2).filter(k => k.startsWith('IT'));
+
+test('Tecnici vigente: ogni disciplina del quadro vigente (biennio e triennio) ha una voce curata', () => {
+  const missing = [];
+  for (const k of TECNICI) {
+    const q = QUADRI_ORARI_SEC2[k];
+    for (const nome of [...q.biennio, ...q.triennio]) {
+      if (nome === 'Religione / Attività alternativa') continue;
+      if (!getProgrammaDisciplina('sec2', nome, k, 17)) missing.push(`${k}: ${nome}`);
+    }
+  }
+  assert(missing.length === 0, `discipline Tecnici senza voce: ${missing.join('; ')}`);
+});
+
+test('Tecnici: Italiano/Matematica/Inglese usano le Linee guida tecniche, non la bozza dei licei', () => {
+  for (const nome of ['Italiano', 'Matematica', 'Lingua Straniera (Inglese)']) {
+    for (const k of TECNICI) {
+      assert(getProgrammaDisciplina('sec2', nome, k, 17) === PROGRAMMI_TECNICI_VIGENTE[nome], `${nome} non risolto sulle Linee guida tecniche per ${k}`);
+    }
+  }
+});
+
+test('Tecnici: le voci di indirizzo non compaiono per altri tipi di scuola (Licei/Professionali)', () => {
+  assert(getProgrammaDisciplina('sec2', 'Enologia', 'IP – Servizi commerciali') === null, 'Enologia non deve valere per i professionali');
+  assert(getProgrammaDisciplina('sec2', 'Topografia e Costruzioni', 'Liceo Scientifico') === null, 'Topografia e Costruzioni non deve valere per i licei');
+});
+
+test('Tecnici Trasporti: Diritto ed Economia cambia tra biennio e triennio', () => {
+  const t = 'IT – Trasporti e logistica';
+  const bi = getProgrammaDisciplina('sec2', 'Diritto ed Economia', t, 14);
+  const tri = getProgrammaDisciplina('sec2', 'Diritto ed Economia', t, 17);
+  assert(bi && tri && bi !== tri, 'voce del triennio non distinta da quella del biennio');
+  assert(tri.nuclei.join(' ').includes('navigazione'), 'la voce del triennio deve trattare il diritto della navigazione');
+});
+
+test('Tecnici: Complementi di Matematica è declinato per indirizzo (Trasporti ≠ Grafica)', () => {
+  const a = getProgrammaDisciplina('sec2', 'Complementi di Matematica', 'IT – Trasporti e logistica', 17);
+  const b = getProgrammaDisciplina('sec2', 'Complementi di Matematica', 'IT – Grafica e comunicazione', 17);
+  assert(a !== b && a.nuclei.join(' ').includes('sferica') && !b.nuclei.join(' ').includes('sferica'), 'declinazione per indirizzo non rispettata');
+});
+
+test('Tecnici: intestazione con riferimento alle Linee guida; nota di cautela solo per il nuovo ordinamento', () => {
+  const k = 'IT – Meccanica, meccatronica ed energia';
+  const vig = getProgrammiPerDiscipline('sec2', getDisciplineSec2(k, 17), k, 17);
+  assert(vig.startsWith('Programmi ministeriali di riferimento (Linee guida degli istituti tecnici'), 'intestazione vigente errata');
+  assert(!vig.includes('non ancora consultate'), 'nota di cautela non attesa per il vigente');
+  const nuovo = getProgrammiPerDiscipline('sec2', getDisciplineSec2(k, 14), k, 14);
+  assert(nuovo.includes('D.M. 29/2026') && nuovo.includes('non ancora consultate'), 'nota di cautela mancante per il nuovo ordinamento');
 });
 
 test('Religione / Attività alternativa in sec2: nessun errore, degrado silenzioso voluto', () => {
