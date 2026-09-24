@@ -3,7 +3,7 @@
 // Nessuna modifica di logica — solo require/module.exports -> import/export.
 
 import {
-  Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
+  Document, Packer, Paragraph, TextRun, Table, TableRow as DocxTableRow, TableCell,
   AlignmentType, BorderStyle, WidthType, ShadingType,
   VerticalAlign, PageNumber, Footer, UnderlineType,
 } from 'docx';
@@ -27,6 +27,14 @@ const bNone = { style: BorderStyle.NONE,   size: 0, color: C.WHITE };
 const allGrey = { top: bGrey, bottom: bGrey, left: bGrey, right: bGrey };
 const FULL = 9360;
 
+// ── Impaginazione ─────────────────────────────────────────────────────────────
+// Le righe di tabella non si spezzano tra due pagine; le intestazioni si ripetono; titoli, note e intestazioni di tabella
+// restano con ciò che segue; le tabelle brevi (firme, orario, schede) restano intere (keepNext su ogni paragrafo).
+let _keepAll = false;
+function keepTogether(fn) { const prev = _keepAll; _keepAll = true; try { return fn(); } finally { _keepAll = prev; } }
+const _kn = () => (_keepAll ? { keepNext: true } : {});
+function TableRow(o) { return new DocxTableRow({ cantSplit: true, ...o }); }
+
 // ── Primitivi ─────────────────────────────────────────────────────────────────
 function txt(t, o = {}) {
   return new TextRun({
@@ -43,6 +51,7 @@ function p(children, o = {}) {
   return new Paragraph({
     children: runs,
     alignment: o.align || AlignmentType.LEFT,
+    keepNext: o.keepNext ?? (_keepAll || !!o.italic),
     spacing: { before: o.before ?? 60, after: o.after ?? 60 },
     indent: o.indent ? { left: o.indent } : undefined,
     border: o.borderBottom
@@ -54,6 +63,12 @@ function p(children, o = {}) {
 function empty(n = 1) {
   return Array.from({ length: n }, () =>
     new Paragraph({ children: [txt('')], spacing: { before: 40, after: 40 } })
+  );
+}
+// Riga vuota che resta attaccata all'elemento successivo (usata tra titolo/nota e tabella)
+function emptyK(n = 1) {
+  return Array.from({ length: n }, () =>
+    new Paragraph({ children: [txt('')], keepNext: true, spacing: { before: 40, after: 40 } })
   );
 }
 
@@ -102,16 +117,16 @@ function lines(str, size = 21) {
             txt(': ', { size }),
             ...parseInline(val, size),
           ],
-          spacing: { before: 60, after: 40 },
+          spacing: { before: 60, after: 40 }, ..._kn(),
         }));
       } else {
-        result.push(new Paragraph({ children: parseInline(cells[0], size), spacing: { before: 40, after: 40 } }));
+        result.push(new Paragraph({ children: parseInline(cells[0], size), spacing: { before: 40, after: 40 }, ..._kn() }));
       }
       continue;
     }
     result.push(new Paragraph({
       children: parseInline(t, size),
-      spacing: { before: 40, after: 40 },
+      spacing: { before: 40, after: 40 }, ..._kn(),
     }));
   }
   return result;
@@ -119,7 +134,7 @@ function lines(str, size = 21) {
 
 function h1(text) {
   return new Paragraph({
-    children: [txt(text, { bold: true, size: 26, color: C.BLUE })],
+    children: [txt(text, { bold: true, size: 26, color: C.BLUE })], keepNext: true,
     spacing: { before: 280, after: 100 },
     border: { bottom: { style: BorderStyle.SINGLE, size: 8, color: C.MIDBLUE, space: 6 } },
   });
@@ -127,14 +142,14 @@ function h1(text) {
 
 function h2(text, color = C.MIDBLUE) {
   return new Paragraph({
-    children: [txt(text, { bold: true, size: 23, color })],
+    children: [txt(text, { bold: true, size: 23, color })], keepNext: true,
     spacing: { before: 160, after: 80 },
   });
 }
 
 function h3(text) {
   return new Paragraph({
-    children: [txt(text, { bold: true, size: 21, color: C.DARKGREY })],
+    children: [txt(text, { bold: true, size: 21, color: C.DARKGREY })], keepNext: true,
     spacing: { before: 100, after: 60 },
   });
 }
@@ -157,11 +172,11 @@ function cell(content, w, o = {}) {
 // Il parametro fill resta nella firma per non dover toccare ogni chiamata esistente,
 // ma viene ignorato: le intestazioni ministeriali sono sempre sfondo bianco, testo nero grassetto.
 function hCell(text, w, fill = C.WHITE) {
-  return cell([p(text, { bold: true, color: C.BLACK, size: 20 })], w, { fill: C.WHITE, borders: allGrey });
+  return cell([p(text, { bold: true, color: C.BLACK, size: 20, keepNext: true })], w, { fill: C.WHITE, borders: allGrey });
 }
 
 // ── Tabelle helper ────────────────────────────────────────────────────────────
-function twoCol(rows, wL = 3000, wR = null) {
+function _twoCol(rows, wL = 3000, wR = null) {
   const wR2 = wR ?? (FULL - wL);
   return new Table({
     width: { size: FULL, type: WidthType.DXA },
@@ -177,7 +192,7 @@ function twoCol(rows, wL = 3000, wR = null) {
   });
 }
 
-function dimTable(rawText) {
+function _dimTable(rawText) {
   // Parsa la tabella markdown dalla risposta AI
   const cols = [3400, 2400, 3560];
   const headers = ['Dimensione', 'Esito Analisi (∑P; N; Media)', 'Motivazione'];
@@ -202,7 +217,7 @@ function dimTable(rawText) {
     width: { size: FULL, type: WidthType.DXA },
     columnWidths: cols,
     rows: [
-      new TableRow({ children: headers.map((h, i) => hCell(h, cols[i])) }),
+      new TableRow({ tableHeader: true, children: headers.map((h, i) => hCell(h, cols[i])) }),
       ...dataRows.map((row, ri) => new TableRow({
         children: row.slice(0, 3).map((val, ci) => cell(
           [p(String(val), { size: 20, bold: ci === 1 && String(val).includes('DEFINITA') })],
@@ -350,7 +365,7 @@ function objectivesBlock(rawText) {
   for (const dim of dimOrder) {
     // Banner Dimensione (grassetto, nessuno sfondo)
     result.push(new Paragraph({
-      children: [txt('DIMENSIONE ' + DIM_LABEL[dim], { bold: true, size: 22, color: C.BLACK })],
+      children: [txt('DIMENSIONE ' + DIM_LABEL[dim], { bold: true, size: 22, color: C.BLACK })], keepNext: true,
       spacing: { before: 300, after: 100 },
       border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: C.BLACK, space: 4 } },
     }));
@@ -363,7 +378,7 @@ function objectivesBlock(rawText) {
           txt(`Obiettivo ${obj.num} – `, { bold: true, size: 22, color: C.BLACK }),
           txt(obj.title, { bold: true, size: 22, color: C.BLACK }),
         ],
-        spacing: { before: 160, after: 40 },
+        spacing: { before: 160, after: 40 }, keepNext: true,
       }));
 
       // Corpo obiettivo — salta la riga "Dimensione:" (già nel banner). Strip # e ** prima
@@ -382,7 +397,7 @@ function objectivesBlock(rawText) {
 }
 
 // Render sezione 7: 3 categorie ministeriali con tabella azioni 3 colonne
-function sez7Block(cat1, cat2, cat3, fallbackRaw) {
+function _sez7Block(cat1, cat2, cat3, fallbackRaw) {
   const CAT_TITLES = [
     'Categoria 1 – Rimozione delle barriere',
     'Categoria 2 – Facilitatori universali',
@@ -397,7 +412,7 @@ function sez7Block(cat1, cat2, cat3, fallbackRaw) {
   // sottostante (coerente con h1()/h2() e con il banner Dimensione della Sezione 5).
   const renderCat = (title, rawCat) => {
     result.push(new Paragraph({
-      children: [txt(title, { bold: true, size: 21, color: C.BLACK })],
+      children: [txt(title, { bold: true, size: 21, color: C.BLACK })], keepNext: true,
       spacing: { before: 140, after: 80 },
       border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: C.BLACK, space: 4 } },
     }));
@@ -420,7 +435,7 @@ function sez7Block(cat1, cat2, cat3, fallbackRaw) {
         width: { size: FULL, type: WidthType.DXA },
         columnWidths: cols3,
         rows: [
-          new TableRow({ children: heads3.map((h, i) => hCell(h, cols3[i])) }),
+          new TableRow({ tableHeader: true, children: heads3.map((h, i) => hCell(h, cols3[i])) }),
           ...rows3.map((row, ri) => new TableRow({
             children: row.map((val, ci) => cell(
               [p(String(val), { size: 19 })], cols3[ci],
@@ -463,7 +478,7 @@ function parseCells(line) {
 }
 
 // Restituisce SEMPRE un array di elementi (Table o paragrafi narrativi)
-function intervTable(rawText) {
+function _intervTable(rawText) {
   const cols = [3500, 1960, 2200, 1700];
   const heads = ['Azione', 'Tipo intervento', 'Destinatari', 'Tempi'];
   const dataRows = [];
@@ -482,7 +497,7 @@ function intervTable(rawText) {
     width: { size: FULL, type: WidthType.DXA },
     columnWidths: cols,
     rows: [
-      new TableRow({ children: heads.map((h, i) => hCell(h, cols[i], C.MIDBLUE)) }),
+      new TableRow({ tableHeader: true, children: heads.map((h, i) => hCell(h, cols[i], C.MIDBLUE)) }),
       ...dataRows.map((row, ri) => new TableRow({
         children: row.map((val, ci) => cell(
           [p(String(val), { size: 19 })], cols[ci],
@@ -491,6 +506,27 @@ function intervTable(rawText) {
       })),
     ],
   })];
+}
+
+const CAMPI_INFANZIA = ["Il sé e l'altro", 'Il corpo e il movimento', 'Immagini, suoni, colori', 'I discorsi e le parole', 'La conoscenza del mondo'];
+function parseCampiBlocks(text) {
+  const blocks = [];
+  let cur = null;
+  for (const raw of String(text || '').split('\n')) {
+    const t = raw.replace(/\*\*/g, '').replace(/^\s*(?:[-•]|\d+[.)]|#{1,4})\s*/, '').replace(/[’‘]/g, "'").trim();
+    if (!t) continue;
+    if (/^nota\s*:/i.test(t)) { cur = null; continue; }
+    const senzaEtichetta = t.replace(/^campo(?:\s+di\s+esperienza)?\s*:\s*/i, '');
+    const canon = CAMPI_INFANZIA.find(c => senzaEtichetta.toLowerCase().startsWith(c.toLowerCase()));
+    if (canon) { cur = { campo: canon, body: senzaEtichetta.slice(canon.length) }; blocks.push(cur); continue; }
+    if (cur) cur.body += '\n' + t;
+  }
+  const pulisci = x => (x || '').replace(/^[\s|:–-]+|[\s|]+$/g, '').replace(/\s*\n\s*/g, ' ').trim();
+  return blocks.map(b => {
+    const a = b.body.match(/Attivit[àa]\s*:?\s*([\s\S]*?)(?=\|?\s*Strategie|$)/i);
+    const st = b.body.match(/Strategie(?:\s+e\s+Strumenti)?\s*:?\s*([\s\S]*)$/i);
+    return [b.campo, pulisci(a ? a[1] : b.body), pulisci(st ? st[1] : '')];
+  }).filter(r => r[1] || r[2]);
 }
 
 function disciplineTable(rawText, grado) {
@@ -543,13 +579,25 @@ function disciplineTable(rawText, grado) {
     }
   }
 
-  if (dataRows.length === 0) return p('Tabella discipline da completare.', { size: 20, italic: true });
+  // Parser 4 (infanzia): blocchi multi-riga "Campo: X / Attività: Y / Strategie e Strumenti: Z" o titoli coi nomi dei 5 campi
+  if (dataRows.length === 0 && isInfanzia) {
+    for (const r of parseCampiBlocks(rawText)) dataRows.push(r);
+  }
 
-  return new Table({
+  // Ultima difesa: mai perdere il testo generato dall'AI (prima compariva solo "Tabella discipline da completare")
+  if (dataRows.length === 0) {
+    const grezzo = isInfanzia
+      ? String(rawText || '').split('\n').filter(l => /campo|attivit|strategi|s[eé] e l'altro|corpo e il movimento|immagini, suoni|discorsi e le parole|conoscenza del mondo/i.test(l)).join('\n')
+      : rawText;
+    const narrativo = lines(grezzo);
+    return narrativo.length ? narrativo : [p('Tabella discipline da completare.', { size: 20, italic: true })];
+  }
+
+  return [new Table({
     width: { size: FULL, type: WidthType.DXA },
     columnWidths: cols,
     rows: [
-      new TableRow({ children: headers.map((h, i) => hCell(h, cols[i], C.MIDBLUE)) }),
+      new TableRow({ tableHeader: true, children: headers.map((h, i) => hCell(h, cols[i], C.MIDBLUE)) }),
       ...dataRows.map((row, ri) => new TableRow({
         children: row.map((val, ci) => cell(
           [p(String(val), { size: 20 })], cols[ci],
@@ -557,10 +605,10 @@ function disciplineTable(rawText, grado) {
         )),
       })),
     ],
-  });
+  })];
 }
 
-function gloTable() {
+function _gloTable() {
   const cols = [3600, 3760, 2000];
   return new Table({
     width: { size: FULL, type: WidthType.DXA },
@@ -577,7 +625,7 @@ function gloTable() {
   });
 }
 
-function oraryCols() {
+function _oraryCols() {
   const days = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
   const cols  = [1200, 1360, 1360, 1360, 1360, 1360, 1360];
   const ore   = ['Prima ora','Seconda ora','Terza ora','Quarta ora','Quinta ora','Sesta ora'];
@@ -596,6 +644,14 @@ function oraryCols() {
     ],
   });
 }
+
+// Tabelle brevi: restano intere sulla stessa pagina
+const dimTable = (...a) => keepTogether(() => _dimTable(...a));
+const gloTable = (...a) => keepTogether(() => _gloTable(...a));
+const oraryCols = (...a) => keepTogether(() => _oraryCols(...a));
+const intervTable = (...a) => keepTogether(() => _intervTable(...a));
+const twoCol = (...a) => keepTogether(() => _twoCol(...a));
+const sez7Block = (...a) => keepTogether(() => _sez7Block(...a));
 
 // ── BUILDER PRINCIPALE ────────────────────────────────────────────────────────
 function buildDocx(d, grado) {
@@ -648,7 +704,7 @@ function buildDocx(d, grado) {
     p([txt('Progetto Individuale   ', { bold: true }), txt('☐ redatto in data ___________     ☐ da redigere', {})]),
     ...empty(2),
     // Tabella PEI Provvisorio / Verifiche
-    new Table({
+    keepTogether(() => new Table({
       width: { size: FULL, type: WidthType.DXA },
       columnWidths: [2800, 3280, 3280],
       rows: [
@@ -662,7 +718,7 @@ function buildDocx(d, grado) {
             ],
           })),
       ],
-    }),
+    })),
     ...empty(2),
   );
 
@@ -670,7 +726,7 @@ function buildDocx(d, grado) {
   children.push(
     h1('Composizione del GLO – Gruppo di Lavoro Operativo per l\'inclusione'),
     p('Art. 15, commi 10 e 11 della L. 104/1992 (come modif. dal D.Lgs 96/2019)', { size: 19, italic: true, color: C.DARKGREY }),
-    ...empty(1), gloTable(), ...empty(2),
+    ...emptyK(1), gloTable(), ...empty(2),
   );
 
   // ── SEZ. 1 ───────────────────────────────────────────────────────────────
@@ -692,7 +748,7 @@ function buildDocx(d, grado) {
   children.push(
     h1('Sezione 2 – Dimensioni da definire nel PEI'),
     p('In base alle indicazioni del Profilo di Funzionamento, le dimensioni rispetto alle quali è necessario definire nel PEI specifici interventi:', { size: 19, italic: true, color: C.DARKGREY }),
-    ...empty(1),
+    ...emptyK(1),
     dimTable(d.sez2Raw),
     ...empty(1),
   );
@@ -744,8 +800,8 @@ function buildDocx(d, grado) {
     children.push(
       h2(sez8.titolo81),
       ...lines(std81),
-      ...empty(1),
-      disciplineTable(d.sez8Raw, grado),
+      ...emptyK(1),
+      ...disciplineTable(d.sez8Raw, grado),
       ...empty(1),
       p(sez8.noteValutazione, { size: 19, italic: true, color: C.DARKGREY }),
       ...empty(2),
@@ -766,8 +822,8 @@ function buildDocx(d, grado) {
       children.push(
         h2('8.2 – Progettazione disciplinare'),
         p(sez8.note82 || '', { size: 18, italic: true, color: C.DARKGREY }),
-        ...empty(1),
-        disciplineTable(sez82text, grado),
+        ...emptyK(1),
+        ...disciplineTable(sez82text, grado),
         ...empty(1),
       );
       // I programmi ministeriali di riferimento per i Licei (pei-programmi.js) sono basati
@@ -822,7 +878,7 @@ function buildDocx(d, grado) {
       children.push(
         h2('8.3 – FSL – Formazione Scuola-Lavoro'),
         p('Obbligatoria dalle classi III, IV e V (D.Lgs. 66/2017 art.7 c.2 lett.e; L. 145/2018 art.1 cc.784-787; Decreto Interm. n.153/2023 art.11; percorso rinominato FSL dalla L. 213/2023)', { size: 19, italic: true, color: C.DARKGREY }),
-        ...empty(1),
+        ...emptyK(1),
         twoCol([
           ['Tipologia percorso',       extractPctoField(d.sez8Raw, 'Tipologia') || '□ A – Aziendale  □ B – Scolastico  □ C – Altra tipologia'],
           ['Ente / Azienda ospitante', extractPctoField(d.sez8Raw, 'Ente') || ''],
@@ -875,7 +931,7 @@ function buildDocx(d, grado) {
     h1('Sezione 9 – Organizzazione generale del progetto di inclusione e utilizzo delle risorse'),
     h2('Tabella orario settimanale'),
     p('Pres. = presente a scuola · Sost. = insegnante di sostegno presente · Ass. = assistente presente', { size: 18, italic: true, color: C.DARKGREY }),
-    ...empty(1), oraryCols(), ...empty(1),
+    ...emptyK(1), oraryCols(), ...empty(1),
     twoCol([
       [`Il/la ${term.soggetto} frequenta con orario ridotto?`,
         '□ Sì: ___ ore settimanali, nel periodo ___, per le seguenti motivazioni: ___\n□ No, frequenta regolarmente tutte le ore previste'],
@@ -892,7 +948,7 @@ function buildDocx(d, grado) {
     ], 3200, 6160),
     ...empty(1),
     h2('Interventi e attività extrascolastiche attive'),
-    new Table({
+    keepTogether(() => new Table({
       width: { size: FULL, type: WidthType.DXA },
       columnWidths: [2200, 800, 1800, 2860, 1700],
       rows: [
@@ -906,7 +962,7 @@ function buildDocx(d, grado) {
           ...['','','',''].map((v,i) => cell(v, [800,1800,2860,1700][i], { fill:C.GREY, borders:allGrey })),
         ]}),
       ],
-    }),
+    })),
     ...empty(2),
   );
 
@@ -915,7 +971,7 @@ function buildDocx(d, grado) {
     h1('Verifica finale del PEI e proposte per l\'a.s. successivo'),
     h2('Valutazione globale dei risultati raggiunti'),
     p('Da compilare a fine anno scolastico a cura del GLO.', { size: 20, italic: true, color: C.DARKGREY }),
-    ...empty(1),
+    ...emptyK(1),
     twoCol([
       ['Proposta ore di sostegno per l\'a.s. successivo',
         'Ore richieste: ___\nMotivazione: ___'],
@@ -944,7 +1000,7 @@ function buildDocx(d, grado) {
   children.push(
     h1('Approvazione finale – Firme del GLO'),
     p(`La verifica finale con proposta di fabbisogno per l'a.s. successivo è stata approvata dal GLO in data ___ come risulta da verbale n. ___ allegato`, { size: 20, italic: true }),
-    ...empty(1), gloTable(), ...empty(2),
+    ...emptyK(1), gloTable(), ...empty(2),
     new Paragraph({
       children: [
         txt('Documento redatto con supporto AI sulla base del profilo ICF osservativo – ', { size: 18, italic: true, color: C.DARKGREY }),
