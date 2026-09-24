@@ -177,6 +177,28 @@ const DISCIPLINE_SEC1 = [
 // del triennio ma segnalate a parte (v. getOpzionaliSec2) perché l'istituto potrebbe non attivarle.
 const IP_GEN_BIENNIO = ["Italiano","Storia","Geografia","Matematica","Lingua Straniera (Inglese)","Diritto ed Economia","Scienze Motorie e Sportive","Religione / Attività alternativa"];
 const IP_GEN_TRIENNIO = ["Italiano","Storia","Matematica","Lingua Straniera (Inglese)","Scienze Motorie e Sportive","Religione / Attività alternativa"];
+// Istituti Tecnici: DUE ordinamenti (vedi getOrdinamentoSec2)
+//  - vigente: DPR 88/2010 (classi non ancora passate al nuovo ordinamento)
+//  - nuovoOrdinamento: D.M. 29/2026 (Valditara), dalle classi PRIME del 2026/27, poi una classe in più ogni anno
+// Nell'ordinamento nuovo l'area generale è l'Allegato B, l'area di indirizzo "flessibile" gli Allegati C1-C11.
+// Le discipline specifiche delle articolazioni (alternative tra loro) sono nelle opzionali.
+const IT_GEN_BIENNIO_VIGENTE = ["Italiano","Storia","Matematica","Lingua Straniera (Inglese)","Diritto ed Economia","Scienze Integrate (Scienze della Terra e Biologia)","Scienze Motorie e Sportive","Religione / Attività alternativa"];
+const IT_GEN_TRIENNIO = ["Italiano","Storia","Matematica","Lingua Straniera (Inglese)","Scienze Motorie e Sportive","Religione / Attività alternativa"];
+const IT_GEN_BIENNIO_NUOVO = ["Italiano","Storia","Geografia","Matematica","Lingua Straniera (Inglese)","Diritto ed Economia","Scienze Motorie e Sportive","Religione / Attività alternativa"];
+const IT_NUOVO_DAL = 2026; // anno scolastico di inizio (2026/27) per le classi prime
+function it(bV, tV, oV, bN, tN, oN) {
+  return {
+    biennio: [...IT_GEN_BIENNIO_VIGENTE, ...bV],
+    triennio: [...IT_GEN_TRIENNIO, ...tV, ...oV],
+    triennioOpzionali: [...oV],
+    nuovoOrdinamento: {
+      biennio: [...IT_GEN_BIENNIO_NUOVO, ...bN],
+      triennio: [...IT_GEN_TRIENNIO, ...tN, ...oN],
+      triennioOpzionali: [...oN],
+      dal: IT_NUOVO_DAL,
+    },
+  };
+}
 function ip(biennioInd, triennioInd, opz = []) {
   return {
     biennio: [...IP_GEN_BIENNIO, ...biennioInd],
@@ -244,79 +266,94 @@ const QUADRI_ORARI_SEC2 = {
     "Esecuzione e Interpretazione / Laboratorio Coreutico",
     "Scienze Motorie e Sportive","Religione / Attività alternativa",
   ],
-  "IT – Amministrazione, finanza e marketing": [
-    "Italiano","Storia","Matematica","Lingua Straniera (Inglese)",
-    "Seconda Lingua Straniera","Economia Aziendale",
-    "Diritto","Economia Politica","Informatica",
-    "Scienze Motorie e Sportive","Religione / Attività alternativa",
-  ],
-  "IT – Turismo": [
-    "Italiano","Storia","Matematica","Lingua Straniera (Inglese)",
-    "Seconda Lingua Straniera","Terza Lingua Straniera",
-    "Discipline Turistiche e Aziendali",
-    "Diritto e Legislazione Turistica","Arte e Territorio",
-    "Scienze Motorie e Sportive","Religione / Attività alternativa",
-  ],
-  "IT – Meccanica, meccatronica ed energia": [
-    "Italiano","Storia","Matematica","Lingua Straniera (Inglese)",
-    "Meccanica, Macchine ed Energia","Sistemi e Automazione",
-    "Tecnologie Meccaniche di Processo e di Prodotto",
-    "Disegno, Progettazione e Organizzazione Industriale",
-    "Scienze Motorie e Sportive","Religione / Attività alternativa",
-  ],
-  "IT – Trasporti e logistica": [
-    "Italiano","Storia","Matematica","Lingua Straniera (Inglese)",
-    "Scienze della Navigazione, Struttura e Costruzione del Mezzo",
-    "Meccanica e Macchine","Logistica",
-    "Diritto e Legislazione Nautica",
-    "Scienze Motorie e Sportive","Religione / Attività alternativa",
-  ],
-  "IT – Elettronica ed elettrotecnica": [
-    "Italiano","Storia","Matematica","Lingua Straniera (Inglese)",
-    "Elettrotecnica ed Elettronica","Sistemi Automatici",
-    "Tecnologie e Progettazione di Sistemi Elettrici ed Elettronici",
-    "Scienze Motorie e Sportive","Religione / Attività alternativa",
-  ],
-  "IT – Informatica e telecomunicazioni": [
-    "Italiano","Storia","Matematica","Lingua Straniera (Inglese)",
-    "Informatica","Sistemi e Reti","Telecomunicazioni",
-    "Tecnologie e Progettazione di Sistemi Informatici e di Telecomunicazioni",
-    "Scienze Motorie e Sportive","Religione / Attività alternativa",
-  ],
-  "IT – Grafica e comunicazione": [
-    "Italiano","Storia","Matematica","Lingua Straniera (Inglese)",
-    "Progettazione Multimediale",
-    "Tecnologie dei Processi di Produzione",
-    "Organizzazione e Gestione dei Processi Produttivi",
-    "Scienze Motorie e Sportive","Religione / Attività alternativa",
-  ],
-  "IT – Chimica, materiali e biotecnologie": [
-    "Italiano","Storia","Matematica","Lingua Straniera (Inglese)",
-    "Chimica Analitica e Strumentale","Chimica Organica e Biochimica",
-    "Biologia, Microbiologia e Tecnologie di Controllo Ambientale",
-    "Scienze Motorie e Sportive","Religione / Attività alternativa",
-  ],
-  "IT – Sistema moda": [
-    "Italiano","Storia","Matematica","Lingua Straniera (Inglese)",
-    "Progettazione Tessile-Abbigliamento, Moda e Costume",
-    "Tecnologie Applicate ai Materiali e ai Processi Produttivi Tessili",
-    "Economia e Marketing nel Sistema Moda",
-    "Scienze Motorie e Sportive","Religione / Attività alternativa",
-  ],
-  "IT – Agraria, agroalimentare e agroindustria": [
-    "Italiano","Storia","Matematica","Lingua Straniera (Inglese)",
-    "Produzioni Vegetali","Produzioni Animali",
-    "Trasformazione dei Prodotti","Gestione dell'Ambiente e del Territorio",
-    "Economia Agraria e dello Sviluppo Rurale",
-    "Scienze Motorie e Sportive","Religione / Attività alternativa",
-  ],
-  "IT – Costruzioni, ambiente e territorio": [
-    "Italiano","Storia","Matematica","Lingua Straniera (Inglese)",
-    "Progettazione, Costruzioni e Impianti","Topografia",
-    "Geopedologia, Economia ed Estimo",
-    "Gestione del Cantiere e Sicurezza dell'Ambiente di Lavoro",
-    "Scienze Motorie e Sportive","Religione / Attività alternativa",
-  ],
+  "IT – Amministrazione, finanza e marketing": it(
+    ["Scienze Integrate (Fisica)","Scienze Integrate (Chimica)","Geografia","Informatica","Seconda Lingua Straniera","Economia Aziendale"],
+    ["Informatica","Seconda Lingua Straniera","Economia Aziendale","Diritto","Economia Politica"],
+    ["Terza Lingua Straniera","Economia Aziendale e Geo-politica","Relazioni Internazionali","Tecnologie della Comunicazione"],
+    ["Scienze Sperimentali","Economia Aziendale","Tecnologie dell'Informazione e della Comunicazione (TIC)","Geografia Economica","Seconda Lingua Straniera"],
+    ["Economia Aziendale","Informatica Applicata","Diritto","Economia Politica","Seconda Lingua Straniera"],
+    ["Relazioni Internazionali","Terza Lingua Straniera"]
+  ),
+  "IT – Turismo": it(
+    ["Scienze Integrate (Fisica)","Scienze Integrate (Chimica)","Geografia","Informatica","Seconda Lingua Straniera","Economia Aziendale"],
+    ["Seconda Lingua Straniera","Terza Lingua Straniera","Discipline Turistiche e Aziendali","Geografia Turistica","Diritto e Legislazione Turistica","Arte e Territorio"],
+    [],
+    ["Scienze Sperimentali","Seconda Lingua Straniera","Tecnologie dell'Informazione e della Comunicazione (TIC)","Economia Aziendale","Geografia Turistica"],
+    ["Seconda Lingua Straniera","Terza Lingua Straniera","Discipline Turistiche Aziendali","Legislazione Turistica, dei Beni Culturali e Ambientali","Territorio e Turismo"],
+    []
+  ),
+  "IT – Meccanica, meccatronica ed energia": it(
+    ["Scienze Integrate (Fisica)","Scienze Integrate (Chimica)","Tecnologie e Tecniche di Rappresentazione Grafica","Tecnologie Informatiche","Scienze e Tecnologie Applicate"],
+    ["Complementi di Matematica","Meccanica, Macchine ed Energia","Sistemi e Automazione","Tecnologie Meccaniche di Processo e Prodotto"],
+    ["Disegno, Progettazione e Organizzazione Industriale","Impianti Energetici, Disegno e Progettazione"],
+    ["Scienze Sperimentali","Tecnologie dell'Informazione e della Comunicazione (TIC)","Tecnologie e Tecniche di Rappresentazione Grafica","Fondamenti di Meccanica ed Elementi di Disegno","Elementi di Elettrotecnica ed Elettronica per la Meccatronica","Tecnologie dei Materiali"],
+    [],
+    ["Meccanica, Meccatronica e Robotica Industriale","Tecniche di Produzione e Digitalizzazione del Processo","Organizzazione e Manutenzione dei Processi e dei Sistemi Produttivi","Disegno, Modellazione 3D e Prototipazione","Impianti, Macchine e Sistemi Automatici per l'Energia","Gestione dei Progetti, Disegno e Manutenzione di Impianti","Meccanica Applicata alle Macchine","Tecnologie dei Materiali e Tecniche di Produzione"]
+  ),
+  "IT – Trasporti e logistica": it(
+    ["Scienze Integrate (Fisica)","Scienze Integrate (Chimica)","Tecnologie e Tecniche di Rappresentazione Grafica","Tecnologie Informatiche","Scienze e Tecnologie Applicate"],
+    ["Complementi di Matematica","Elettrotecnica, Elettronica e Automazione","Diritto ed Economia","Logistica"],
+    ["Struttura, Costruzione, Sistemi e Impianti del Mezzo","Meccanica, Macchine e Sistemi Propulsivi","Scienze della Navigazione, Struttura e Costruzione del Mezzo","Meccanica e Macchine","Scienze della Navigazione e Struttura dei Mezzi di Trasporto"],
+    ["Scienze Sperimentali","Tecnologie dell'Informazione e della Comunicazione (TIC)","Tecnologie e Tecniche di Rappresentazione Grafica","Scienze e Tecnologie dei Trasporti"],
+    [],
+    ["Progettazione e Costruzioni Navali","Meccanica, Impianti e Allestimento Navale","Logistica del Cantiere Navale","Progettazione e Costruzioni Aeronautiche","Meccanica e Sistemi Propulsivi","Elettrotecnica ed Avionica","Logistica Industriale e Aeronautica","Aeronavigabilità e Sistemi di Bordo","Struttura, Costruzione, Sistemi e Impianti del Mezzo","Meccanica, Macchine e Sistemi Propulsivi","Elettrotecnica, Elettronica ed Automazione","Diritto","Logistica","Scienze della Navigazione e Tecnologie Nautiche","Scienze e Tecnologie Elettriche ed Elettroniche","Scienze e Tecnologie Meccaniche","Diritto del Mare e dei Trasporti","Logistica dei Trasporti e Gestione Portuale","Scienze della Navigazione e Tecnologie Aeronautiche","Meccanica del Mezzo Aereo","Elettrotecnica, Elettronica e Radartecnica","Diritto Aeronautico","Logistica Aeroportuale e Gestione del Traffico Aereo","Scienze della Navigazione, Struttura e Costruzione del Mezzo","Meccanica e Macchine","Struttura dei Mezzi e delle Infrastrutture di Trasporto","Tecnologie e Impianti di Trasporto","Tecnologie Digitali e Sistemi Informativi della Logistica","Diritto ed Economia dei Trasporti"]
+  ),
+  "IT – Elettronica ed elettrotecnica": it(
+    ["Scienze Integrate (Fisica)","Scienze Integrate (Chimica)","Tecnologie e Tecniche di Rappresentazione Grafica","Tecnologie Informatiche","Scienze e Tecnologie Applicate"],
+    ["Complementi di Matematica","Tecnologie e Progettazione di Sistemi Elettrici ed Elettronici","Elettrotecnica ed Elettronica","Sistemi Automatici"],
+    [],
+    ["Scienze Sperimentali","Tecnologie dell'Informazione e della Comunicazione (TIC)","Tecnologie e Tecniche di Rappresentazione Grafica","Fondamenti di Elettrotecnica ed Elettronica"],
+    ["Elettrotecnica ed Elettronica","Sistemi Automatici","Tecnologie e Progettazione","Complementi di Matematica"],
+    []
+  ),
+  "IT – Informatica e telecomunicazioni": it(
+    ["Scienze Integrate (Fisica)","Scienze Integrate (Chimica)","Tecnologie e Tecniche di Rappresentazione Grafica","Tecnologie Informatiche","Scienze e Tecnologie Applicate"],
+    ["Complementi di Matematica","Sistemi e Reti","Tecnologie e Progettazione di Sistemi Informatici e di Telecomunicazioni","Gestione Progetto, Organizzazione d'Impresa","Informatica","Telecomunicazioni"],
+    [],
+    ["Scienze Sperimentali","Tecnologie e Tecniche di Rappresentazione Grafica","Informatica e Reti di Comunicazione"],
+    ["Sistemi e Reti","Tecnologie e Progettazione di Sistemi Informatici e di Telecomunicazioni","Informatica","Telecomunicazioni","Complementi di Matematica"],
+    []
+  ),
+  "IT – Grafica e comunicazione": it(
+    ["Scienze Integrate (Fisica)","Scienze Integrate (Chimica)","Tecnologie e Tecniche di Rappresentazione Grafica","Tecnologie Informatiche","Scienze e Tecnologie Applicate"],
+    ["Complementi di Matematica","Teoria della Comunicazione","Progettazione Multimediale","Tecnologie dei Processi di Produzione","Organizzazione e Gestione dei Processi Produttivi","Laboratori Tecnici"],
+    [],
+    ["Scienze Sperimentali","Tecnologie e Tecniche di Rappresentazione Grafica","Laboratorio di Tecnologie Digitali","Teoria e Tecnica della Comunicazione"],
+    ["Teoria e Tecnica della Comunicazione","Progettazione Multimediale","Tecnologie, Organizzazione e Gestione dei Processi Produttivi","Laboratori Tecnici"],
+    []
+  ),
+  "IT – Chimica, materiali e biotecnologie": it(
+    ["Scienze Integrate (Fisica)","Scienze Integrate (Chimica)","Tecnologie e Tecniche di Rappresentazione Grafica","Tecnologie Informatiche","Scienze e Tecnologie Applicate"],
+    ["Complementi di Matematica","Chimica Analitica e Strumentale","Chimica Organica e Biochimica"],
+    ["Tecnologie Chimiche Industriali","Biologia, Microbiologia e Tecnologie di Controllo Ambientale","Fisica Ambientale","Biologia, Microbiologia e Tecnologie di Controllo Sanitario","Igiene, Anatomia, Fisiologia, Patologia","Legislazione Sanitaria"],
+    ["Scienze Sperimentali","Tecnologie dell'Informazione e della Comunicazione (TIC)","Tecnologie e Tecniche di Rappresentazione Grafica","Chimica Applicata"],
+    [],
+    ["Tecnologie Chimiche","Chimica Analitica","Chimica Organica","Chimica Organica e Biochimica","Chimica Analitica e Strumentale","Biologia, Microbiologia e Tecnologie di Controllo Ambientale","Fisica Ambientale","Igiene, Anatomia e Patologia","Biologia, Microbiologia e Tecnologie di Controllo Sanitario","Legislazione Sanitaria"]
+  ),
+  "IT – Sistema moda": it(
+    ["Scienze Integrate (Fisica)","Scienze Integrate (Chimica)","Tecnologie e Tecniche di Rappresentazione Grafica","Tecnologie Informatiche","Scienze e Tecnologie Applicate"],
+    ["Complementi di Matematica","Chimica Applicata e Nobilitazione dei Materiali per i Prodotti Moda","Economia e Marketing delle Aziende della Moda","Tecnologie dei Materiali e dei Processi Produttivi e Organizzativi della Moda","Ideazione, Progettazione e Industrializzazione dei Prodotti Moda"],
+    [],
+    ["Scienze Sperimentali","Tecnologie dell'Informazione e della Comunicazione (TIC)","Tecnologie e Tecniche di Rappresentazione Grafica","Laboratorio di Tecniche Creative per il Tessile/Moda"],
+    ["Tecnologie dei Materiali e Processi Produttivi","Economia e Marketing delle Aziende della Moda"],
+    ["Ideazione e Progettazione Prodotti Tessili/Moda e Laboratorio CAD","Chimica Applicata, Nobilitazione e Sostenibilità dei Prodotti Tessili/Moda","Ideazione e Progettazione Calzatura Moda e Laboratorio CAD","Chimica Applicata, Nobilitazione e Sostenibilità dei Componenti e Prodotti Calzatura"]
+  ),
+  "IT – Agraria, agroalimentare e agroindustria": it(
+    ["Scienze Integrate (Fisica)","Scienze Integrate (Chimica)","Tecnologie e Tecniche di Rappresentazione Grafica","Tecnologie Informatiche","Scienze e Tecnologie Applicate"],
+    ["Complementi di Matematica","Produzioni Animali","Produzioni Vegetali","Trasformazione dei Prodotti","Economia, Estimo, Marketing e Legislazione","Genio Rurale","Biotecnologie Agrarie","Gestione dell'Ambiente e del Territorio"],
+    ["Viticoltura e Difesa della Vite","Enologia","Biotecnologie Vitivinicole"],
+    ["Scienze Sperimentali","Informatica e Smart Farming","Tecnologie e Tecniche di Rappresentazione Grafica","Agrobiologia","Fondamenti di Scienze Agrarie"],
+    ["Produzioni Animali","Produzioni Vegetali","Trasformazioni dei Prodotti","Economia, Estimo, Marketing e Legislazione","Genio Rurale"],
+    ["Biotecnologie Agrarie e Sicurezza Alimentare","Gestione Ambiente e Territorio","Viticoltura e Difesa della Vite","Enologia","Microbiologia e Chimica Enologica"]
+  ),
+  "IT – Costruzioni, ambiente e territorio": it(
+    ["Scienze Integrate (Fisica)","Scienze Integrate (Chimica)","Tecnologie e Tecniche di Rappresentazione Grafica","Tecnologie Informatiche","Scienze e Tecnologie Applicate"],
+    ["Complementi di Matematica","Gestione del Cantiere e Sicurezza dell'Ambiente di Lavoro","Progettazione, Costruzioni e Impianti","Geopedologia, Economia ed Estimo","Topografia"],
+    ["Geologia e Geologia Applicata","Topografia e Costruzioni","Tecnologie per la Gestione del Territorio e dell'Ambiente"],
+    ["Scienze Sperimentali","Tecnologie dell'Informazione e della Comunicazione (TIC)","Tecnologie e Tecniche di Rappresentazione Grafica","Fondamenti di Progettazione Edilizia e Ambiente","Fisica Applicata alle Strutture e all'Ambiente"],
+    ["Salvaguardia, Valorizzazione e Valutazione dei Beni e del Territorio","Rilievo e Geomatica"],
+    ["Progettazione, Edilizia, Sostenibilità e Sicurezza","Progettazione e Tecnologie per la Gestione del Territorio e dell'Ambiente","Geologia e Geologia Applicata","Progettazione Sostenibile, Bioarchitettura, Tecnologie del Legno nelle Costruzioni e Sicurezza"]
+  ),
   "IP – Agricoltura, sviluppo rurale, valorizzazione dei prodotti del territorio e gestione delle risorse forestali e montane": ip(
     ["Scienze Integrate","Ecologia e Pedologia","Tecnologie dell'Informazione e della Comunicazione (TIC)","Laboratorio di Scienze e Tecnologie Agrarie"],
     ["Laboratorio di Biologia e di Chimica Applicata ai Processi di Trasformazione","Agronomia del Territorio Agrario e Forestale","Tecniche delle Produzioni Vegetali e Zootecniche","Economia Agraria e Legislazione di Settore Agraria e Forestale","Gestione e Valorizzazione delle Attività Produttive e Sviluppo del Territorio e Sociologia Rurale"],
@@ -374,8 +411,12 @@ const QUADRI_ORARI_SEC2 = {
   ),
 };
 
-const _unione = v => Array.isArray(v) ? v : [...new Set([...v.biennio, ...v.triennio])];
-// Elenco piatto (unione biennio+triennio) per compatibilità: chiavi = indirizzi, valori = tutte le discipline
+const _unione = v => {
+  if (Array.isArray(v)) return v;
+  const liste = [v.biennio, v.triennio, ...(v.nuovoOrdinamento ? [v.nuovoOrdinamento.biennio, v.nuovoOrdinamento.triennio] : [])];
+  return [...new Set(liste.flat())];
+};
+// Elenco piatto (unione di biennio+triennio e, per i Tecnici, di entrambi gli ordinamenti) per compatibilità
 const ISTITUTI_SEC2 = Object.fromEntries(Object.entries(QUADRI_ORARI_SEC2).map(([k, v]) => [k, _unione(v)]));
 
 // Anno di corso (1-5) dall'età, stessa formula di calcolaClasse() in pei-prompt.js
@@ -383,18 +424,35 @@ function annoCorsoSec2(eta) {
   const e = parseInt(eta, 10) || 0;
   return Math.min(Math.max(e - 13, 1), 5);
 }
-// Discipline di un indirizzo sec2 per la classe corrispondente all'età (biennio se 1ª-2ª, triennio altrimenti)
-function getDisciplineSec2(istituto, eta) {
+// Anno scolastico corrente (anno di inizio): da settembre in poi è l'anno solare, altrimenti quello precedente
+function annoScolasticoInizio(data = new Date()) {
+  return data.getMonth() >= 8 ? data.getFullYear() : data.getFullYear() - 1;
+}
+// Ordinamento che si applica a un indirizzo per la classe corrispondente all'età nell'anno scolastico dato:
+//   'nuovo'   = nuovoOrdinamento (Tecnici, D.M. 29/2026: dal 2026/27 le sole classi prime, poi una classe in più ogni anno)
+//   'vigente' = quadro orario vigente (Professionali, Licei, Tecnici per le classi non ancora passate)
+function getOrdinamentoSec2(istituto, eta, asInizio = annoScolasticoInizio()) {
   const v = QUADRI_ORARI_SEC2[istituto];
-  if (!v) return [];
-  if (Array.isArray(v)) return v;
-  return annoCorsoSec2(eta) <= 2 ? v.biennio : v.triennio;
+  if (!v || Array.isArray(v) || !v.nuovoOrdinamento) return 'vigente';
+  return annoCorsoSec2(eta) <= (asInizio - v.nuovoOrdinamento.dal + 1) ? 'nuovo' : 'vigente';
+}
+function _quadro(istituto, eta, asInizio) {
+  const v = QUADRI_ORARI_SEC2[istituto];
+  if (!v || Array.isArray(v)) return v || null;
+  return getOrdinamentoSec2(istituto, eta, asInizio) === 'nuovo' ? v.nuovoOrdinamento : v;
+}
+// Discipline di un indirizzo sec2 per la classe corrispondente all'età (biennio se 1ª-2ª, triennio altrimenti)
+function getDisciplineSec2(istituto, eta, asInizio = annoScolasticoInizio()) {
+  const q = _quadro(istituto, eta, asInizio);
+  if (!q) return [];
+  if (Array.isArray(q)) return q;
+  return annoCorsoSec2(eta) <= 2 ? q.biennio : q.triennio;
 }
 // Discipline opzionali/alternative presenti nell'elenco per la classe (solo triennio, solo se definite)
-function getOpzionaliSec2(istituto, eta) {
-  const v = QUADRI_ORARI_SEC2[istituto];
-  if (!v || Array.isArray(v) || annoCorsoSec2(eta) <= 2) return [];
-  return v.triennioOpzionali || [];
+function getOpzionaliSec2(istituto, eta, asInizio = annoScolasticoInizio()) {
+  const q = _quadro(istituto, eta, asInizio);
+  if (!q || Array.isArray(q) || annoCorsoSec2(eta) <= 2) return [];
+  return q.triennioOpzionali || [];
 }
 
 /**
@@ -403,7 +461,7 @@ function getOpzionaliSec2(istituto, eta) {
  * @param {string} [istituto]  solo per sec2
  * @param {number|string} [eta]  solo per sec2: seleziona l'elenco del biennio o del triennio
  */
-function getConfig(grado, istituto = null, eta = null) {
+function getConfig(grado, istituto = null, eta = null, asInizio = annoScolasticoInizio()) {
   const term   = TERMINOLOGIA[grado];
   const sez8   = STRUTTURA_SEZ8[grado];
   const std81  = testoStandard81(term);
@@ -412,7 +470,7 @@ function getConfig(grado, istituto = null, eta = null) {
   if (grado === 'infanzia') discipline = CAMPI_ESPERIENZA;
   else if (grado === 'primaria') discipline = DISCIPLINE_PRIMARIA;
   else if (grado === 'sec1') discipline = DISCIPLINE_SEC1;
-  else if (grado === 'sec2' && istituto) discipline = getDisciplineSec2(istituto, eta);
+  else if (grado === 'sec2' && istituto) discipline = getDisciplineSec2(istituto, eta, asInizio);
 
   return { term, sez8, std81, discipline, istituti: grado === 'sec2' ? ISTITUTI_SEC2 : null };
 }
@@ -427,6 +485,8 @@ export {
   QUADRI_ORARI_SEC2,
   getDisciplineSec2,
   getOpzionaliSec2,
+  getOrdinamentoSec2,
+  annoScolasticoInizio,
   annoCorsoSec2,
   testoStandard81,
   getConfig,

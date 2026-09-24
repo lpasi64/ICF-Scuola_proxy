@@ -384,6 +384,7 @@ const PROGRAMMI_SEC2_BASE = {
   },
   "Geografia": {
     competenze: "Primo biennio (bozza Indicazioni Licei 2026: Storia e Geografia sono due discipline distinte, affidate a un unico docente). Geografia umana e culturale come scienza della rappresentazione e delle relazioni tra sistemi umani e naturali alle diverse scale; analisi critica dei cambiamenti ambientali, politici, economici e sociali; lettura di carte, dati statistici e paesaggi (art. 9 Costituzione) con approccio critico alle rappresentazioni digitali e generate da IA; sostenibilità e uso equo dei beni ambientali come beni comuni.",
+    soloPer: ["Liceo"],
     nuclei: [
       "Sistemi naturali e umani e loro interazioni (Antropocene, cambiamento climatico)",
       "Lettura e interpretazione di carte, dati statistici e rappresentazioni geografiche (anche digitali/IA)",
@@ -694,6 +695,7 @@ const PROGRAMMI_SEC2_BASE = {
   },
   "Scienze Integrate": {
     competenze: "Materia comune del primo biennio di tutti gli istituti professionali (Fisica, Chimica, Scienze della Terra, Biologia in approccio integrato): osservare, descrivere e analizzare fenomeni della realtà naturale e artificiale; riconoscere i concetti di sistema e complessità; analizzare qualitativamente/quantitativamente fenomeni legati alle trasformazioni di energia e materia.",
+    soloPer: ["IP"],
     nuclei: [
       "Osservazione e analisi di fenomeni naturali e artificiali",
       "Concetti di sistema e complessità",
@@ -704,6 +706,7 @@ const PROGRAMMI_SEC2_BASE = {
   },
   "Diritto ed Economia": {
     competenze: "Materia comune del primo biennio di tutti gli istituti professionali: principi fondamentali del diritto (Costituzione, diritti/doveri del cittadino) e dell'economia (bisogni, beni, mercato, imprese); primo approccio al lessico giuridico-economico applicato a contesti quotidiani e al settore professionale di riferimento.",
+    soloPer: ["IP"],
     nuclei: [
       "Costituzione italiana e principi fondamentali del diritto",
       "Diritti e doveri del cittadino, cittadinanza attiva",
@@ -1355,6 +1358,27 @@ const PROGRAMMI_SEC2_BASE = {
 };
 // Override per indirizzo: Diritto ed Economia del Liceo delle Scienze Umane (bozza Indicazioni
 // Licei, primo biennio) ha impostazione propria, diversa dalla voce base comune a professionali/tecnici.
+// Alias: nome ufficiale del quadro orario -> voce già curata con nome leggermente diverso (stessa disciplina).
+const PROGRAMMI_SEC2_ALIAS = {
+  "Discipline Turistiche Aziendali": "Discipline Turistiche e Aziendali",
+  "Tecnologie Meccaniche di Processo e Prodotto": "Tecnologie Meccaniche di Processo e di Prodotto",
+  "Psicologia Generale e Applicata": "Psicologia Generale ed Applicata",
+  "Economia e Marketing delle Aziende della Moda": "Economia e Marketing nel Sistema Moda",
+  "Gestione Ambiente e Territorio": "Gestione dell'Ambiente e del Territorio",
+  "Esercitazioni di Optometria": "Esercitazioni di Laboratorio di Optometria",
+  "Esercitazioni di Contattologia": "Contattologia",
+  "Ottica, Ottica Applicata": "Fisica Applicata (Ottica)",
+};
+// Una voce base con "soloPer" vale solo per gli istituti il cui nome inizia con uno dei prefissi indicati
+const _applicabile = (voce, istituto) => !voce.soloPer || (istituto && voce.soloPer.some(p => istituto.startsWith(p)));
+function _risolviSec2(nome, istituto) {
+  const ov = istituto && PROGRAMMI_SEC2_OVERRIDE[istituto];
+  if (ov?.[nome]) return ov[nome];
+  const chiave = PROGRAMMI_SEC2_ALIAS[nome] || nome;
+  if (ov?.[chiave]) return ov[chiave];
+  const base = PROGRAMMI_SEC2_BASE[chiave];
+  return base && _applicabile(base, istituto) ? base : null;
+}
 const PROGRAMMI_SEC2_OVERRIDE = {
   "IP – Pesca commerciale e produzioni ittiche": {
     "Laboratori Tecnologici ed Esercitazioni": {
@@ -1466,12 +1490,7 @@ const PROGRAMMI_PER_GRADO = {
  * Per gli altri gradi: mappa[nome] -> null.
  */
 function getProgrammaDisciplina(grado, nomeDisciplina, istituto = null) {
-  if (grado === 'sec2') {
-    if (istituto && PROGRAMMI_SEC2_OVERRIDE[istituto]?.[nomeDisciplina]) {
-      return PROGRAMMI_SEC2_OVERRIDE[istituto][nomeDisciplina];
-    }
-    return PROGRAMMI_SEC2_BASE[nomeDisciplina] || null;
-  }
+  if (grado === 'sec2') return _risolviSec2(nomeDisciplina, istituto);
   return PROGRAMMI_PER_GRADO[grado]?.[nomeDisciplina] || null;
 }
 
@@ -1512,8 +1531,7 @@ function checkCoverage({ campiEsperienza, disciplinePrimaria, disciplineSec1, is
     for (const [istituto, discipline] of Object.entries(istitutiSec2)) {
       for (const nome of discipline) {
         if (nome === 'Religione / Attività alternativa') continue;
-        const override = PROGRAMMI_SEC2_OVERRIDE[istituto]?.[nome];
-        if (!override && !PROGRAMMI_SEC2_BASE[nome]) missing.push(`sec2 (${istituto}): ${nome}`);
+        if (!_risolviSec2(nome, istituto)) missing.push(`sec2 (${istituto}): ${nome}`);
       }
     }
   }
@@ -1526,6 +1544,7 @@ export {
   PROGRAMMI_SEC1,
   PROGRAMMI_SEC2_BASE,
   PROGRAMMI_SEC2_OVERRIDE,
+  PROGRAMMI_SEC2_ALIAS,
   getProgrammaDisciplina,
   getProgrammiPerDiscipline,
   checkCoverage,

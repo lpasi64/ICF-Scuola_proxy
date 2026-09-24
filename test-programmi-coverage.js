@@ -14,8 +14,10 @@ import {
   getConfig,
   getDisciplineSec2,
   getOpzionaliSec2,
+  getOrdinamentoSec2,
+  annoCorsoSec2,
 } from './pei-gradi.js';
-import { checkCoverage, getProgrammiPerDiscipline } from './pei-programmi.js';
+import { checkCoverage, getProgrammiPerDiscipline, getProgrammaDisciplina, PROGRAMMI_SEC2_ALIAS, PROGRAMMI_SEC2_BASE } from './pei-programmi.js';
 
 let passed = 0;
 let failed = 0;
@@ -88,6 +90,57 @@ test('opzionali: solo nel triennio e solo per gli indirizzi che le prevedono', (
   assert(getOpzionaliSec2(agr, 17).length > 0, 'opzionali del triennio assenti');
   assert(getOpzionaliSec2('IP – Manutenzione e assistenza tecnica', 17).length === 0, 'Manutenzione non ha opzionali');
   assert(getOpzionaliSec2('Liceo Classico', 17).length === 0, 'i licei (forma legacy) non hanno opzionali');
+});
+
+test('Tecnici: regola di transizione D.M. 29/2026 (nuovo dalle classi prime 2026/27, una classe in più ogni anno)', () => {
+  const m = 'IT – Meccanica, meccatronica ed energia';
+  const casi = [ // [età, a.s. inizio, atteso]
+    [14, 2026, 'nuovo'], [15, 2026, 'vigente'], [17, 2026, 'vigente'],
+    [14, 2027, 'nuovo'], [15, 2027, 'nuovo'], [16, 2027, 'vigente'],
+    [17, 2029, 'nuovo'], [18, 2029, 'vigente'], [18, 2030, 'nuovo'],
+  ];
+  for (const [eta, as, atteso] of casi) {
+    assert(getOrdinamentoSec2(m, eta, as) === atteso, `età ${eta} (anno ${annoCorsoSec2(eta)}) a.s. ${as}/${as + 1}: atteso ${atteso}`);
+  }
+  // Licei e Professionali non hanno nuovo ordinamento: sempre 'vigente'
+  for (const k of ['Liceo Classico', 'IP – Manutenzione e assistenza tecnica']) {
+    for (const eta of [14, 18]) assert(getOrdinamentoSec2(k, eta, 2030) === 'vigente', `${k} deve restare vigente`);
+  }
+});
+
+test('Tecnici: elenchi coerenti con i due ordinamenti (1ª nuovo, 3ª vigente)', () => {
+  const m = 'IT – Meccanica, meccatronica ed energia';
+  const n1 = getDisciplineSec2(m, 14, 2026), v3 = getDisciplineSec2(m, 16, 2026);
+  assert(n1.includes('Scienze Sperimentali') && n1.includes('Geografia'), 'nuovo biennio: Scienze Sperimentali/Geografia mancanti');
+  assert(!n1.includes('Scienze Integrate (Fisica)') && !n1.includes('Scienze Integrate (Scienze della Terra e Biologia)'), 'nuovo biennio non deve avere le Scienze integrate');
+  assert(v3.includes('Meccanica, Macchine ed Energia') && !v3.includes('Scienze Sperimentali'), 'vigente triennio errato');
+  assert(getDisciplineSec2(m, 14, 2026).join() !== getDisciplineSec2(m, 14, 2025).join(), 'a.s. 2025/26: la 1ª è ancora nel vecchio ordinamento');
+  // tutti gli 11 IT hanno entrambi gli ordinamenti con elenchi non vuoti e opzionali contenute
+  for (const [k, v] of Object.entries(QUADRI_ORARI_SEC2)) {
+    if (!k.startsWith('IT')) continue;
+    const n = v.nuovoOrdinamento;
+    assert(n && n.biennio.length > 0 && n.triennio.length > 0, `nuovo ordinamento mancante: ${k}`);
+    for (const o of n.triennioOpzionali) assert(n.triennio.includes(o), `opzionale (nuovo) non nel triennio: ${k} / ${o}`);
+    assert(new Set(n.biennio).size === n.biennio.length && new Set(n.triennio).size === n.triennio.length, `duplicati nel nuovo ordinamento: ${k}`);
+  }
+});
+
+test('voci scritte per un solo tipo di scuola non vengono iniettate negli altri (soloPer)', () => {
+  const man = 'IP – Manutenzione e assistenza tecnica', mec = 'IT – Meccanica, meccatronica ed energia', cla = 'Liceo Classico', su = 'Liceo delle Scienze Umane';
+  assert(getProgrammaDisciplina('sec2', 'Geografia', cla), 'Geografia (bozza Licei) deve valere per i licei');
+  assert(!getProgrammaDisciplina('sec2', 'Geografia', man) && !getProgrammaDisciplina('sec2', 'Geografia', mec), 'Geografia dei licei non deve arrivare a IP/IT');
+  assert(getProgrammaDisciplina('sec2', 'Diritto ed Economia', man), 'Diritto ed Economia (professionali) deve valere per gli IP');
+  assert(!getProgrammaDisciplina('sec2', 'Diritto ed Economia', mec), 'Diritto ed Economia dei professionali non deve arrivare agli IT');
+  assert(getProgrammaDisciplina('sec2', 'Diritto ed Economia', su).competenze.includes('Liceo') || getProgrammaDisciplina('sec2', 'Diritto ed Economia', su).competenze.includes('Licei'), 'override del Liceo Scienze Umane perso');
+  assert(getProgrammaDisciplina('sec2', 'Scienze Integrate', man) && !getProgrammaDisciplina('sec2', 'Scienze Integrate', mec), 'Scienze Integrate: solo IP');
+});
+
+test('alias: ogni alias punta a una voce base esistente e restituisce lo stesso contenuto', () => {
+  for (const [nuovo, vecchio] of Object.entries(PROGRAMMI_SEC2_ALIAS)) {
+    assert(PROGRAMMI_SEC2_BASE[vecchio], `alias verso voce inesistente: ${nuovo} -> ${vecchio}`);
+    assert(!PROGRAMMI_SEC2_BASE[nuovo], `alias inutile, la voce esiste già: ${nuovo}`);
+    assert(getProgrammaDisciplina('sec2', nuovo, 'IT – Turismo') === PROGRAMMI_SEC2_BASE[vecchio], `alias non risolto: ${nuovo}`);
+  }
 });
 
 test('getProgrammiPerDiscipline produce un blocco non vuoto per infanzia', () => {

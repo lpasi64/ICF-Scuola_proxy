@@ -7,7 +7,7 @@ import {
   AlignmentType, BorderStyle, WidthType, ShadingType,
   VerticalAlign, PageNumber, Footer, UnderlineType,
 } from 'docx';
-import { STRUTTURA_SEZ8, TERMINOLOGIA, testoStandard81, getOpzionaliSec2 } from './pei-gradi.js';
+import { STRUTTURA_SEZ8, TERMINOLOGIA, testoStandard81, getOpzionaliSec2, getOrdinamentoSec2 } from './pei-gradi.js';
 
 // ── Palette ───────────────────────────────────────────────────────────────────
 // Bianco e nero puro, come i modelli ministeriali ufficiali (Allegati A1-A4, D.I. 182/2020):
@@ -778,12 +778,26 @@ function buildDocx(d, grado) {
           ...empty(1),
         );
       }
-      // Discipline opzionali/alternative del triennio (quadro orario dei nuovi professionali: soglia minima
-      // 0 ore, scelte dall'istituto): l'elenco le include tutte, l'istituto può non averle attivate.
+      // Istituti Tecnici: indica il quadro orario di riferimento (due ordinamenti in parallelo dal 2026/27)
+      if (grado === 'sec2' && (d.istituto || '').startsWith('IT')) {
+        const nuovo = getOrdinamentoSec2(d.istituto, d.eta) === 'nuovo';
+        children.push(
+          p(nuovo
+            ? "Nota: elenco delle discipline secondo il nuovo ordinamento degli istituti tecnici (D.M. 29/2026, allegati B e C), in vigore dal 2026/27 per le classi prime e via via per le successive."
+            : "Nota: elenco delle discipline secondo il quadro orario vigente per questa classe (DPR 88/2010); il nuovo ordinamento (D.M. 29/2026) si applica dal 2026/27 alle sole classi prime.",
+          { size: 17, italic: true, color: C.DARKGREY }),
+          ...empty(1),
+        );
+      }
+      // Discipline opzionali/alternative del triennio: professionali (soglia minima 0 ore, scelte dall'istituto)
+      // e tecnici (discipline specifiche delle articolazioni): l'elenco le include tutte.
       const opzionali = grado === 'sec2' ? getOpzionaliSec2(d.istituto, d.eta) : [];
       if (opzionali.length) {
+        const motivo = (d.istituto || '').startsWith('IT')
+          ? "sono specifiche delle articolazioni dell'indirizzo (alternative tra loro)"
+          : "sono insegnamenti opzionali o alternativi, attivati secondo la caratterizzazione dell'istituto (art. 3 c. 5 D.Lgs. 61/2017)";
         children.push(
-          p(`Nota: le seguenti discipline sono insegnamenti opzionali o alternativi, attivati secondo la caratterizzazione dell'istituto (quadro orario dei nuovi istituti professionali; art. 3 c. 5 D.Lgs. 61/2017): ${opzionali.join('; ')}. Eliminare le righe relative alle discipline non attivate.`, { size: 17, italic: true, color: C.DARKGREY }),
+          p(`Nota: le seguenti discipline ${motivo}: ${opzionali.join('; ')}. Eliminare le righe relative alle discipline non attivate o non pertinenti all'articolazione frequentata.`, { size: 17, italic: true, color: C.DARKGREY }),
           ...empty(1),
         );
       }

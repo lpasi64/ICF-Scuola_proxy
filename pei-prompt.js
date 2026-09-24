@@ -2,7 +2,7 @@
 // Porting ESM di server/prompt.js (progetto "Generatore PEI", G:\Il mio Drive\ICF_Scuola\PEI con Claude)
 // Nessuna modifica di logica — solo require/module.exports -> import/export.
 
-import { getConfig } from './pei-gradi.js';
+import { getConfig, getOrdinamentoSec2 } from './pei-gradi.js';
 import { getProgrammiPerDiscipline } from './pei-programmi.js';
 
 // ── Calcola classe frequentata dall'età ──────────────────────────────────────
@@ -28,13 +28,18 @@ function calcolaClasse(eta, grado) {
 }
 
 // ── Etichetta riferimento programmi ──────────────────────────────────────────
-function labelProgrammi(grado, istituto) {
+function labelProgrammi(grado, istituto, eta = null) {
   if (grado === 'infanzia')  return 'Indicazioni Nazionali per il curricolo 2025 (D.M. 221/2025) – traguardi di sviluppo';
   if (grado === 'primaria')  return 'Indicazioni Nazionali per il curricolo 2025 (D.M. 221/2025) – scuola primaria';
   if (grado === 'sec1')      return 'Indicazioni Nazionali per il curricolo 2025 (D.M. 221/2025) – scuola secondaria di primo grado';
   if (!istituto)             return 'Linee Guida per il secondo ciclo (DPR 15/03/2010)';
   if (istituto.startsWith('Liceo')) return `Indicazioni Nazionali per i Licei (DPR 89/2010; bozza nuove Indicazioni MIM 22/04/2026) – ${istituto}`;
-  if (istituto.startsWith('IT'))   return `Linee Guida Istituti Tecnici (DPR 88/2010) – ${istituto}`;
+  if (istituto.startsWith('IT')) {
+    // Tecnici: D.M. 29/2026 dalle classi prime 2026/27 (poi una classe in più ogni anno); DPR 88/2010 per le altre
+    return getOrdinamentoSec2(istituto, eta) === 'nuovo'
+      ? `Nuovo ordinamento Istituti Tecnici (D.M. 29/2026, All. B e C) – ${istituto}`
+      : `Linee Guida Istituti Tecnici (DPR 88/2010) – ${istituto}`;
+  }
   if (istituto.startsWith('IP'))   return `Linee Guida Istituti Professionali (D.Lgs. 61/2017) – ${istituto}`;
   return `Linee Guida per il secondo ciclo – ${istituto}`;
 }
@@ -201,7 +206,7 @@ function buildPromptPart2({ eta, sesso, grado, istituto, jsonData }) {
   const campoLabel = grado === 'infanzia' ? 'campi di esperienza' : 'discipline';
   const ctx        = buildContext({ eta, sesso, grado, istituto }, term, discStr, campoLabel);
   const classe     = calcolaClasse(eta, grado);
-  const refProgr   = labelProgrammi(grado, istituto);
+  const refProgr   = labelProgrammi(grado, istituto, eta);
 
   const obiettiviFmt = grado === 'infanzia'
     ? `I traguardi devono fare riferimento alle Indicazioni Nazionali per il curricolo 2025 (D.M. 221/2025) per il ${classe}.`
@@ -356,7 +361,7 @@ ${jsonData}`;
 // ── Blocco sezione 8 calibrato per grado ─────────────────────────────────────
 function buildSez8Block(grado, sez8, std81, discStr, istituto, term, eta = '', discipline = []) {
   const classe   = calcolaClasse(eta, grado);
-  const refProgr = labelProgrammi(grado, istituto);
+  const refProgr = labelProgrammi(grado, istituto, eta);
   const programmiBlock = getProgrammiPerDiscipline(grado, discipline, istituto);
   const programmiSection = programmiBlock ? `${programmiBlock}\n\n` : '';
 
