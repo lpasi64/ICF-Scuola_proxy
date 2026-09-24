@@ -61,7 +61,7 @@ TERMINOLOGIA OBBLIGATORIA:
 - Soggetto: "${sessoLabel}" (il sesso è noto: MAI forme con la barra come "${term.soggetto}", "Lo/la", "il/la", "del/della")
 - Unità scolastica: "${term.sezione}"
 - Organo collegiale: "${term.organo}"
-- Usa sempre il nome proprio rilevato dal JSON (mai ID numerici); nelle frasi, anche negli obiettivi, nei punti di forza e negli esiti attesi della Sezione 5, apri con il nome proprio e non con "Lo/la ${term.soggetto}"
+- Usa sempre il nome proprio rilevato dal JSON (mai ID numerici); nelle frasi, anche negli obiettivi, nei punti di forza e negli esiti attesi della Sezione 5, apri con il solo nome di battesimo (es. "Giulia", non nome e cognome) e non con "Lo/la ${term.soggetto}"
 
 REGOLE FONDAMENTALI:
 1. Sezione 1: ZERO codici ICF, ZERO diagnosi cliniche, linguaggio positivo e narrativo.

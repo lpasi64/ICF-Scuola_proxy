@@ -539,10 +539,14 @@ function parseCampiBlocks(text) {
   for (const raw of String(text || '').split('\n')) {
     const t = raw.replace(/\*\*/g, '').replace(/^\s*(?:[-•]|\d+[.)]|#{1,4})\s*/, '').replace(/[’‘]/g, "'").trim();
     if (!t) continue;
+    if (/^nota\s+metodologica/i.test(t)) break;          // da qui in poi è la nota, non i campi
     if (/^nota\s*:/i.test(t)) { cur = null; continue; }
     const senzaEtichetta = t.replace(/^campo(?:\s+di\s+esperienza)?\s*:\s*/i, '');
     const canon = CAMPI_INFANZIA.find(c => senzaEtichetta.toLowerCase().startsWith(c.toLowerCase()));
-    if (canon) { cur = { campo: canon, body: senzaEtichetta.slice(canon.length) }; blocks.push(cur); continue; }
+    if (canon) {
+      if (blocks.some(x => x.campo === canon)) { cur = null; continue; }   // un solo blocco per campo (le ripetizioni sono testo di altre sezioni)
+      cur = { campo: canon, body: senzaEtichetta.slice(canon.length) }; blocks.push(cur); continue;
+    }
     if (cur) cur.body += '\n' + t;
   }
   const pulisci = x => (x || '').replace(/^[\s|:–-]+|[\s|]+$/g, '').replace(/\s*\n\s*/g, ' ').trim();
