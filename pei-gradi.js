@@ -199,6 +199,10 @@ function it(bV, tV, oV, bN, tN, oN) {
     },
   };
 }
+// Licei: piano degli studi vigente (DPR 89/2010, Allegati B-G) con biennio e triennio distinti
+function lic(biennio, triennio) {
+  return { biennio: [...biennio], triennio: [...triennio], triennioOpzionali: [] };
+}
 function ip(biennioInd, triennioInd, opz = []) {
   return {
     biennio: [...IP_GEN_BIENNIO, ...biennioInd],
@@ -208,42 +212,35 @@ function ip(biennioInd, triennioInd, opz = []) {
 }
 
 const QUADRI_ORARI_SEC2 = {
-  "Liceo Classico": [
-    "Italiano","Latino","Greco","Storia e Filosofia","Geografia",
-    "Matematica","Fisica","Scienze Naturali","Storia dell'Arte",
-    "Lingua Straniera (Inglese)","Scienze Motorie e Sportive","Religione / Attività alternativa",
-  ],
-  "Liceo Scientifico": [
-    "Italiano","Latino","Storia e Filosofia","Geografia","Matematica","Fisica",
-    "Scienze Naturali","Disegno e Storia dell'Arte","Lingua Straniera (Inglese)",
-    "Scienze Motorie e Sportive","Religione / Attività alternativa",
-  ],
-  "Liceo Scientifico – opzione Scienze Applicate": [
-    "Italiano","Storia e Filosofia","Geografia","Matematica","Fisica","Scienze Naturali",
-    "Informatica","Disegno e Storia dell'Arte","Lingua Straniera (Inglese)",
-    "Scienze Motorie e Sportive","Religione / Attività alternativa",
-  ],
+  "Liceo Classico": lic(
+    ["Italiano","Latino","Greco","Lingua Straniera (Inglese)","Storia e Geografia","Matematica","Scienze Naturali","Scienze Motorie e Sportive","Religione / Attività alternativa"],
+    ["Italiano","Latino","Greco","Lingua Straniera (Inglese)","Storia","Filosofia","Matematica","Fisica","Scienze Naturali","Storia dell'Arte","Scienze Motorie e Sportive","Religione / Attività alternativa"]
+  ),
+  "Liceo Scientifico": lic(
+    ["Italiano","Latino","Lingua Straniera (Inglese)","Storia e Geografia","Matematica","Fisica","Scienze Naturali","Disegno e Storia dell'Arte","Scienze Motorie e Sportive","Religione / Attività alternativa"],
+    ["Italiano","Latino","Lingua Straniera (Inglese)","Storia","Filosofia","Matematica","Fisica","Scienze Naturali","Disegno e Storia dell'Arte","Scienze Motorie e Sportive","Religione / Attività alternativa"]
+  ),
+  "Liceo Scientifico – opzione Scienze Applicate": lic(
+    ["Italiano","Lingua Straniera (Inglese)","Storia e Geografia","Matematica","Informatica","Fisica","Scienze Naturali","Disegno e Storia dell'Arte","Scienze Motorie e Sportive","Religione / Attività alternativa"],
+    ["Italiano","Lingua Straniera (Inglese)","Storia","Filosofia","Matematica","Informatica","Fisica","Scienze Naturali","Disegno e Storia dell'Arte","Scienze Motorie e Sportive","Religione / Attività alternativa"]
+  ),
+  "Liceo Linguistico": lic(
+    ["Italiano","Latino","Prima Lingua Straniera (Inglese)","Seconda Lingua Straniera","Terza Lingua Straniera","Storia e Geografia","Matematica","Scienze Naturali","Scienze Motorie e Sportive","Religione / Attività alternativa"],
+    ["Italiano","Prima Lingua Straniera (Inglese)","Seconda Lingua Straniera","Terza Lingua Straniera","Storia","Filosofia","Matematica","Fisica","Scienze Naturali","Storia dell'Arte","Scienze Motorie e Sportive","Religione / Attività alternativa"]
+  ),
+  "Liceo delle Scienze Umane": lic(
+    ["Italiano","Latino","Storia e Geografia","Scienze Umane","Diritto ed Economia","Lingua Straniera (Inglese)","Matematica","Scienze Naturali","Scienze Motorie e Sportive","Religione / Attività alternativa"],
+    ["Italiano","Latino","Storia","Filosofia","Scienze Umane","Lingua Straniera (Inglese)","Matematica","Fisica","Scienze Naturali","Storia dell'Arte","Scienze Motorie e Sportive","Religione / Attività alternativa"]
+  ),
+  "Liceo delle Scienze Umane – opzione economico-sociale": lic(
+    ["Italiano","Storia e Geografia","Scienze Umane","Diritto ed Economia Politica","Lingua Straniera (Inglese)","Seconda Lingua Straniera","Matematica","Scienze Naturali","Scienze Motorie e Sportive","Religione / Attività alternativa"],
+    ["Italiano","Storia","Filosofia","Scienze Umane","Diritto ed Economia Politica","Lingua Straniera (Inglese)","Seconda Lingua Straniera","Matematica","Fisica","Storia dell'Arte","Scienze Motorie e Sportive","Religione / Attività alternativa"]
+  ),
   "Liceo Scientifico – sezione a indirizzo sportivo": [
     "Italiano","Storia e Filosofia","Geografia","Matematica","Fisica",
     "Scienze Naturali","Lingua Straniera (Inglese)",
     "Diritto ed Economia dello Sport","Discipline Sportive",
     "Scienze Motorie e Sportive","Religione / Attività alternativa",
-  ],
-  "Liceo Linguistico": [
-    "Italiano","Latino","Prima Lingua Straniera (Inglese)","Seconda Lingua Straniera",
-    "Terza Lingua Straniera","Storia e Filosofia","Geografia","Matematica","Fisica",
-    "Scienze Naturali","Storia dell'Arte","Scienze Motorie e Sportive","Religione / Attività alternativa",
-  ],
-  "Liceo delle Scienze Umane": [
-    "Italiano","Latino","Scienze Umane","Storia e Filosofia","Geografia",
-    "Diritto ed Economia","Matematica","Fisica","Scienze Naturali","Storia dell'Arte",
-    "Lingua Straniera (Inglese)","Scienze Motorie e Sportive","Religione / Attività alternativa",
-  ],
-  "Liceo delle Scienze Umane – opzione economico-sociale": [
-    "Italiano","Storia e Filosofia","Geografia","Scienze Umane (Sociologia e Metodologia della Ricerca)",
-    "Matematica","Fisica","Scienze Naturali","Storia dell'Arte",
-    "Lingua Straniera (Inglese)","Seconda Lingua Straniera",
-    "Diritto ed Economia Politica","Scienze Motorie e Sportive","Religione / Attività alternativa",
   ],
   "Liceo Artistico": [
     "Italiano","Storia e Filosofia","Geografia","Matematica","Fisica","Scienze Naturali",

@@ -3,7 +3,7 @@
 // Nessuna modifica di logica — solo require/module.exports -> import/export.
 
 import { getConfig, getOrdinamentoSec2 } from './pei-gradi.js';
-import { getProgrammiPerDiscipline } from './pei-programmi.js';
+import { getProgrammiPerDiscipline, LICEI_2010_MIGRATI } from './pei-programmi.js';
 
 // ── Calcola classe frequentata dall'età ──────────────────────────────────────
 function calcolaClasse(eta, grado) {
@@ -33,6 +33,7 @@ function labelProgrammi(grado, istituto, eta = null) {
   if (grado === 'primaria')  return 'Indicazioni Nazionali per il curricolo 2025 (D.M. 221/2025) – scuola primaria';
   if (grado === 'sec1')      return 'Indicazioni Nazionali per il curricolo 2025 (D.M. 221/2025) – scuola secondaria di primo grado';
   if (!istituto)             return 'Linee Guida per il secondo ciclo (DPR 15/03/2010)';
+  if (LICEI_2010_MIGRATI.has(istituto)) return `Indicazioni nazionali per i licei (D.M. 211/2010, vigenti) e piano degli studi DPR 89/2010 – ${istituto}`;
   if (istituto.startsWith('Liceo')) return `Indicazioni Nazionali per i Licei (DPR 89/2010; bozza nuove Indicazioni MIM 22/04/2026) – ${istituto}`;
   if (istituto.startsWith('IT')) {
     // Tecnici: D.M. 29/2026 dalle classi prime 2026/27 (poi una classe in più ogni anno); DPR 88/2010 per le altre
@@ -66,7 +67,7 @@ REGOLE FONDAMENTALI:
 1. Sezione 1: ZERO codici ICF, ZERO diagnosi cliniche, linguaggio positivo e narrativo.
 2. Ogni "deficit" → "area di sviluppo"; ogni "sostituzione" → "supporto orientato all'autonomia".
 3. NON usare placeholder "[...]" — scrivi ogni sezione integralmente.
-4. Sezione 8: usa ESATTAMENTE i ${campoLabel} elencati sopra, nessuno di più, nessuno di meno.
+4. Sezione 8: usa ESATTAMENTE i ${campoLabel} elencati sopra, nessuno di più, nessuno di meno. L'elenco è separato da punto e virgola (";"): alcuni nomi contengono virgole e vanno riportati per intero, come UNA sola voce (mai spezzati in più righe).
 5. VIETATO usare "autonomamente", "in modo autonomo", "uso autonomo" per descrivere P=0.
    In ICF "autonomia" indica la capacità intrinseca (qualifier C), non l'assenza di difficoltà in performance.
    Per P=0 usa: "non presenta difficoltà", "performance ottimale", "svolge senza difficoltà".
@@ -120,7 +121,7 @@ INTERPRETAZIONE P vs C (obbligatoria nella narrativa della Sezione 4):
 // ── PARTE 1: Sezioni 1–4 ─────────────────────────────────────────────────────
 function buildPromptPart1({ eta, sesso, grado, istituto, jsonData }) {
   const { term, discipline } = getConfig(grado, istituto, eta);
-  const discStr    = discipline.join(', ');
+  const discStr    = discipline.join('; ');
   const campoLabel = grado === 'infanzia' ? 'campi di esperienza' : 'discipline';
   const ctx        = buildContext({ eta, sesso, grado, istituto }, term, discStr, campoLabel);
 
@@ -202,7 +203,7 @@ ${jsonData}`;
 // ── PARTE 2: Sezione 5 (obiettivi) ───────────────────────────────────────────
 function buildPromptPart2({ eta, sesso, grado, istituto, jsonData }) {
   const { term, discipline } = getConfig(grado, istituto, eta);
-  const discStr    = discipline.join(', ');
+  const discStr    = discipline.join('; ');
   const campoLabel = grado === 'infanzia' ? 'campi di esperienza' : 'discipline';
   const ctx        = buildContext({ eta, sesso, grado, istituto }, term, discStr, campoLabel);
   const classe     = calcolaClasse(eta, grado);
@@ -254,7 +255,7 @@ ${jsonData}`;
 // ── PARTE 3: Sezioni 6–7 (contesto) ──────────────────────────────────────────
 function buildPromptPart3({ eta, sesso, grado, istituto, jsonData }) {
   const { term, discipline } = getConfig(grado, istituto, eta);
-  const discStr    = discipline.join(', ');
+  const discStr    = discipline.join('; ');
   const campoLabel = grado === 'infanzia' ? 'campi di esperienza' : 'discipline';
   const ctx        = buildContext({ eta, sesso, grado, istituto }, term, discStr, campoLabel);
 
@@ -315,7 +316,7 @@ ${jsonData}`;
 // ── PARTE 4: Sezione 8 + Nota Metodologica ───────────────────────────────────
 function buildPromptPart4({ eta, sesso, grado, istituto, jsonData }) {
   const { term, sez8, std81, discipline } = getConfig(grado, istituto, eta);
-  const discStr    = discipline.join(', ');
+  const discStr    = discipline.join('; ');
   const campoLabel = grado === 'infanzia' ? 'campi di esperienza' : 'discipline';
   const ctx        = buildContext({ eta, sesso, grado, istituto }, term, discStr, campoLabel);
   const bloccoSez8 = buildSez8Block(grado, sez8, std81, discStr, istituto, term, eta, discipline);

@@ -1372,6 +1372,10 @@ const PROGRAMMI_SEC2_ALIAS = {
 // Una voce base con "soloPer" vale solo per gli istituti il cui nome inizia con uno dei prefissi indicati
 const _applicabile = (voce, istituto) => !voce.soloPer || (istituto && voce.soloPer.some(p => istituto.startsWith(p)));
 function _risolviSec2(nome, istituto) {
+  // Licei già migrati alle Indicazioni nazionali vigenti (D.M. 211/2010): solo le voci del 2010, mai la bozza 2026
+  if (istituto && LICEI_2010_MIGRATI.has(istituto)) {
+    return PROGRAMMI_LICEI_2010_OVERRIDE[istituto]?.[nome] || PROGRAMMI_LICEI_2010[nome] || null;
+  }
   const ov = istituto && PROGRAMMI_SEC2_OVERRIDE[istituto];
   if (ov?.[nome]) return ov[nome];
   const chiave = PROGRAMMI_SEC2_ALIAS[nome] || nome;
@@ -1478,6 +1482,282 @@ const PROGRAMMI_SEC2_OVERRIDE = {
   },
 };
 
+// ─────────────────────────────────────────────────────────────────────────────────────────────
+// LICEI — Indicazioni nazionali VIGENTI (D.M. 7 ottobre 2010, n. 211; regolamento DPR 89/2010)
+// Decisione 2026-09-24: le nuove Indicazioni (bozza MIM 22/04/2026) non sono in vigore (previste dal
+// 2027/28, solo classi prime): per il 2026/27 valgono queste. Le voci ricavate dalla bozza restano in
+// PROGRAMMI_SEC2_BASE per un riuso dal 2027/28 (non usate per i licei "migrati").
+// Fonte: "Indicazioni nazionali per i licei" (indire.it, capitoli per disciplina: linee generali e
+// competenze; obiettivi specifici di apprendimento per primo biennio, secondo biennio, quinto anno).
+// Lotto 1: Classico, Scientifico, Scientifico Scienze applicate, Linguistico, Scienze umane, LES.
+// Struttura: PROGRAMMI_LICEI_2010[nome] = voce comune ai licei; PROGRAMMI_LICEI_2010_OVERRIDE[istituto][nome]
+// = variante di quel liceo (dove il capitolo delle Indicazioni differisce).
+// ─────────────────────────────────────────────────────────────────────────────────────────────
+const LICEI_2010_MIGRATI = new Set([
+  "Liceo Classico",
+  "Liceo Scientifico",
+  "Liceo Scientifico – opzione Scienze Applicate",
+  "Liceo Linguistico",
+  "Liceo delle Scienze Umane",
+  "Liceo delle Scienze Umane – opzione economico-sociale",
+]);
+
+const _LINGUA_STRANIERA_2010 = {
+  competenze: "Indicazioni licei 2010 – Lingua e cultura straniera: due assi interrelati, competenze linguistico-comunicative e conoscenza della cultura dei paesi di cui si parla la lingua; traguardo del percorso liceale almeno livello B2 del QCER (primo biennio orientativamente B1). Comprensione di testi orali e scritti (ambito personale, scolastico, letterario, artistico, scientifico, sociale, economico), produzione e interazione adeguate a interlocutore e contesto, riflessione sul sistema e sugli usi linguistici, uso della lingua per contenuti di discipline non linguistiche.",
+  nuclei: [
+    "Comprensione globale e selettiva di testi orali e scritti su argomenti noti (primo biennio)",
+    "Produzione di testi orali e scritti lineari e coesi per riferire fatti e descrivere situazioni",
+    "Interazione e conversazione, anche con parlanti nativi, adeguata al contesto",
+    "Riflessione su fonologia, morfologia, sintassi, lessico e registri, anche in ottica comparativa con l'italiano",
+    "Cultura dei paesi di cui si parla la lingua (letteratura, arte, attualità) e strategie di apprendimento autonomo",
+  ],
+};
+
+const PROGRAMMI_LICEI_2010 = {
+  "Italiano": {
+    competenze: "Indicazioni licei 2010 – Lingua e letteratura italiana: padronanza della lingua italiana scritta e orale (esprimersi con chiarezza e proprietà nei diversi contesti, riassumere e parafrasare, organizzare e motivare un ragionamento, interpretare un fenomeno storico, culturale, scientifico), riflessione metalinguistica sui livelli ortografico, interpuntivo, morfosintattico, lessicale-semantico e testuale, coscienza della storicità della lingua; gusto della lettura come obiettivo primario, lettura e interpretazione di testi letterari lungo il quinquennio.",
+    nuclei: [
+      "Lingua: consolidamento delle capacità linguistiche orali e scritte, uso efficace e corretto, coesione e coerenza del testo",
+      "Riflessione sulla lingua (livelli ortografico, morfosintattico, lessicale-semantico, testuale) senza tassonomie minuziose",
+      "Produzione scritta: riassumere, parafrasare, titolare, relazionare, testi di varie tipologie e registri, videoscrittura",
+      "Storia della lingua: dal latino ai volgari e all'italiano, varietà d'uso e dialetti",
+      "Letteratura: lettura diretta e interpretazione dei testi, percorsi per autori, generi e temi dalle origini all'età contemporanea",
+    ],
+  },
+  "Lingua Straniera (Inglese)": _LINGUA_STRANIERA_2010,
+  "Prima Lingua Straniera (Inglese)": _LINGUA_STRANIERA_2010,
+  "Seconda Lingua Straniera": _LINGUA_STRANIERA_2010,
+  "Terza Lingua Straniera": _LINGUA_STRANIERA_2010,
+  "Storia e Geografia": {
+    competenze: "Indicazioni licei 2010 – Storia e Geografia (primo biennio): Storia: orientarsi nella dimensione temporale e spaziale degli eventi, civiltà antiche e altomedievali, lessico e categorie della disciplina, lettura e valutazione delle fonti, cittadinanza e Costituzione. Geografia: strumenti e metodi fondamentali, lettura critica delle rappresentazioni cartografiche (aspetti geografico-fisici e geopolitici), relazioni tra condizioni ambientali, caratteristiche socioeconomiche e culturali e assetti politici.",
+    nuclei: [
+      "Civiltà antiche: Vicino Oriente, giudaica, greca, romana; avvento del Cristianesimo",
+      "Europa romano-barbarica e altomedioevo: società, economia, Chiesa, Islam, Impero e regni, feudalesimo",
+      "Fonti storiche e contributo di archeologia, epigrafia e paleografia",
+      "Geografia: carte e strumenti di rappresentazione del territorio, orientamento e nuove tecniche di lettura",
+      "Cittadinanza e Costituzione, relazioni tra ambiente, società ed economia",
+    ],
+  },
+  "Storia": {
+    competenze: "Indicazioni licei 2010 – Storia (secondo biennio e quinto anno): conoscere i principali eventi e le trasformazioni di lungo periodo della storia d'Europa e d'Italia nel quadro della storia globale; usare lessico e categorie interpretative, leggere e valutare le fonti, discutere criticamente interpretazioni diverse; conoscere i fondamenti dell'ordinamento costituzionale. Secondo biennio: dall'XI secolo alle soglie del Novecento (formazione dell'Europa e apertura a una dimensione globale). Quinto anno: epoca contemporanea, dalle premesse della prima guerra mondiale ai giorni nostri.",
+    nuclei: [
+      "Dall'XI secolo al Basso Medioevo: poteri universali, comuni, monarchie, Chiesa, società ed economia",
+      "Età moderna: scoperte geografiche e loro conseguenze, Signorie e Stati territoriali, rivoluzioni e Illuminismo",
+      "Ottocento: Risorgimento, industrializzazione e trasformazioni sociali fino alle soglie del Novecento",
+      "Novecento: prima guerra mondiale, totalitarismi, seconda guerra mondiale, Repubblica italiana e mondo contemporaneo",
+      "Cittadinanza e Costituzione; differenza tra storia e cronaca e uso critico delle fonti",
+    ],
+  },
+  "Filosofia": {
+    competenze: "Indicazioni licei 2010 – Filosofia (triennio): consapevolezza del significato della riflessione filosofica come modalità specifica della ragione umana; conoscenza organica dei punti nodali dello sviluppo del pensiero occidentale, con il legame con il contesto storico-culturale; lettura diretta dei testi; sviluppo di riflessione personale, giudizio critico e capacità di argomentare; problemi fondamentali: ontologia, etica e felicità, rapporto con le tradizioni religiose, conoscenza, logica, rapporto con la scienza, bellezza, libertà e potere.",
+    nuclei: [
+      "Lessico e categorie della filosofia; esposizione organica di idee e sistemi di pensiero",
+      "Filosofia antica: presocratici, sofisti, Socrate, Platone, Aristotele, età ellenistica",
+      "Filosofia medievale e moderna, dalle origini a Hegel: percorsi per autori e problemi con lettura di testi",
+      "Quinto anno: filosofia contemporanea (Schopenhauer, Kierkegaard, Marx, Nietzsche, Positivismo e reazioni, autori del Novecento)",
+      "Cittadinanza e Costituzione: libertà e potere nel pensiero politico; nessi con le altre discipline",
+    ],
+  },
+  "Matematica": {
+    competenze: "Indicazioni licei 2010 – Matematica (licei classico, linguistico, musicale e coreutico, scienze umane): concetti e metodi elementari della matematica, interni alla disciplina e rilevanti per descrivere e prevedere semplici fenomeni, in particolare del mondo fisico; visione storico-critica dei rapporti tra pensiero matematico e contesto filosofico, scientifico e tecnologico. Gruppi di concetti: geometria euclidea del piano e dello spazio, calcolo algebrico e geometria analitica, funzioni elementari e prime nozioni di calcolo differenziale e integrale, probabilità e statistica, modelli matematici, elementi di informatica.",
+    nuclei: [
+      "Aritmetica e algebra: dal calcolo aritmetico al calcolo algebrico, numeri interi, razionali e reali, equazioni e disequazioni",
+      "Geometria euclidea del piano e dello spazio: definizioni, dimostrazioni, assiomatizzazione, geometria analitica cartesiana",
+      "Relazioni e funzioni: funzioni elementari, prime nozioni di calcolo differenziale e integrale",
+      "Dati e previsioni: analisi statistica e calcolo delle probabilità",
+      "Modelli matematici, strumenti informatici per il calcolo e la rappresentazione, contesto storico del pensiero matematico",
+    ],
+  },
+  "Fisica": {
+    competenze: "Indicazioni licei 2010 – Fisica (licei classico, linguistico, musicale e coreutico, scienze umane): concetti fondamentali della fisica, valore culturale della disciplina e sua evoluzione storica ed epistemologica; competenze di osservare e identificare fenomeni, risolvere semplici problemi con gli strumenti matematici adeguati, consapevolezza del metodo sperimentale (esperimento come interrogazione ragionata dei fenomeni, analisi critica dei dati e dell'affidabilità della misura), valutare le scelte scientifiche e tecnologiche della società.",
+    nuclei: [
+      "Linguaggio della fisica classica: grandezze scalari e vettoriali, unità di misura, semplificazione e modellizzazione di situazioni reali",
+      "Meccanica: moto, forze e principi della dinamica, energia e quantità di moto",
+      "Termodinamica e onde (secondo biennio)",
+      "Elettromagnetismo e cenni di fisica moderna (quinto anno)",
+      "Metodo sperimentale, misure e analisi critica dei dati; raccordo con matematica, scienze, storia e filosofia",
+    ],
+  },
+  "Scienze Naturali": {
+    competenze: "Indicazioni licei 2010 – Scienze naturali: conoscenze disciplinari e metodologie delle scienze della natura (scienze della Terra, chimica, biologia) fondate sull'indagine scientifica 'osservazione e sperimentazione'; dimensione sperimentale e laboratorio come momento significativo del 'fare scienza' (anche in classe o sul campo, con dati, simulazioni, modelli). Primo biennio: approccio fenomenologico e osservativo-descrittivo; poi approfondimento concettuale e modellistico.",
+    nuclei: [
+      "Scienze della Terra: moti della Terra, geomorfologia (fiumi, laghi, ghiacciai, mari); poi mineralogia e petrologia",
+      "Chimica: stati e classificazione della materia, reazioni semplici, modello atomico, sistema periodico, legami chimici, primi concetti di chimica organica",
+      "Biologia: cellula e biodiversità, genetica mendeliana, evoluzione e sistematica, rapporti organismi-ambiente; poi basi molecolari e aspetti anatomici e fisiologici (educazione alla salute)",
+      "Metodo sperimentale: unità di misura, raccolta e registrazione dei dati, attività di laboratorio",
+      "Scienza, tecnologia e società: rapporti con i contesti storico, filosofico e tecnologico",
+    ],
+  },
+  "Storia dell'Arte": {
+    competenze: "Indicazioni licei 2010 – Storia dell'arte: comprensione del rapporto tra opere d'arte e situazione storica in cui sono state prodotte, con i legami con letteratura, pensiero filosofico e scientifico, politica, religione; lettura delle opere pittoriche, scultoree, architettoniche con metodo e terminologia appropriati (aspetti iconografici e simbolici, caratteri stilistici, funzioni, materiali e tecniche); consapevolezza del valore del patrimonio archeologico, architettonico e artistico e delle questioni di tutela, conservazione e restauro. Secondo biennio: dalle origini nell'area mediterranea alla fine del XVIII secolo; quinto anno: Ottocento e Novecento.",
+    nuclei: [
+      "Lettura dell'opera: metodo e terminologia, aspetti iconografici, simbolici, stilistici, materiali e tecniche",
+      "Inquadramento storico degli artisti e delle opere e legami con letteratura, pensiero, scienza, politica e religione",
+      "Dalle origini nell'area mediterranea alla fine del XVIII secolo: opere e movimenti fondamentali (secondo biennio)",
+      "Ottocento e Novecento: dal Neoclassicismo e Romanticismo alle avanguardie fino alla metà del secolo (quinto anno)",
+      "Patrimonio culturale: tutela, conservazione, restauro e storia dei metodi storiografici",
+    ],
+  },
+  "Scienze Motorie e Sportive": {
+    competenze: "Indicazioni licei 2010 – Scienze motorie e sportive: consapevolezza della propria corporeità (conoscenza, padronanza e rispetto del proprio corpo), valori sociali dello sport, buona preparazione motoria e atteggiamento positivo verso uno stile di vita sano e attivo; padronanza del corpo sperimentando un'ampia gamma di attività (capacità coordinative, forza, resistenza, velocità, flessibilità); agire in modo responsabile, analizzare la propria e l'altrui prestazione; linguaggio del corpo e espressione di emozioni; benefici delle attività fisiche nei diversi ambienti.",
+    nuclei: [
+      "Percezione di sé e completamento dello sviluppo funzionale delle capacità motorie ed espressive",
+      "Capacità coordinative e condizionali: forza, resistenza, velocità, flessibilità",
+      "Sport individuali e di squadra, regole, fair play e valori sociali dello sport",
+      "Linguaggio del corpo ed espressione di stati d'animo ed emozioni",
+      "Salute, prevenzione e sicurezza; attività fisica nei diversi ambienti",
+    ],
+  },
+  "Latino": {
+    competenze: "Indicazioni licei 2010 – Lingua e cultura latina (Liceo classico): leggere, comprendere e tradurre testi d'autore di vario genere e argomento; confronto linguistico del latino con l'italiano e con altre lingue moderne (lessico, semantica), traduzione come strumento di conoscenza di un testo e di un autore; cultura: lettura diretta in lingua originale e in traduzione dei testi fondamentali del patrimonio letterario classico, valore fondante della classicità romana per la tradizione europea, interpretazione e commento di opere in prosa e in versi con analisi linguistica, stilistica, retorica.",
+    nuclei: [
+      "Primo biennio: lettura scorrevole, morfosintassi (flessione nominale e verbale, funzioni dei casi, periodo), lessico per famiglie semantiche",
+      "Traduzione di testi d'autore, prevalentemente in prosa, con note di contestualizzazione, e confronto con l'italiano",
+      "Secondo biennio e quinto anno: lettura di autori e generi della latinità (prosa e versi), analisi linguistica, stilistica e retorica",
+      "Storia letteraria e cultura di Roma: contesto storico, religioso, politico, morale ed estetico dei testi",
+      "Confronto tra modelli culturali e letterari e ricezione della classicità nella tradizione europea",
+    ],
+  },
+  "Greco": {
+    competenze: "Indicazioni licei 2010 – Lingua e cultura greca (Liceo classico): leggere, comprendere e tradurre testi d'autore di vario genere e argomento; confronto di strutture morfosintattiche e lessico con italiano e latino, continuità e cambiamento dei sistemi linguistici; cultura: lettura diretta e in traduzione dei testi fondamentali del patrimonio letterario greco, valore fondante della classicità greca per la tradizione europea, interpretazione e commento di opere in prosa e in versi.",
+    nuclei: [
+      "Primo biennio: lettura, morfosintassi di base (nome, verbo, funzioni dei casi), lessico e formazione delle parole",
+      "Traduzione di testi d'autore come strumento di conoscenza del testo e dell'autore",
+      "Secondo biennio e quinto anno: generi e autori della letteratura greca, analisi linguistica, stilistica e retorica",
+      "Cultura greca: contesto storico, religioso, politico, morale ed estetico dei testi",
+      "Confronto con latino e italiano e ricezione del mondo greco nella civiltà europea",
+    ],
+  },
+  "Informatica": {
+    competenze: "Indicazioni licei 2010 – Informatica (opzione scienze applicate): comprendere i fondamenti teorici delle scienze dell'informazione, padroneggiare strumenti software per calcolo, ricerca e comunicazione in rete, comunicazione multimediale, acquisizione e organizzazione dei dati; sufficiente padronanza di uno o più linguaggi per applicazioni di calcolo in ambito scientifico; struttura logico-funzionale di computer e reti locali; consapevolezza di vantaggi, limiti e conseguenze sociali e culturali dell'uso degli strumenti informatici, con teoria e pratica integrate.",
+    nuclei: [
+      "Architettura del computer: hardware e software, codifica binaria (ASCII, Unicode), macchina di Von Neumann",
+      "Strumenti di lavoro: sistemi operativi, elaborazione di testi e dati, ricerca e comunicazione in rete, multimedialità",
+      "Algoritmi e programmazione: linguaggi per applicazioni semplici di calcolo scientifico",
+      "Reti: struttura di reti locali, Internet e servizi",
+      "Uso consapevole: vantaggi, limiti e conseguenze sociali e culturali dell'informatica; applicazioni all'indagine scientifica",
+    ],
+  },
+  "Disegno e Storia dell'Arte": {
+    competenze: "Indicazioni licei 2010 – Disegno e storia dell'arte (Liceo scientifico): padronanza del disegno grafico/geometrico come linguaggio e strumento di conoscenza (vedere nello spazio, confrontare, ipotizzare relazioni), metodi di rappresentazione della geometria descrittiva e uso degli strumenti del disegno; lettura critica di opere architettoniche e artistiche con terminologia e sintassi descrittiva appropriate (lettura formale e iconografica), collocazione storico-culturale, materiali, tecniche, stili, significati e funzioni; consapevolezza del valore del patrimonio architettonico e artistico. Primo biennio: dalle origini alla fine del XIV secolo.",
+    nuclei: [
+      "Disegno geometrico e geometria descrittiva: proiezioni ortogonali, assonometrie, prospettiva, uso degli strumenti",
+      "Disegno come strumento di studio dell'architettura e dell'opera d'arte (rilievo, analisi grafica)",
+      "Lettura dell'opera d'arte e dello spazio architettonico: categorie formali, iconografia, tecniche e materiali",
+      "Storia dell'arte e dell'architettura: dalle origini al Medioevo (primo biennio), poi Rinascimento, Barocco, Ottocento e Novecento",
+      "Patrimonio architettonico e artistico: valore culturale, tutela e conservazione",
+    ],
+  },
+  "Scienze Umane": {
+    competenze: "Indicazioni licei 2010 – Scienze umane (Liceo delle scienze umane): orientarsi con i linguaggi propri delle scienze umane nelle molteplici dimensioni della persona e delle relazioni (esperienza di sé e dell'altro, relazioni educative e interpersonali, forme di vita sociale e di cura per il bene comune, forme istituzionali in ambito socio-educativo, relazioni con il mondo dei valori); padroneggiare le principali tipologie educative, relazionali e sociali della cultura occidentale, comprendere le dinamiche della realtà sociale (fenomeni educativi e formativi, servizi alla persona, lavoro, interculturalità, cittadinanza), consapevolezza culturale delle dinamiche degli affetti. Insegnamento pluridisciplinare (antropologia, pedagogia, psicologia, sociologia) in stretto contatto con filosofia, storia, letteratura.",
+    nuclei: [
+      "Antropologia: significato della cultura, teorie antropologiche, diversità culturali e loro ragioni",
+      "Pedagogia: tipologie educative e storia dell'educazione, processi formativi formali e non formali",
+      "Psicologia: funzionamento mentale, sviluppo, dimensioni sociali e dinamiche affettive",
+      "Sociologia: fenomeni e istituzioni sociali, lavoro, servizi alla persona, interculturalità e cittadinanza",
+      "Approccio pluridisciplinare, in stretto contatto con filosofia, storia e letteratura",
+    ],
+  },
+  "Diritto ed Economia": {
+    competenze: "Indicazioni licei 2010 – Diritto ed economia (Liceo delle scienze umane, biennio): Economia: elementi teorici fondamentali dell'economia politica come scienza delle decisioni di soggetti razionali che vivono in società, dinamica di produzione e scambio di beni e servizi, dimensioni etiche, psicologiche e sociali dell'agire umano; Diritto: linguaggio giuridico essenziale, confronto tra diritto e altre norme sociali ed etiche, principi della Costituzione, organi costituzionali e forma di governo, istituti del diritto di famiglia, ordinamento dell'Unione Europea.",
+    nuclei: [
+      "Il problema economico: ricchezza, reddito, moneta, produzione, consumo, risparmio, investimento, costo e ricavo",
+      "Produzione e scambio di beni e servizi; dimensioni etiche, psicologiche e sociali dell'agire economico",
+      "Fonti e funzione delle norme giuridiche; distinzione tra diritto e altre norme sociali ed etiche",
+      "Costituzione italiana, organi costituzionali e forma di governo",
+      "Diritto di famiglia; ordinamento e istituzioni dell'Unione Europea",
+    ],
+  },
+  "Diritto ed Economia Politica": {
+    competenze: "Indicazioni licei 2010 – Diritto ed economia politica (Liceo delle scienze umane, opzione economico-sociale): Economia politica: lessico di base e fondamenti teorici come scienza sociale in dialogo con storia, filosofia, sociologia, storia del pensiero economico e strumenti di analisi quantitativa, ruolo degli operatori economici pubblici e privati (anche terzo settore) a livello internazionale; Diritto: linguaggio giuridico in diversi contesti, principi filosofici e trasformazioni storiche delle istituzioni giuridiche, conoscenza approfondita della Costituzione italiana nel quinquennio.",
+    nuclei: [
+      "Primo biennio: problema economico (ricchezza, reddito, moneta, produzione, consumo, risparmio, investimento) a partire dall'esperienza di vita e dai media",
+      "Economia politica: mercato, imprese, Stato e politiche economiche; storia del pensiero economico e fatti salienti della storia economica",
+      "Operatori economici pubblici e privati, terzo settore, dimensione internazionale e benessere sociale",
+      "Diritto: fonti e principi delle norme, Costituzione italiana, ordinamento dello Stato e istituzioni europee",
+      "Strumenti di analisi quantitativa dei fenomeni economici",
+    ],
+  },
+};
+
+const PROGRAMMI_LICEI_2010_OVERRIDE = {
+  "Liceo Scientifico": {
+    "Matematica": {
+      competenze: "Indicazioni licei 2010 – Matematica (Liceo scientifico): concetti e metodi elementari della matematica, interni alla disciplina e rilevanti per descrivere e prevedere fenomeni, in particolare del mondo fisico (più ampio impianto rispetto agli altri licei); visione storico-critica dei rapporti tra pensiero matematico e contesto filosofico, scientifico e tecnologico; geometria euclidea del piano e dello spazio, calcolo algebrico, geometria analitica, funzioni, calcolo differenziale e integrale, calcolo vettoriale e derivata per lo studio dei fenomeni fisici, probabilità e statistica, modelli matematici, elementi di informatica.",
+      nuclei: [
+        "Aritmetica e algebra: dal calcolo aritmetico al calcolo algebrico, numeri reali, equazioni e disequazioni",
+        "Geometria euclidea e analitica: dimostrazioni, trasformazioni, geometria cartesiana, coniche",
+        "Relazioni e funzioni: funzioni elementari, limiti, calcolo differenziale e integrale",
+        "Dati e previsioni: statistica, calcolo delle probabilità, distribuzioni",
+        "Modelli matematici di fenomeni (anche fisici), strumenti informatici di calcolo e rappresentazione",
+      ],
+    },
+    "Fisica": {
+      competenze: "Indicazioni licei 2010 – Fisica (Liceo scientifico): concetti fondamentali, leggi e teorie della fisica, valore conoscitivo della disciplina e nesso con il contesto storico e filosofico; competenze di osservare e identificare fenomeni, formulare ipotesi esplicative con modelli, analogie e leggi, formalizzare un problema e applicare gli strumenti matematici, metodo sperimentale (scelta delle variabili, raccolta e analisi critica dei dati, affidabilità della misura, costruzione e validazione di modelli), valutare le scelte scientifiche e tecnologiche della società.",
+      nuclei: [
+        "Linguaggio della fisica classica: grandezze scalari e vettoriali, misura e modellizzazione",
+        "Meccanica: moto e dinamica, leggi di conservazione, gravitazione",
+        "Termodinamica e onde: calore, principi della termodinamica, ottica e fenomeni ondulatori",
+        "Elettromagnetismo: campi elettrico e magnetico, induzione, equazioni di Maxwell (secondo biennio e quinto anno)",
+        "Fisica del Novecento: relatività e quanti; metodo sperimentale e attività di laboratorio",
+      ],
+    },
+    "Scienze Naturali": {
+      competenze: "Indicazioni licei 2010 – Scienze naturali (Liceo scientifico): conoscenze disciplinari e metodologie delle scienze della natura (Terra, chimica, biologia) con dimensione sperimentale e laboratorio come momento del 'fare scienza'; consapevolezza critica dei rapporti tra sviluppo delle conoscenze e contesto storico, filosofico e tecnologico e dei nessi tra le aree scientifiche; primo biennio con approccio osservativo-descrittivo, poi approfondimento concettuale, modellistico e interpretativo.",
+      nuclei: [
+        "Scienze della Terra: moti della Terra, geomorfologia, mineralogia e petrologia, tettonica (secondo biennio e quinto anno)",
+        "Chimica: struttura della materia, sistema periodico, legami, reazioni, chimica organica di base",
+        "Biologia: cellula e biodiversità, genetica, evoluzione, basi molecolari (DNA, sintesi proteica), aspetti anatomici e fisiologici, biochimica",
+        "Metodo sperimentale: misure, raccolta dati, laboratorio, modelli e simulazioni",
+        "Scienza e società: nessi con il contesto storico, filosofico e tecnologico",
+      ],
+    },
+  },
+  "Liceo Scientifico – opzione Scienze Applicate": {}, // popolato sotto con gli stessi override dello Scientifico
+  "Liceo Scientifico – opzione Scienze Applicate ": {},
+  "Liceo Linguistico": {
+    "Latino": {
+      competenze: "Indicazioni licei 2010 – Lingua latina (Liceo linguistico, primo biennio): conoscere i fondamenti della lingua latina e riflettere metalinguisticamente su di essi attraverso la traduzione di testi d'autore non troppo impegnativi e annotati; a livello di base, riconoscere affinità e divergenze tra latino, italiano e altre lingue romanze e non romanze (formazione delle parole, esiti morfologici, semantica storica, etimologia); orientarsi su aspetti della società e della cultura di Roma antica a partire dai fattori linguistici (lessico dei legami familiari, del diritto, della politica, del culto).",
+      nuclei: [
+        "Strutture fonologiche e morfologiche di base: sistema quantitativo, flessione di nome, aggettivo, pronome e verbo",
+        "Sintassi essenziale: funzioni dei casi, participio e ablativo assoluto, infinitive, cum e ut",
+        "Lessico latino di base e famiglie semantiche; formazione delle parole ed esiti nelle lingue romanze",
+        "Traduzione di testi d'autore non impegnativi con note; confronto con italiano e lingue moderne studiate",
+        "Aspetti della civiltà romana attraverso il lessico (famiglia, diritto, politica, religione)",
+      ],
+    },
+  },
+  "Liceo delle Scienze Umane": {
+    "Latino": {
+      competenze: "Indicazioni licei 2010 – Lingua e cultura latina (Liceo delle scienze umane e Liceo scientifico): padronanza della lingua latina sufficiente a orientarsi nella lettura, diretta o in traduzione con testo a fronte, dei testi più rappresentativi della latinità e a coglierne i valori storici e culturali; confronto linguistico con l'italiano e le lingue straniere note (lessico, semantica); traduzione come strumento di conoscenza; cultura: lettura in lingua e in traduzione dei testi fondamentali della latinità in prospettiva letteraria e culturale e valore fondante del patrimonio latino per la tradizione europea.",
+      nuclei: [
+        "Primo biennio: lettura scorrevole, morfologia di nome, aggettivo, pronome e verbo, sintassi dei casi e del periodo essenziale",
+        "Lessico di base, famiglie semantiche e formazione delle parole",
+        "Traduzione e confronto con l'italiano e le lingue straniere note",
+        "Secondo biennio e quinto anno: lettura in lingua e in traduzione di autori e generi rappresentativi della latinità",
+        "Aspetti storici e culturali del mondo romano attraverso i testi",
+      ],
+    },
+  },
+  "Liceo delle Scienze Umane – opzione economico-sociale": {
+    "Scienze Umane": {
+      competenze: "Indicazioni licei 2010 – Scienze umane (opzione economico-sociale): orientarsi con i linguaggi della cultura nelle dimensioni della persona e delle relazioni (esperienza di sé e dell'altro, relazioni interpersonali, forme di vita sociale e di cura per il bene comune, relazioni istituzionali in ambito sociale); comprendere le dinamiche della realtà sociale (mondo del lavoro, servizi alla persona, interculturalità, cittadinanza) e le trasformazioni socio-politiche ed economiche indotte dalla globalizzazione, gestione della multiculturalità, significato del terzo settore; consapevolezza delle dinamiche psicosociali; principi, metodi e tecniche della ricerca in campo economico-sociale. In stretto contatto con economia, diritto, matematica, geografia, filosofia, storia, letteratura.",
+      nuclei: [
+        "Psicologia: specificità della disciplina scientifica, funzionamento mentale, sviluppo e dimensioni sociali",
+        "Antropologia: cultura, diversità culturali e interculturalità",
+        "Sociologia: fenomeni e istituzioni sociali, lavoro, globalizzazione, multiculturalità, terzo settore",
+        "Metodologia della ricerca: principi, metodi e tecniche di ricerca economico-sociale (qualitativa e quantitativa)",
+        "Collegamenti con economia, diritto, matematica, geografia, filosofia, storia e letteratura",
+      ],
+    },
+  },
+};
+// Le opzioni Scienze applicate e (per gli stessi capitoli) Scientifico condividono le varianti
+PROGRAMMI_LICEI_2010_OVERRIDE["Liceo Scientifico – opzione Scienze Applicate"] = PROGRAMMI_LICEI_2010_OVERRIDE["Liceo Scientifico"];
+delete PROGRAMMI_LICEI_2010_OVERRIDE["Liceo Scientifico – opzione Scienze Applicate "];
+// Il Liceo Scientifico (tradizionale) e il Liceo delle scienze umane usano la stessa variante del Latino
+PROGRAMMI_LICEI_2010_OVERRIDE["Liceo Scientifico"] = { ...PROGRAMMI_LICEI_2010_OVERRIDE["Liceo Scientifico"], "Latino": PROGRAMMI_LICEI_2010_OVERRIDE["Liceo delle Scienze Umane"]["Latino"] };
+
 const PROGRAMMI_PER_GRADO = {
   infanzia: PROGRAMMI_INFANZIA,
   primaria: PROGRAMMI_PRIMARIA,
@@ -1499,6 +1779,13 @@ function getProgrammaDisciplina(grado, nomeDisciplina, istituto = null) {
  * nel prompt per la Sezione 8. Le discipline senza voce curata vengono semplicemente
  * omesse dal blocco (degrado silenzioso: il prompt userà comunque il nome disciplina).
  */
+// Intestazione del blocco: indica il riferimento normativo effettivamente usato per quella scuola
+function _intestazioneProgrammi(grado, istituto) {
+  if (grado === 'sec2' && istituto && LICEI_2010_MIGRATI.has(istituto)) {
+    return 'Programmi ministeriali di riferimento (Indicazioni nazionali per i licei, D.M. 211/2010, vigenti):';
+  }
+  return 'Programmi ministeriali di riferimento (Indicazioni Nazionali 2025 / Linee Guida):';
+}
 function getProgrammiPerDiscipline(grado, nomiDiscipline, istituto = null) {
   const righe = [];
   for (const nome of nomiDiscipline) {
@@ -1507,7 +1794,7 @@ function getProgrammiPerDiscipline(grado, nomiDiscipline, istituto = null) {
     righe.push(`- ${nome}: ${prog.competenze} Nuclei: ${prog.nuclei.join('; ')}.`);
   }
   if (righe.length === 0) return '';
-  return `Programmi ministeriali di riferimento (Indicazioni Nazionali 2025 / Linee Guida):\n${righe.join('\n')}`;
+  return `${_intestazioneProgrammi(grado, istituto)}\n${righe.join('\n')}`;
 }
 
 /**
@@ -1545,6 +1832,9 @@ export {
   PROGRAMMI_SEC2_BASE,
   PROGRAMMI_SEC2_OVERRIDE,
   PROGRAMMI_SEC2_ALIAS,
+  PROGRAMMI_LICEI_2010,
+  PROGRAMMI_LICEI_2010_OVERRIDE,
+  LICEI_2010_MIGRATI,
   getProgrammaDisciplina,
   getProgrammiPerDiscipline,
   checkCoverage,

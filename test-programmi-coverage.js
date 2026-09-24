@@ -17,7 +17,7 @@ import {
   getOrdinamentoSec2,
   annoCorsoSec2,
 } from './pei-gradi.js';
-import { checkCoverage, getProgrammiPerDiscipline, getProgrammaDisciplina, PROGRAMMI_SEC2_ALIAS, PROGRAMMI_SEC2_BASE } from './pei-programmi.js';
+import { checkCoverage, getProgrammiPerDiscipline, getProgrammaDisciplina, PROGRAMMI_SEC2_ALIAS, PROGRAMMI_SEC2_BASE, LICEI_2010_MIGRATI, PROGRAMMI_LICEI_2010 } from './pei-programmi.js';
 
 let passed = 0;
 let failed = 0;
@@ -126,13 +126,35 @@ test('Tecnici: elenchi coerenti con i due ordinamenti (1ª nuovo, 3ª vigente)',
 });
 
 test('voci scritte per un solo tipo di scuola non vengono iniettate negli altri (soloPer)', () => {
-  const man = 'IP – Manutenzione e assistenza tecnica', mec = 'IT – Meccanica, meccatronica ed energia', cla = 'Liceo Classico', su = 'Liceo delle Scienze Umane';
+  const man = 'IP – Manutenzione e assistenza tecnica', mec = 'IT – Meccanica, meccatronica ed energia', cla = 'Liceo Artistico', su = 'Liceo del Made in Italy';
   assert(getProgrammaDisciplina('sec2', 'Geografia', cla), 'Geografia (bozza Licei) deve valere per i licei');
   assert(!getProgrammaDisciplina('sec2', 'Geografia', man) && !getProgrammaDisciplina('sec2', 'Geografia', mec), 'Geografia dei licei non deve arrivare a IP/IT');
   assert(getProgrammaDisciplina('sec2', 'Diritto ed Economia', man), 'Diritto ed Economia (professionali) deve valere per gli IP');
   assert(!getProgrammaDisciplina('sec2', 'Diritto ed Economia', mec), 'Diritto ed Economia dei professionali non deve arrivare agli IT');
-  assert(getProgrammaDisciplina('sec2', 'Diritto ed Economia', su).competenze.includes('Liceo') || getProgrammaDisciplina('sec2', 'Diritto ed Economia', su).competenze.includes('Licei'), 'override del Liceo Scienze Umane perso');
   assert(getProgrammaDisciplina('sec2', 'Scienze Integrate', man) && !getProgrammaDisciplina('sec2', 'Scienze Integrate', mec), 'Scienze Integrate: solo IP');
+});
+
+test('Licei migrati (Lotto 1): programmi vigenti D.M. 211/2010, copertura completa in biennio e triennio, mai la bozza 2026', () => {
+  assert(LICEI_2010_MIGRATI.size === 6, 'attesi 6 licei migrati nel Lotto 1');
+  for (const k of LICEI_2010_MIGRATI) {
+    for (const eta of [14, 17]) {
+      const mancanti = getDisciplineSec2(k, eta).filter(n => n !== 'Religione / Attività alternativa' && !getProgrammaDisciplina('sec2', n, k));
+      assert(mancanti.length === 0, `${k} età ${eta}: senza voce ${mancanti.join(', ')}`);
+    }
+    const testo = getProgrammiPerDiscipline('sec2', getDisciplineSec2(k, 17), k);
+    assert(testo.startsWith('Programmi ministeriali di riferimento (Indicazioni nazionali per i licei, D.M. 211/2010'), `intestazione errata: ${k}`);
+    assert(!/bozza|2026/i.test(testo.split('D.M. 211/2010').join('')), `testo con riferimenti alla bozza 2026: ${k}`);
+  }
+  // le voci della bozza non devono raggiungere i licei migrati
+  const cla = 'Liceo Classico';
+  assert(!getProgrammaDisciplina('sec2', 'Storia e Filosofia', cla) && !getProgrammaDisciplina('sec2', 'Geografia', cla), 'voce della bozza trapelata nel Classico');
+  // varianti per liceo
+  const sc = getProgrammaDisciplina('sec2', 'Matematica', 'Liceo Scientifico'), cl = getProgrammaDisciplina('sec2', 'Matematica', cla);
+  assert(sc && cl && sc !== cl && sc.competenze.includes('Liceo scientifico'), 'variante Matematica dello Scientifico assente');
+  assert(getProgrammaDisciplina('sec2', 'Latino', 'Liceo Linguistico').competenze.includes('Liceo linguistico'), 'Latino del Linguistico');
+  assert(getProgrammaDisciplina('sec2', 'Scienze Umane', 'Liceo delle Scienze Umane – opzione economico-sociale').competenze.includes('economico-sociale'), 'Scienze umane LES');
+  // gli altri licei restano (per ora) sul vecchio comportamento
+  assert(!LICEI_2010_MIGRATI.has('Liceo Artistico') && getProgrammaDisciplina('sec2', 'Italiano', 'Liceo Artistico'), 'Liceo Artistico non ancora migrato: deve avere ancora le voci esistenti');
 });
 
 test('alias: ogni alias punta a una voce base esistente e restituisce lo stesso contenuto', () => {

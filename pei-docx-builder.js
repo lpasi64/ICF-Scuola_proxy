@@ -8,6 +8,7 @@ import {
   VerticalAlign, PageNumber, Footer, UnderlineType,
 } from 'docx';
 import { STRUTTURA_SEZ8, TERMINOLOGIA, testoStandard81, getOpzionaliSec2, getOrdinamentoSec2 } from './pei-gradi.js';
+import { LICEI_2010_MIGRATI } from './pei-programmi.js';
 
 // ── Palette ───────────────────────────────────────────────────────────────────
 // Bianco e nero puro, come i modelli ministeriali ufficiali (Allegati A1-A4, D.I. 182/2020):
@@ -773,8 +774,13 @@ function buildDocx(d, grado) {
       // sulla bozza delle nuove Indicazioni Nazionali (MIM 22/04/2026), non ancora adottata
       // in via definitiva — segnalarlo in ogni PEI liceale generato, non solo nel codice.
       if (grado === 'sec2' && (d.istituto || '').startsWith('Liceo')) {
+        // Licei: Indicazioni nazionali vigenti (D.M. 211/2010) dove già curate; per gli altri licei ancora la bozza 2026
+        const vigenti = LICEI_2010_MIGRATI.has(d.istituto);
         children.push(
-          p('Nota: i programmi ministeriali di riferimento per questo indirizzo liceale sono basati sulla bozza delle nuove Indicazioni Nazionali per i Licei (MIM, 22/04/2026), non ancora adottata in via definitiva — verificare eventuali aggiornamenti al momento della revisione del PEI.', { size: 17, italic: true, color: C.DARKGREY }),
+          p(vigenti
+            ? 'Nota: i programmi ministeriali di riferimento sono le Indicazioni nazionali per i licei vigenti (D.M. 211/2010) e il piano degli studi del DPR 89/2010; le nuove Indicazioni per i licei sono previste dal 2027/28, per le sole classi prime.'
+            : 'Nota: i programmi ministeriali di riferimento per questo indirizzo liceale sono basati sulla bozza delle nuove Indicazioni Nazionali per i Licei (MIM, 22/04/2026), non ancora adottata in via definitiva — verificare eventuali aggiornamenti al momento della revisione del PEI.',
+          { size: 17, italic: true, color: C.DARKGREY }),
           ...empty(1),
         );
       }
