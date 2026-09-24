@@ -7,7 +7,7 @@ import {
   AlignmentType, BorderStyle, WidthType, ShadingType,
   VerticalAlign, PageNumber, Footer, UnderlineType,
 } from 'docx';
-import { STRUTTURA_SEZ8, TERMINOLOGIA, testoStandard81 } from './pei-gradi.js';
+import { STRUTTURA_SEZ8, TERMINOLOGIA, testoStandard81, getOpzionaliSec2 } from './pei-gradi.js';
 
 // ── Palette ───────────────────────────────────────────────────────────────────
 // Bianco e nero puro, come i modelli ministeriali ufficiali (Allegati A1-A4, D.I. 182/2020):
@@ -775,6 +775,15 @@ function buildDocx(d, grado) {
       if (grado === 'sec2' && (d.istituto || '').startsWith('Liceo')) {
         children.push(
           p('Nota: i programmi ministeriali di riferimento per questo indirizzo liceale sono basati sulla bozza delle nuove Indicazioni Nazionali per i Licei (MIM, 22/04/2026), non ancora adottata in via definitiva — verificare eventuali aggiornamenti al momento della revisione del PEI.', { size: 17, italic: true, color: C.DARKGREY }),
+          ...empty(1),
+        );
+      }
+      // Discipline opzionali/alternative del triennio (quadro orario dei nuovi professionali: soglia minima
+      // 0 ore, scelte dall'istituto): l'elenco le include tutte, l'istituto può non averle attivate.
+      const opzionali = grado === 'sec2' ? getOpzionaliSec2(d.istituto, d.eta) : [];
+      if (opzionali.length) {
+        children.push(
+          p(`Nota: le seguenti discipline sono insegnamenti opzionali o alternativi, attivati secondo la caratterizzazione dell'istituto (quadro orario dei nuovi istituti professionali; art. 3 c. 5 D.Lgs. 61/2017): ${opzionali.join('; ')}. Eliminare le righe relative alle discipline non attivate.`, { size: 17, italic: true, color: C.DARKGREY }),
           ...empty(1),
         );
       }
