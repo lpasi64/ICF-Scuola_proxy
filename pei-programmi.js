@@ -1390,7 +1390,9 @@ function _risolviSec2(nome, istituto, eta = null) {
   if (ov?.[nome]) return ov[nome];
   const chiave = PROGRAMMI_SEC2_ALIAS[nome] || nome;
   if (ov?.[chiave]) return ov[chiave];
-  // Istituti Professionali: area generale dal D.I. 92/2018 All. 1 (mai le voci base, che derivano dalla bozza dei licei)
+  // Istituti Professionali: discipline di indirizzo (All. 2) e area generale (All. 1) dal D.I. 92/2018
+  if (istituto && istituto.startsWith('IP') && PROGRAMMI_PROFESSIONALI_INDIRIZZO[istituto]?.[chiave]) return PROGRAMMI_PROFESSIONALI_INDIRIZZO[istituto][chiave];
+  // Area generale dal D.I. 92/2018 All. 1 (mai le voci base, che derivano dalla bozza dei licei)
   if (istituto && istituto.startsWith('IP') && PROGRAMMI_PROFESSIONALI_AREA_GENERALE[chiave]) return PROGRAMMI_PROFESSIONALI_AREA_GENERALE[chiave];
   const base = PROGRAMMI_SEC2_BASE[chiave];
   return base && _applicabile(base, istituto) ? base : null;
@@ -2895,6 +2897,594 @@ const PROGRAMMI_PROFESSIONALI_AREA_GENERALE = {
   },
 };
 
+// ── Istituti Professionali: discipline di indirizzo (D.I. 92/2018, Allegati 2A–2M) ─────────────────
+// Fonte: Allegati 2A–2M del Regolamento D.I. 24 maggio 2018 n. 92 (Gazzetta Ufficiale S.O. n. 35/L, 27/07/2018): per ciascun indirizzo
+// competenze in uscita con "abilità minime" e "conoscenze essenziali", NON assegnate a singole discipline. Ogni voce sotto è quindi una
+// selezione nostra delle competenze/conoscenze pertinenti al nome della disciplina (dichiarata nel campo "competenze", da rivedere con i
+// docenti). Dove il regolamento non tratta il tema del titolo (es. sociologia rurale, logistica, storia dell'arte) la voce lo dice.
+const _IND = (all, testo) => `Sintetizzato dal profilo di indirizzo (D.I. 92/2018, All. ${all}; nessun programma per singola disciplina: selezione nostra, da rivedere con i docenti). ${testo}`;
+const _IPIND_A = {
+  "IP – Agricoltura, sviluppo rurale, valorizzazione dei prodotti del territorio e gestione delle risorse forestali e montane": {
+    "Ecologia e Pedologia": {
+      competenze: _IND("2A", "Analizzare le realtà agronomiche di pianura, collina e montagna e le loro potenzialità produttive; descrivere le caratteristiche ambientali di un territorio; individuare i livelli essenziali di biodiversità degli ecosistemi e degli agro-ecosistemi."),
+      nuclei: [
+        "Sistema suolo-pianta-atmosfera e fattori che ne condizionano il funzionamento",
+        "Ecosistemi dei paesaggi agricoli e forestali; paesaggio agrario e forestale",
+        "Biodiversità agraria e forestale e cause della sua perdita",
+        "Fenomeni di dissesto idrogeologico",
+      ],
+    },
+    "Laboratorio di Scienze e Tecnologie Agrarie": {
+      competenze: _IND("2A", "Individuare e applicare procedure operative e tecniche di coltivazione, utilizzando in sicurezza attrezzature, macchine e dispositivi di protezione individuale nei processi di produzione e trasformazione."),
+      nuclei: [
+        "Principi fondamentali della meccanizzazione per coltivazioni erbacee, arboree e selvicolturali; cura del parco macchine",
+        "Sistemi e tecniche di produzione delle coltivazioni erbacee, arboree e forestali",
+        "Difesa delle colture nel rispetto degli equilibri ambientali",
+        "Aspetti essenziali della gestione delle acque e dell'irrigazione",
+        "Normative di sicurezza, igiene e salvaguardia ambientale; dispositivi di protezione individuale",
+      ],
+    },
+    "Laboratorio di Biologia e di Chimica Applicata ai Processi di Trasformazione": {
+      competenze: _IND("2A", "Individuare e applicare le procedure operative dei processi di trasformazione agroalimentare; supportare il controllo di sicurezza, qualità e tracciabilità delle produzioni."),
+      nuclei: [
+        "Aspetti fisico-chimico-organolettici delle materie prime e dei prodotti primari da trasformare",
+        "Processi e cicli di lavoro delle principali trasformazioni agroalimentari",
+        "Tecniche di controllo e di analisi dei processi di trasformazione",
+        "Metodologie di controllo di processo e di prodotto; classificazione qualitativa dei prodotti",
+        "Norme e sistemi di prevenzione e protezione nella gestione in sicurezza dei processi produttivi",
+      ],
+    },
+    "Agronomia del Territorio Agrario e Forestale": {
+      competenze: _IND("2A", "Gestire soluzioni tecniche di produzione idonee a conferire ai prodotti i caratteri di qualità previsti dalle normative; analizzare le realtà agronomiche e i metodi di produzione in relazione alle specie agrarie e forestali."),
+      nuclei: [
+        "Sistema suolo-pianta-atmosfera; gestione delle acque e irrigazione",
+        "Sistemi e tecniche di produzione delle coltivazioni erbacee, arboree e forestali",
+        "Principi di meccanizzazione applicati alle diverse coltivazioni",
+        "Difesa delle colture con piani rispettosi degli equilibri ambientali",
+        "Processi gestionali e produttivi per l'organizzazione operativa dell'azienda agraria e forestale",
+      ],
+    },
+    "Tecniche delle Produzioni Vegetali e Zootecniche": {
+      competenze: _IND("2A", "Gestire soluzioni tecniche di produzione vegetale e sistemi di allevamento, garantendo benessere animale e qualità delle produzioni."),
+      nuclei: [
+        "Sistemi e tecniche di produzione delle coltivazioni erbacee e arboree; difesa delle colture",
+        "Anatomia e fisiologia delle principali specie allevate; caratteristiche morfologiche e produttive di specie e razze",
+        "Tecniche di produzione delle principali specie allevate; sistemi e strutture di allevamento",
+        "Igiene e benessere animale",
+        "Conservazione dei foraggi e degli alimenti ad uso zootecnico",
+      ],
+    },
+    "Economia Agraria e Legislazione di Settore Agraria e Forestale": {
+      competenze: _IND("2A", "Gestire attività di progettazione e direzione di opere di miglioramento fondiario, con analisi di efficienza tecnico-economica aziendale e conoscenza del quadro giuridico e fiscale del settore."),
+      nuclei: [
+        "Principi di economia generale e di economia delle produzioni e delle trasformazioni",
+        "Aspetti giuridici dell'impresa agraria e figure giuridiche nelle attività agricole e forestali",
+        "Principi e strumenti della contabilità agraria; gestione del bilancio economico e contabile",
+        "Sistema tributario delle imprese agroforestali e catasto",
+        "Miglioramenti fondiari e agrari e giudizi di convenienza; piani territoriali di bonifica e riordino fondiario; valutazione di impatto ambientale",
+      ],
+    },
+    "Gestione e Valorizzazione delle Attività Produttive e Sviluppo del Territorio e Sociologia Rurale": {
+      competenze: _IND("2A", "Individuare e attuare processi di integrazione tra prodotti per valorizzare le filiere, realizzare progetti di sviluppo rurale e collaborare con gli enti territoriali. Il regolamento non tratta in modo specifico la sociologia rurale."),
+      nuclei: [
+        "Politiche di sviluppo rurale e forestale nella comunità europea",
+        "Caratteristiche di multifunzionalità del settore agricolo-forestale e servizi connessi",
+        "Tecniche di analisi delle filiere agroalimentari e forestali",
+        "Elementi di organizzazione aziendale e programmazione dei processi produttivi",
+        "Rapporti tra impresa ed enti territoriali; schemi progettuali e piani di sviluppo per la valorizzazione degli ambienti rurali",
+      ],
+    },
+    "Logistica e Marketing dei Prodotti Agroalimentari": {
+      competenze: _IND("2A", "Gestire attività di promozione e marketing dei prodotti agricoli, agroindustriali e silvo-pastorali; supportare il controllo di qualità, tracciabilità e tipicità. Il regolamento non tratta in modo specifico la logistica."),
+      nuclei: [
+        "Attività di promozione e marketing dei prodotti del settore agro-forestale; meccanismi che regolano i mercati",
+        "Tecniche di analisi delle filiere agroalimentari e forestali",
+        "Caratteristiche e classificazione dei prodotti delle principali filiere agroforestali",
+        "Certificazione dei processi e dei prodotti ai fini della tracciabilità",
+        "Norme di tutela dei prodotti tipici ed etichettatura",
+      ],
+    },
+    "Agricoltura Sostenibile e Biologica": {
+      competenze: _IND("2A", "Applicare sistemi di produzione e piani di difesa rispettosi degli equilibri ambientali; tutelare la biodiversità; valorizzare biomasse e reflui. Il regolamento non tratta in modo specifico l'agricoltura biologica."),
+      nuclei: [
+        "Difesa delle colture con piani rispettosi degli equilibri ambientali",
+        "Biodiversità agraria e forestale; tutela e valorizzazione delle risorse genetiche vegetali e animali",
+        "Classificazione e valorizzazione delle biomasse agroforestali, zootecniche e agroindustriali; filiere delle agrienergie",
+        "Trattamento e valorizzazione a fini agronomici dei reflui zootecnici e agroalimentari",
+        "Sistemi di produzione che valorizzano la qualità nel rispetto della normativa nazionale e comunitaria",
+      ],
+    },
+    "Selvicoltura, Dendrometria e Utilizzazioni Forestali": {
+      competenze: _IND("2A", "Gestire i processi produttivi delle filiere selvicolturali, progettando semplici interventi nel rispetto della biodiversità e delle risorse naturalistiche e paesaggistiche."),
+      nuclei: [
+        "Teorie e metodi della gestione forestale sostenibile; tecniche selvicolturali",
+        "Strumenti per l'analisi produttiva del bosco; rilievi dendrometrici; volume di boschi, tronchi e cataste",
+        "Filiere bosco-legno-industria e bosco-legno-energia; tecniche produttive delle fasi delle filiere forestali",
+        "Organizzazione del cantiere forestale e utilizzazioni forestali a basso impatto ambientale, con norme di sicurezza",
+        "Normative nazionali e comunitarie; servizi a tutela dell'ambiente agricolo, forestale e naturale",
+      ],
+    },
+    "Assestamento Forestale, Gestione Parchi, Aree Protette e Fauna Selvatica": {
+      competenze: _IND("2A", "Intervenire nei processi di salvaguardia e ripristino della biodiversità, di conservazione di parchi e aree protette, di prevenzione del degrado e di sistemazione idraulico-agroforestale, con relativi piani di assestamento."),
+      nuclei: [
+        "Principi di assestamento forestale e faunistico; elementi di un piano di assestamento",
+        "Classificazione e gestione delle aree protette; enti preposti al controllo e normative di riferimento",
+        "Importanza della salvaguardia della biodiversità e azioni di tutela",
+        "Fenomeni di dissesto idrogeologico e tecniche di ingegneria naturalistica",
+        "Principi e procedure di difesa dagli incendi boschivi",
+      ],
+    },
+  },
+};
+
+const _IPIND_B = {
+  "IP – Pesca commerciale e produzioni ittiche": {
+    "Ecologia Applicata alla Pesca e all'Acquacoltura": {
+      competenze: _IND("2B", "Pianificare e condurre le operazioni di pesca nel rispetto degli ecosistemi acquatici; gestire l'allevamento di pesci, molluschi e crostacei individuando aree idonee e sistemi ecocompatibili."),
+      nuclei: [
+        "Principi di ecologia della pesca e dell'acquacoltura",
+        "Caratteristiche degli ecosistemi acquatici per la ricostruzione di ambienti naturali di allevamento",
+        "Principi di meteorologia e oceanografia",
+        "Sostenibilità economica ed ecologica; Codice di condotta della pesca responsabile",
+        "Normativa ambientale sull'allevamento ittico e impatto dei sistemi di allevamento sul territorio",
+      ],
+    },
+    "Tecnologie e Tecniche di Gestione e Conduzione delle Imbarcazioni da Pesca": {
+      competenze: _IND("2B", "Definire e pianificare il viaggio, il governo del mezzo e le operazioni di pesca nel rispetto delle normative nazionali e internazionali; gestire e manutenere gli apparati e gli impianti di bordo."),
+      nuclei: [
+        "Costruzione, tipologia e stabilità delle imbarcazioni da pesca; stabilità e stivaggio del carico",
+        "Tecniche di pianificazione di un viaggio; conduzione del mezzo e determinazione della posizione, anche con strumentazione elettronica; manovra navale",
+        "Principali apparati, impianti e servizi di bordo: caratteristiche, funzionalità e manutenzione ordinaria",
+        "Ricerca e salvataggio in mare, procedure di emergenza e antincendio, comunicazione marittima",
+        "Salute e sicurezza a bordo",
+      ],
+    },
+    "Tecnologie e Tecniche di Pesca ed Acquacoltura Sostenibili": {
+      competenze: _IND("2B", "Pianificare, coordinare e condurre le operazioni di pesca con tecniche e tecnologie appropriate; gestire l'allevamento e organizzare la produzione primaria come base della filiera alimentare."),
+      nuclei: [
+        "Tecnologia della pesca, sistemi, tecniche e attrezzi; selezione e gestione del pescato per specie, taglia e qualità",
+        "Prima trasformazione, conservazione e primo confezionamento del prodotto ittico a bordo",
+        "Tecniche di allevamento (seme, nursery, ingrasso); manutenzione di vasche e bacini; alimentazione e mangimi delle specie allevate",
+        "Elementi di biologia delle specie ittiche oggetto di commercializzazione; patologie e benessere animale",
+        "Sistemi di allevamento ecocompatibili; gestione responsabile delle zone di pesca",
+      ],
+    },
+    "Diritto ed Economia della Filiera Ittica": {
+      competenze: _IND("2B", "Operare nel rispetto delle normative internazionali, comunitarie e nazionali della pesca e dell'acquacoltura (Politica Comune della Pesca) e predisporre certificazioni e documentazioni di settore per microfiliere."),
+      nuclei: [
+        "Legislazione marittima internazionale applicata alla pesca; legislazione sulla pesca e gestione sostenibile del mare e delle risorse ittiche",
+        "Norme sanitarie e alimentari dei prodotti ittici; obblighi dell'operatore del settore alimentare (OSA)",
+        "Codici di autocontrollo per tipologie di pesca e di filiera",
+        "Sistemi di etichettatura, classificazione del pescato e tracciabilità della filiera",
+        "Valorizzazione e commercializzazione dei prodotti ittici; misure per la riduzione dei costi nelle filiere",
+      ],
+    },
+    "Tecnologie e Tecniche di Conduzione e Manutenzione di Apparati ed Impianti": {
+      competenze: _IND("2B", "Gestire, monitorare e manutenere apparati, attrezzature e impianti di bordo e di produzione, compresi quelli della catena del freddo, in ottemperanza alle norme su salute e sicurezza."),
+      nuclei: [
+        "Principi, meccanismi e parametri di funzionamento e approntamento di macchinari e apparecchiature",
+        "Manutenzione ordinaria di strumenti, attrezzature e macchinari; individuazione e valutazione dei malfunzionamenti",
+        "Monitoraggio dei consumi energetici e gestione razionale delle risorse idriche",
+        "Impianti della catena del freddo (refrigerazione, congelazione, surgelazione) e processi biologici legati alla conservazione",
+        "Procedure e tecniche di igiene, pulizia e disinfezione di impianti e spazi di lavoro; normativa di sicurezza",
+      ],
+    },
+  },
+};
+
+const _IPIND_C = {
+  "IP – Industria e artigianato per il Made in Italy": {
+    "Tecnologie, Disegno e Progettazione": {
+      competenze: _IND("2C", "Predisporre il progetto di un prodotto sulla base delle richieste del cliente, dei materiali, dei costi e della sostenibilità ambientale; realizzare disegni tecnici e/o artistici con strumenti tradizionali o informatici; realizzare e valutare prototipi."),
+      nuclei: [
+        "Caratteristiche chimiche, fisiche ed estetiche dei materiali; tecniche di lavorazione e gestione degli scarti",
+        "Principi del disegno geometrico e rappresentazione di oggetti 3D (proiezioni, sezioni, assonometria, prospettiva, esploso); regole del disegno tecnico e/o artistico",
+        "Strumenti e tecniche tradizionali e informatici per la rappresentazione bidimensionale e tridimensionale; uso di stampanti 3D",
+        "Realizzazione di modelli e prototipi, misura degli scostamenti e delle tolleranze, verifiche e relazioni tecniche",
+        "Distinte base, cicli di lavorazione e preventivi di massima dei costi",
+      ],
+    },
+    "Progettazione e Produzione": {
+      competenze: _IND("2C", "Realizzare prototipi e gestire le attività realizzative e di controllo dei processi produttivi di manufatti, padroneggiando le tecniche di lavorazione, fabbricazione e assemblaggio."),
+      nuclei: [
+        "Processi produttivi in relazione all'area di attività; selezione di materie prime, materiali e semilavorati",
+        "Tecniche manuali di lavorazione e uso di macchine automatiche; applicativi per il Computer Aided Manufacturing",
+        "Interpretazione di disegni tecnici e artistici e verifica di conformità tra progetto e prodotto",
+        "Controllo qualità, standard internazionali di qualità e miglioramento continuo; gestione delle non conformità",
+        "Tecniche e processi di lavorazione manuale e/o automatica; strumenti di misura",
+      ],
+    },
+    "Tecniche di Gestione e Organizzazione del Processo Produttivo": {
+      competenze: _IND("2C", "Predisporre e programmare macchine, attrezzature e sistemi di controllo, pianificare la manutenzione ordinaria e operare in sicurezza nel rispetto di igiene e ambiente."),
+      nuclei: [
+        "Funzionamento e modalità di impiego di strumenti e macchine automatiche; programmazione delle macchine",
+        "Manutenzione ordinaria e straordinaria; principi della teoria dell'affidabilità; procedure di monitoraggio e ricerca del guasto",
+        "Pianificazione e organizzazione delle lavorazioni nel rispetto delle norme di sicurezza, igiene e salvaguardia ambientale",
+        "Legislazione sulla salute e sicurezza nei luoghi di lavoro; valutazione dei rischi; dispositivi di protezione; primo soccorso e antincendio",
+        "Pericolosità per l'ambiente di lavorazioni, prodotti e rifiuti; gestione dei rifiuti; ergonomia",
+      ],
+    },
+    "Tecniche di Distribuzione e Marketing": {
+      competenze: _IND("2C", "Elaborare e attuare piani industriali e commerciali delle produzioni, in raccordo con gli obiettivi economici aziendali e sulla base dei vincoli di mercato."),
+      nuclei: [
+        "Tendenze e fabbisogni dei mercati e dei settori produttivi; tecniche di ricerche di mercato",
+        "Elementi di marketing; le produzioni artigianali e industriali del settore nel quadro economico locale, nazionale e globale",
+        "Metodiche per la valutazione dei costi diretti e indiretti; convenienza economica delle scelte aziendali",
+        "La logistica e la gestione delle scorte",
+        "Principi di organizzazione e divisione del lavoro; elementi della teoria delle decisioni in ambito aziendale",
+      ],
+    },
+    "Storia delle Arti Applicate": {
+      competenze: _IND("2C", "Identificare e interpretare modelli ed esempi storico-stilistici dell'idea da realizzare, ove rilevanti, e definirne i requisiti estetici, funzionali ed ergonomici. Il regolamento cita la dimensione storico-stilistica solo come supporto alla progettazione e non definisce un programma di storia delle arti."),
+      nuclei: [
+        "Modelli ed esempi storico-stilistici di riferimento per l'idea da realizzare",
+        "Regole e stili del disegno tecnico e/o artistico in relazione all'area di attività",
+        "Requisiti estetici, funzionali ed ergonomici del prodotto",
+        "Caratteristiche estetiche dei materiali impiegati",
+      ],
+    },
+  },
+};
+
+const _IPIND_D = {
+  "IP – Manutenzione e assistenza tecnica": {
+    "Tecnologie e Tecniche di Rappresentazione Grafica": {
+      competenze: _IND("2D", "Analizzare e interpretare schemi di apparati, impianti e dispositivi predisponendo le attività; realizzare e interpretare disegni e schemi di particolari meccanici, attrezzature e impianti."),
+      nuclei: [
+        "Norme e tecniche di rappresentazione grafica; rappresentazione esecutiva di organi meccanici",
+        "Schemi logici e funzionali di apparati e impianti, di circuiti elettrici, elettronici e fluidici",
+        "Interpretazione delle condizioni di esercizio indicate in schemi e disegni",
+        "Tecniche di ricerca, consultazione e archiviazione della documentazione tecnica; manuali tecnici",
+        "Distinta base dell'impianto o della macchina",
+      ],
+    },
+    "Tecnologie Meccaniche e Applicazioni": {
+      competenze: _IND("2D", "Installare apparati e impianti secondo le specifiche tecniche e la normativa; eseguire attività di assistenza tecnica e manutenzione ordinaria e straordinaria di macchine e impianti, comprese le parti meccaniche."),
+      nuclei: [
+        "Procedure operative di assemblaggio di componenti meccanici, pneumatici e oleodinamici, con lettura di schemi e disegni",
+        "Caratteristiche d'impiego dei componenti meccanici e fluidici e dei sistemi di trasmissione del moto e del calore",
+        "Processi di saldatura",
+        "Procedure di smontaggio, sostituzione e ripristino di apparecchiature",
+        "Procedure e tecniche standard di manutenzione ordinaria e straordinaria; ricerca dei guasti",
+      ],
+    },
+    "Tecnologie Elettriche-Elettroniche e Applicazioni": {
+      competenze: _IND("2D", "Installare, verificare e manutenere apparati e impianti elettrici ed elettronici, anche programmabili, con misure e prove nel rispetto della normativa sulla sicurezza."),
+      nuclei: [
+        "Caratteristiche d'impiego dei componenti elettrici ed elettronici; schemi di circuiti elettrici ed elettronici",
+        "Grandezze fondamentali e derivate e loro unità di misura; misure di grandezze elettriche ed elettroniche, di tempo e di frequenza",
+        "Funzionamento, tipologie e caratteristiche degli strumenti di misura; taratura e azzeramento",
+        "Teoria degli errori di misura, incertezza e calcolo delle tolleranze",
+        "Metodi e strumenti di ricerca dei guasti; strumenti e software di diagnostica",
+      ],
+    },
+    "Tecnologie e Tecniche di Installazione e di Manutenzione e di Diagnostica": {
+      competenze: _IND("2D", "Pianificare ed effettuare installazione, manutenzione, riparazione, verifica e collaudo di piccoli sistemi, macchine, impianti e apparati tecnologici, operando in sicurezza."),
+      nuclei: [
+        "Procedure operative per l'installazione di apparati e impianti nel rispetto della normativa di settore",
+        "Manutenzione ordinaria e straordinaria; metodi di ricerca guasti; affidabilità, disponibilità e manutenibilità di un sistema",
+        "Verifica, regolazione e collaudo; registri di manutenzione e certificazione di conformità",
+        "Processo di acquisto e gestione delle scorte dei materiali per il reparto di manutenzione",
+        "Legislazione sulla sicurezza e sulla tutela ambientale; criteri di prevenzione e protezione; stoccaggio e smaltimento dei materiali sostituiti",
+      ],
+    },
+  },
+};
+const _IPIND_E = {
+  "IP – Gestione delle acque e risanamento ambientale": {
+    "Tecnologie delle Risorse Idriche e Geologiche": {
+      competenze: _IND("2E", "Collaborare alla gestione e manutenzione di sorgenti, corsi d'acqua, invasi, canalizzazioni, argini e coste; controllare i fattori di rischio idrogeologico."),
+      nuclei: [
+        "Geomorfologia territoriale e principi fondamentali della geopedologia",
+        "Fattori di rischio idrogeologico; tecniche e metodi di gestione e di intervento",
+        "Gestione e manutenzione ordinaria delle risorse idriche e ambientali; controllo di argini, coste, fasce tampone e aree riparie",
+        "Tecniche di gestione della vegetazione; attrezzi e macchine per la gestione del territorio",
+        "Principi di idraulica e costruzioni idrauliche",
+      ],
+    },
+    "Chimica Applicata alla Gestione delle Risorse Idriche e Risanamento Ambientale": {
+      competenze: _IND("2E", "Prelevare campioni e condurre una prima analisi chimica; applicare principi chimici ai processi di risanamento, potabilizzazione e depurazione."),
+      nuclei: [
+        "Principi di analisi chimica e chimico-fisica di ambiente e territorio; prelievo dei campioni secondo la normativa",
+        "Chimica organica applicata alle acque e al territorio",
+        "Fonti di inquinamento fisico-chimico; inquinanti e valutazione dei rischi",
+        "Principi di risanamento ambientale su basi chimiche",
+        "Potabilizzazione: impianti e procedure, metodi fisico-chimici",
+      ],
+    },
+    "Microbiologia Applicata alla Gestione e Risanamento Ambientale": {
+      competenze: _IND("2E", "Effettuare una prima analisi microbiologica dei campioni; applicare processi biologici al risanamento ambientale e alla depurazione."),
+      nuclei: [
+        "Principi di analisi microbiologica di ambiente e territorio",
+        "Natura microbiologica e caratteristiche degli organismi",
+        "Fonti di inquinamento microbiologico e valutazione dei rischi",
+        "Principi di risanamento ambientale su basi biologiche",
+        "Principi biochimici dei processi depuratori e della fitodepurazione; zone umide artificiali",
+      ],
+    },
+    "Tecniche di Gestione e Controllo delle Reti ed Impianti Civili ed Industriali": {
+      competenze: _IND("2E", "Gestire e manutenere reti idriche e fognarie e impianti di depurazione; interpretare schemi e planimetrie; diagnosticare guasti; gestire lo smaltimento dei rifiuti."),
+      nuclei: [
+        "Tecniche di rappresentazione e simbologia di schemi elettrici e idraulici e di planimetrie",
+        "Principi di idraulica legati alle reti idriche in pressione e alle reti fognarie a gravità; piano di controllo periodico delle reti",
+        "Diagnosi e primo intervento su anomalie; strumenti di misura e attrezzature di manutenzione idraulica",
+        "Impianti di depurazione (pretrattamenti, trattamento primario e secondario), digestori, fanghi e biogas; bonifica dei siti contaminati",
+        "Normativa su rifiuti e reflui; classificazione CER, formulari e registri di carico e scarico; sicurezza nel lavoro",
+      ],
+    },
+  },
+};
+
+const _IPIND_F = {
+  "IP – Servizi commerciali": {
+    "Tecniche Professionali dei Servizi Commerciali": {
+      competenze: _IND("2F", "Interagire nei sistemi aziendali, collaborare alla stesura di documenti aziendali e agli adempimenti civilistici e fiscali; curare i sistemi informativi aziendali; collaborare a pianificazione, rendicontazione, finanziamenti e assicurazioni."),
+      nuclei: [
+        "Principi di organizzazione aziendale; forme giuridiche d'impresa; elementi di gestione d'impresa",
+        "Metodi e sistemi di scritture contabili; documenti e clausole commerciali nazionali e internazionali; elementi del sistema tributario",
+        "Software applicativi professionali per la rilevazione dei dati aziendali e per i processi amministrativi, contabili, commerciali e logistici; sicurezza e riservatezza dei dati",
+        "Programmazione delle attività, monitoraggio dei risultati, reporting e controllo di gestione; gestione delle scorte",
+        "Calcolo finanziario, strumenti di pagamento, sistema bancario, forme di finanziamento e investimento, mercato assicurativo",
+      ],
+    },
+    "Laboratorio di Espressioni Grafico-Artistiche": {
+      competenze: _IND("2F", "Collaborare alla realizzazione di azioni di marketing e comunicazione, avvalendosi dei linguaggi innovativi e degli aspetti visivi della comunicazione. Il regolamento non definisce contenuti di espressioni grafico-artistiche in senso stretto."),
+      nuclei: [
+        "Strategie, tecniche, modelli e linguaggi della comunicazione commerciale e pubblicitaria",
+        "Tecniche e strumenti di progettazione e composizione editoriale e/o visiva per la comunicazione aziendale",
+        "Fasi della progettazione pubblicitaria e piano della comunicazione aziendale",
+        "Scelta o predisposizione di materiali informativi da diffondere secondo diverse modalità; tecniche di packaging",
+      ],
+    },
+    "Diritto/Economia": {
+      competenze: _IND("2F", "Riconoscere le forme giuridiche dell'attività d'impresa e i profili normativi e di responsabilità; orientarsi nel sistema tributario, bancario e finanziario e nelle relazioni commerciali nazionali e internazionali."),
+      nuclei: [
+        "Forme giuridiche per l'esercizio dell'attività d'impresa e relativi profili di responsabilità",
+        "Elementi del sistema tributario italiano",
+        "Il sistema bancario e finanziario: soggetti, strumenti e funzioni; relazione tra banche e clienti",
+        "Normative di riferimento e profili di responsabilità nella gestione di dati, documenti e informazioni commerciali",
+        "Normativa sulla salute e sicurezza nei luoghi di lavoro; normativa ambientale",
+        "Riflessi economico-sociali delle transazioni commerciali nazionali e internazionali",
+      ],
+    },
+    "Storia dell'Arte ed Espressioni Grafico-Artistiche": {
+      competenze: _IND("2F", "Leggere e interpretare le tendenze dei mercati alla luce delle tendenze culturali e artistiche locali, nazionali e internazionali. Il regolamento non definisce un programma di storia dell'arte."),
+      nuclei: [
+        "Principali movimenti e tendenze culturali e artistici locali, nazionali e internazionali, storici e contemporanei",
+        "Strategie, tecniche, modelli e linguaggi della comunicazione commerciale e pubblicitaria, nella loro evoluzione e sviluppo storico",
+        "Aspetti visivi della comunicazione a fini promozionali",
+      ],
+    },
+  },
+};
+
+const _G_ALIM = {
+  competenze: _IND("2G", "Predisporre prodotti, servizi e menù coerenti con le esigenze della clientela, anche in relazione a regimi dietetici e stili alimentari, favorendo abitudini e stili di vita sostenibili ed equilibrati; applicare il sistema HACCP."),
+  nuclei: [
+    "Principi di scienze e tecnologie alimentari; materie prime sotto il profilo organolettico, merceologico, chimico-fisico, igienico, nutrizionale e gastronomico",
+    "Offerta di prodotti e servizi per uno stile di vita equilibrato e sostenibile; elementi di eco-gastronomia",
+    "Tecniche per la preparazione e il servizio di prodotti per i principali disturbi e limitazioni alimentari",
+    "Tecnologie innovative di manipolazione e conservazione dei cibi e relativi standard di qualità",
+    "Normativa igienico-sanitaria e procedure di autocontrollo HACCP; sicurezza alimentare, trasparenza e tracciabilità delle materie prime",
+  ],
+};
+const _G_CUCINA = {
+  competenze: _IND("2G", "Utilizzare tecniche tradizionali e innovative di lavorazione e presentazione dei prodotti enogastronomici; predisporre menù coerenti con il contesto e le esigenze della clientela; applicare HACCP e norme di sicurezza."),
+  nuclei: [
+    "Tecniche di realizzazione, lavorazione ed erogazione del prodotto/servizio; fasi, tempi, strumenti e modalità di lavorazione, cottura e conservazione",
+    "Tecniche di approvvigionamento e gestione delle merci; programmazione e controllo dei costi",
+    "Menù a filiera locale e prodotti a denominazione protetta (DOP, IGP, STG); classificazione merceologica dei prodotti agroalimentari",
+    "Principi di estetica e tecniche di presentazione di piatti",
+    "Normativa igienico-sanitaria e HACCP; sicurezza sul lavoro; fattori di rischio professionale e ambientale",
+  ],
+};
+const _G_SALA = {
+  competenze: _IND("2G", "Curare tutte le fasi del ciclo cliente con tecniche di comunicazione efficaci e rispettose delle diverse culture; servire prodotti e bevande secondo le esigenze della clientela; progettare e allestire eventi di banqueting e catering."),
+  nuclei: [
+    "Tecniche di comunicazione e relazioni interpersonali e interculturali; terminologia tecnica di settore anche in lingua straniera",
+    "Tecniche di promozione e vendita; fidelizzazione del cliente, gestione dei reclami e rilevamento della customer satisfaction",
+    "Tecniche di allestimento della sala per servizi di banqueting e catering; organizzazione logistica di eventi",
+    "Principi di estetica e tecniche di presentazione di piatti e bevande; abbinamento cibi-prodotti locali",
+    "Servizio di prodotti per disturbi e limitazioni alimentari; normativa HACCP e tutela e sicurezza del cliente",
+  ],
+};
+const _G_ACC = {
+  competenze: _IND("2G", "Gestire le fasi del ciclo cliente applicando le tecniche professionali di Hospitality Management; realizzare offerte turistiche integrate ecosostenibili e contribuire al Destination Marketing."),
+  nuclei: [
+    "Tipologia di servizi offerti dalle strutture turistico-ricettive: aspetti gestionali e flussi informativi",
+    "Tecniche di ricettività e accoglienza; assistenza al cliente; rilevazione delle aspettative e del gradimento; fidelizzazione (customer care)",
+    "Mercato turistico e sue tendenze; metodologie e strumenti di marketing turistico; promozione territoriale",
+    "Offerta turistica integrata ecosostenibile; norme ISO e certificazione ecolabel",
+    "Terminologia di settore in lingua straniera; tecniche di analisi SWOT",
+  ],
+};
+const _IPIND_G = {
+  "IP – Enogastronomia e ospitalità alberghiera": {
+    "Scienza degli Alimenti": _G_ALIM,
+    "Scienza e Cultura dell'Alimentazione": _G_ALIM,
+    "Laboratorio dei Servizi Enogastronomici – Cucina": _G_CUCINA,
+    "Laboratorio Enogastronomia – Cucina": _G_CUCINA,
+    "Laboratorio dei Servizi Enogastronomici – Bar, Sala e Vendita": _G_SALA,
+    "Laboratorio Enogastronomia – Bar, Sala e Vendita": _G_SALA,
+    "Laboratorio dei Servizi di Accoglienza Turistica": _G_ACC,
+    "Laboratorio di Accoglienza Turistica": _G_ACC,
+    "Laboratorio di Arte Bianca e Pasticceria": {
+      competenze: _IND("2G", "Valorizzare l'elaborazione e la presentazione di prodotti dolciari e di panificazione locali, nazionali e internazionali con tecniche tradizionali e innovative."),
+      nuclei: [
+        "Tecniche di lavorazione di prodotti dolciari e da forno; fasi, tempi, strumenti e modalità di lavorazione, cottura e conservazione",
+        "Materie prime sotto il profilo organolettico, merceologico, chimico-fisico, igienico, nutrizionale e gastronomico",
+        "Caratteristiche della pasticceria e della panificazione regionale, nazionale e internazionale",
+        "Tecniche di presentazione, farcitura, decorazione e guarnizione dei prodotti; dinamiche del gusto e abbinamenti",
+        "Normative su sicurezza alimentare, trasparenza e tracciabilità delle materie prime",
+      ],
+    },
+    "Tecniche di Organizzazione e Gestione dei Processi Produttivi": {
+      competenze: _IND("2G", "Supportare la pianificazione e la gestione dei processi di approvvigionamento, produzione e vendita in ottica di qualità; supportare budgeting, reporting e revenue management."),
+      nuclei: [
+        "Tecniche di approvvigionamento e gestione delle merci; tecniche di organizzazione del lavoro e strumenti di gestione organizzativa",
+        "Metodi per identificare, progettare e controllare i processi gestionali e operativi",
+        "Tecniche di programmazione e controllo dei costi; analisi delle componenti di un prezzo di vendita; calcolo dei margini",
+        "Elementi di budgeting, contabilità analitica, reportistica aziendale e analisi per indici; benchmarking",
+        "Elementi di diritto commerciale, organizzazione e gestione aziendale",
+      ],
+    },
+  },
+};
+
+const _H_LING = {
+  competenze: _IND("2H", "Individuare, valorizzare e utilizzare stili e linguaggi dei mercati e dei contesti espressivi in cui si colloca un prodotto culturale e dello spettacolo, anche in prospettiva storica; realizzare soluzioni tecnico-espressive funzionali al concept del prodotto."),
+  nuclei: [
+    "Linguaggi dell'immagine, della fotografia e degli audiovisivi; tendenze dei new media",
+    "Modelli, linguaggi e tecniche dei prodotti dell'industria culturale e loro collocazione nel processo evolutivo",
+    "Teorie e tecniche della narrazione applicate alla comunicazione visiva, audiovisiva, radiofonica e per lo spettacolo",
+    "Tecniche di struttura narrativa per prodotti audiovisivi; tecniche-base di regia",
+  ],
+};
+const _H_TECN = {
+  competenze: _IND("2H", "Realizzare prodotti visivi, audiovisivi e sonori con soluzioni tecnico-espressive adeguate; padroneggiare le tecniche di ripresa, montaggio e post-produzione e gestire archivi di materiali."),
+  nuclei: [
+    "Tecniche e tecnologie di illuminazione e ripresa fotografica e audiovisiva",
+    "Tecniche e tecnologie del suono, di montaggio ed edizione, degli effetti speciali visivi e dell'animazione",
+    "Tecnologie e sistemi hardware e software per la ripresa, l'editing e la post-produzione",
+    "Tecniche e tecnologie dello sviluppo e della stampa fotografica analogica e digitale",
+    "Sistemi hardware e software di gestione e archiviazione dati; supporti e apparati di archiviazione, riproduzione e proiezione di immagini e suoni",
+  ],
+};
+const _IPIND_H = {
+  "IP – Servizi culturali e dello spettacolo": {
+    "Tecniche e Tecnologie della Comunicazione Visiva": {
+      competenze: _IND("2H", "Realizzare prodotti visivi, audiovisivi e sonori in coerenza con il target individuato e funzionali al concept; diffonderli con formati idonei ai canali di comunicazione previsti."),
+      nuclei: [
+        "Linguaggi dell'immagine, della fotografia e degli audiovisivi; tendenze dei new media",
+        "Processi di realizzazione del prodotto fotografico, audiovisivo, radiofonico e performativo live; filiera generale e fasi comuni",
+        "Tecniche e tecnologie dei new media; prodotti multimediali e siti web per la diffusione e la promozione",
+        "Tecniche e tecnologie di ripresa, del suono e di montaggio",
+        "Principali canali di distribuzione e vendita dei prodotti dell'industria culturale e dello spettacolo",
+      ],
+    },
+    "Linguaggi Fotografici e dell'Audiovisivo": _H_LING,
+    "Linguaggi e Tecniche della Fotografia e dell'Audiovisivo": _H_LING,
+    "Tecnologie della Fotografia e degli Audiovisivi": _H_TECN,
+    "Progettazione e Realizzazione del Prodotto Fotografico e Audiovisivo": {
+      competenze: _IND("2H", "Realizzare prodotti fotografici e audiovisivi, valutandone costi e ricavi e operando in modo sistemico nelle diverse fasi della produzione."),
+      nuclei: [
+        "Processi di realizzazione del prodotto fotografico, audiovisivo e sonoro; lavorazioni specialistiche per prodotti analogici e digitali",
+        "Teorie e tecniche dell'organizzazione della produzione per cultura e spettacolo; tecniche di assistenza alla produzione e di aiuto regia",
+        "Analisi di una sceneggiatura per ricavarne lo spoglio e un piano di produzione; preventivo e tariffario in base al budget",
+        "Elementi di economia della comunicazione per i prodotti dell'industria culturale",
+        "Normativa di settore: diritto d'autore italiano e internazionale, legislazione del lavoro, contrattualistica, sicurezza sul lavoro, privacy",
+      ],
+    },
+    "Storia delle Arti Visive": {
+      competenze: _IND("2H", "Collocare i prodotti dell'industria culturale e dello spettacolo nel processo evolutivo, con conoscenza della storia dello spettacolo, della fotografia e degli audiovisivi. Il regolamento non definisce un programma di storia dell'arte in senso ampio."),
+      nuclei: [
+        "Storia dello spettacolo, dell'immagine fotografica e degli audiovisivi",
+        "Modelli, linguaggi e tecniche dei prodotti dell'industria culturale nei diversi ambiti",
+        "Linguaggi dell'immagine, della fotografia e degli audiovisivi; tendenze dei new media",
+        "Principali istituzioni culturali di settore (festival, rassegne, istituzioni museali, circoli culturali) e archivi per la conservazione dei beni culturali",
+      ],
+    },
+  },
+};
+
+const _IPIND_I = {
+  "IP – Servizi per la sanità e l'assistenza sociale": {
+    "Scienze Umane e Sociali": {
+      competenze: _IND("2I", "Facilitare la comunicazione tra persone e gruppi, anche di culture diverse; cooperare in gruppi ed équipe multiprofessionali; comprendere bisogni e problematiche psicosociali di minori, anziani e persone con disabilità o disagio."),
+      nuclei: [
+        "Comunicazione e relazione: modelli di riferimento, comunicazione terapeutica, comunicazione non verbale e facilitata",
+        "Psicologia e sociologia dei gruppi e delle organizzazioni; caratteristiche del lavoro d'équipe",
+        "Antropologia e sociologia della comunicazione: culture, contesti, pregiudizi e stereotipi; mediazione interculturale",
+        "Psicologia del ciclo di vita; principi di pedagogia del ciclo di vita; teorie sull'intelligenza",
+        "Evoluzione dei concetti di disabilità, handicap e deficit; tipi e cause di disabilità e loro classificazioni",
+        "Tipologie di utenza e problematiche psicosociali; approcci psicologici e modalità di intervento socio-assistenziale",
+      ],
+    },
+    "Diritto, Economia e Tecnica Amministrativa del Settore Socio-Sanitario": {
+      competenze: _IND("2I", "Collaborare nella gestione di progetti e attività dei servizi sociali, socio-sanitari e socio-educativi; orientare l'utente nell'accesso ai servizi; raccogliere e trasmettere dati nel rispetto della privacy."),
+      nuclei: [
+        "I sistemi di welfare e l'economia sociale; principio di sussidiarietà; reti formali e informali",
+        "Tipologia dei servizi sociali, socio-educativi, sanitari e socio-sanitari; modalità di accesso ai servizi socio-assistenziali",
+        "Il Servizio Sanitario Nazionale e il servizio sociale; legislazione nazionale e regionale socio-assistenziale, sanitaria e previdenziale; carta dei servizi e carte dei diritti",
+        "La progettazione nel settore socio-assistenziale; gestione amministrativa e contabile dei progetti",
+        "Diritti della personalità e istituti giuridici a tutela della persona fisica; norme sulla privacy e sul trattamento dei dati",
+        "Elementi di etica e deontologia professionale; norme sulla qualità del servizio e sull'accreditamento",
+      ],
+    },
+  },
+};
+
+const _IPIND_L = {
+  "IP – Arti ausiliarie delle professioni sanitarie: odontotecnico": {
+    "Anatomia Fisiologia Igiene": {
+      competenze: _IND("2L", "Individuare gli aspetti fisiologici correlati all'anatomia dell'apparato stomatognatico e applicare le conoscenze di anatomia, biomeccanica e igiene alla realizzazione di un manufatto protesico. Il regolamento non tratta anatomia e fisiologia generali."),
+      nuclei: [
+        "Anatomia topografica specifica e differenziale degli elementi dentali; anatomia e geometria delle arcate dentali",
+        "Rapporti tra tipi costituzionali e forme dei denti e delle arcate; classificazione delle arcate dentarie e delle arcate parzialmente edentule",
+        "Movimenti articolari della mandibola; rapporti e distanze occlusali; rapporti spaziali statici e dinamici dei segmenti osseo-dentali",
+        "Norme di igiene e sicurezza del lavoro e di prevenzione degli infortuni",
+        "Malattie professionali e comportamenti idonei alla loro prevenzione",
+      ],
+    },
+    "Esercitazioni di Laboratorio di Odontotecnica": {
+      competenze: _IND("2L", "Selezionare e gestire i processi di produzione dei dispositivi medici odontoiatrici in rapporto a materiali e tecnologie; padroneggiare le tecniche di lavorazione per protesi provvisorie, fisse e mobili, con strumenti di precisione."),
+      nuclei: [
+        "Montaggio dei denti secondo le varie scuole gnatologiche; tecniche di modellazione e di montaggio",
+        "Protesi mobile, combinata e scheletrata; protesi fissa provvisoria in resina; ganci, attacchi e fresaggi",
+        "Dispositivi ortodontici (ganci in filo, archi, viti) e casistica di protesi su impianti",
+        "Software CAD-CAM e apparecchiature a controllo numerico per la realizzazione di dispositivi protesici",
+        "Materiali gessosi, resinosi, cere, rivestimenti, leghe, ceramiche e porcellane dentali: proprietà e lavorazione",
+        "Apparecchi di laboratorio, articolatori e parallelometro; norme di igiene e sicurezza",
+      ],
+    },
+    "Diritto e Legislazione Socio-Sanitaria": {
+      competenze: _IND("2L", "Interagire con lo specialista odontoiatra interpretando le prescrizioni, applicare gli adempimenti normativi per la certificazione dei manufatti e la normativa igienico-sanitaria, di sicurezza e di tutela dei dati."),
+      nuclei: [
+        "Prescrizione odontoiatrica e lessico tecnico-professionale di settore; tecniche di interazione professionale",
+        "Certificazione dei manufatti e certificato di conformità delle protesi",
+        "Normativa ambientale, igienico-sanitaria e sulla sicurezza sul lavoro",
+        "Normativa sul trattamento dei dati personali (privacy)",
+      ],
+    },
+  },
+};
+const _IPIND_M = {
+  "IP – Arti ausiliarie delle professioni sanitarie: ottico": {
+    "Discipline Sanitarie": {
+      competenze: _IND("2M", "Effettuare, nei casi consentiti dalla normativa, l'esame delle abilità visive e della capacità visiva binoculare, riconoscere i difetti visivi e segnalare all'attenzione medica eventuali anomalie oculari."),
+      nuclei: [
+        "Diottrica oculare dell'occhio; funzione accomodativa; criteri correttivi della presbiopia",
+        "Ametropie assosimmetriche (miopia, ipermetropia) e astigmatiche e relativo trattamento compensativo",
+        "Visione binoculare normale e alterata; acuità visiva e sensibilità al contrasto",
+        "Metodiche oggettive e soggettive e strumentazione per la misura della refrazione oculare e della funzione visiva; struttura di un esame optometrico",
+        "Metodiche di visual training ed educazione alla visione; lessico tecnico italiano e inglese",
+      ],
+    },
+    "Esercitazioni di Lenti Oftalmiche": {
+      competenze: _IND("2M", "Realizzare e manutenere ausili e dispositivi ottici su prescrizione utilizzando materiali, strumenti e tecniche adeguate; gestire l'applicazione di lenti a contatto. Il regolamento tratta le lenti a contatto in una competenza distinta."),
+      nuclei: [
+        "Lettura della ricetta optometrica; elementi della prescrizione; potenza delle lenti assosimmetriche e astigmatiche",
+        "Frontifocometro, mola manuale e automatica e strumenti del laboratorio ottico; montaggio manuale e automatico di lenti sferiche e astigmatiche",
+        "Decentramento delle lenti, effetto prismatico e tolleranze; sistemi di indicazione dell'asse (TABO e Internazionale)",
+        "Lenti bifocali e progressive; occhiale per la visione da vicino e calcolo dell'addizione",
+        "Trattamenti superficiali e colorazioni delle lenti; caratteristiche dei materiali di lenti e montature",
+        "Lenti a contatto: metodi costruttivi, materiali, geometrie, criteri di scelta, applicazione e controlli",
+      ],
+    },
+    "Diritto e Legislazione Socio-Sanitaria": {
+      competenze: _IND("2M", "Collaborare alla gestione del punto vendita e agli adempimenti amministrativi e fiscali; applicare la normativa su certificazione degli ausili ottici e su sicurezza del luogo di lavoro."),
+      nuclei: [
+        "Aspetti giuridici, fiscali e commerciali di riferimento per l'attività di ottico",
+        "Normativa di riferimento e certificazione di conformità degli ausili ottici e dei dispositivi su misura",
+        "Normativa sulla sicurezza del luogo di lavoro; norme per l'eliminazione dei rifiuti in un laboratorio di occhialeria",
+        "Cenni di marketing e comunicazione aziendale; terminologia tecnica anche in lingua inglese",
+      ],
+    },
+  },
+};
+
+const PROGRAMMI_PROFESSIONALI_INDIRIZZO = { ..._IPIND_A, ..._IPIND_B, ..._IPIND_C, ..._IPIND_D, ..._IPIND_E, ..._IPIND_F, ..._IPIND_G, ..._IPIND_H, ..._IPIND_I, ..._IPIND_L, ..._IPIND_M };
+
 const PROGRAMMI_PER_GRADO = {
   infanzia: PROGRAMMI_INFANZIA,
   primaria: PROGRAMMI_PRIMARIA,
@@ -2988,6 +3578,7 @@ export {
   PROGRAMMI_SEC2_ALIAS,
   PROGRAMMI_TECNICI_VIGENTE,
   PROGRAMMI_PROFESSIONALI_AREA_GENERALE,
+  PROGRAMMI_PROFESSIONALI_INDIRIZZO,
   PROGRAMMI_TECNICI_VIGENTE_OVERRIDE,
   PROGRAMMI_TECNICI_VIGENTE_TRIENNIO,
   PROGRAMMI_LICEI_2010,
