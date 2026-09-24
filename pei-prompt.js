@@ -3,7 +3,7 @@
 // Nessuna modifica di logica — solo require/module.exports -> import/export.
 
 import { getConfig, getOrdinamentoSec2 } from './pei-gradi.js';
-import { getProgrammiPerDiscipline, LICEI_2010_MIGRATI } from './pei-programmi.js';
+import { getProgrammiPerDiscipline, LICEI_2010_MIGRATI, riferimentoLiceo } from './pei-programmi.js';
 
 // ── Calcola classe frequentata dall'età ──────────────────────────────────────
 function calcolaClasse(eta, grado) {
@@ -33,7 +33,7 @@ function labelProgrammi(grado, istituto, eta = null) {
   if (grado === 'primaria')  return 'Indicazioni Nazionali per il curricolo 2025 (D.M. 221/2025) – scuola primaria';
   if (grado === 'sec1')      return 'Indicazioni Nazionali per il curricolo 2025 (D.M. 221/2025) – scuola secondaria di primo grado';
   if (!istituto)             return 'Linee Guida per il secondo ciclo (DPR 15/03/2010)';
-  if (LICEI_2010_MIGRATI.has(istituto)) return `Indicazioni nazionali per i licei (D.M. 211/2010, vigenti) e piano degli studi DPR 89/2010 – ${istituto}`;
+  if (LICEI_2010_MIGRATI.has(istituto)) return `${riferimentoLiceo(istituto).etichetta} – ${istituto}`;
   if (istituto.startsWith('Liceo')) return `Indicazioni Nazionali per i Licei (DPR 89/2010; bozza nuove Indicazioni MIM 22/04/2026) – ${istituto}`;
   if (istituto.startsWith('IT')) {
     // Tecnici: D.M. 29/2026 dalle classi prime 2026/27 (poi una classe in più ogni anno); DPR 88/2010 per le altre

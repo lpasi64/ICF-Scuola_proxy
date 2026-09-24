@@ -17,7 +17,7 @@ import {
   getOrdinamentoSec2,
   annoCorsoSec2,
 } from './pei-gradi.js';
-import { checkCoverage, getProgrammiPerDiscipline, getProgrammaDisciplina, PROGRAMMI_SEC2_ALIAS, PROGRAMMI_SEC2_BASE, LICEI_2010_MIGRATI, PROGRAMMI_LICEI_2010 } from './pei-programmi.js';
+import { riferimentoLiceo, checkCoverage, getProgrammiPerDiscipline, getProgrammaDisciplina, PROGRAMMI_SEC2_ALIAS, PROGRAMMI_SEC2_BASE, LICEI_2010_MIGRATI, PROGRAMMI_LICEI_2010 } from './pei-programmi.js';
 
 let passed = 0;
 let failed = 0;
@@ -126,8 +126,8 @@ test('Tecnici: elenchi coerenti con i due ordinamenti (1ª nuovo, 3ª vigente)',
 });
 
 test('voci scritte per un solo tipo di scuola non vengono iniettate negli altri (soloPer)', () => {
-  const man = 'IP – Manutenzione e assistenza tecnica', mec = 'IT – Meccanica, meccatronica ed energia', cla = 'Liceo Artistico', su = 'Liceo del Made in Italy';
-  assert(getProgrammaDisciplina('sec2', 'Geografia', cla), 'Geografia (bozza Licei) deve valere per i licei');
+  const man = 'IP – Manutenzione e assistenza tecnica', mec = 'IT – Meccanica, meccatronica ed energia', cla = 'Liceo Classico', su = 'Liceo Classico';
+  assert(!getProgrammaDisciplina('sec2', 'Geografia', cla), 'Geografia della bozza non deve raggiungere i licei migrati');
   assert(!getProgrammaDisciplina('sec2', 'Geografia', man) && !getProgrammaDisciplina('sec2', 'Geografia', mec), 'Geografia dei licei non deve arrivare a IP/IT');
   assert(getProgrammaDisciplina('sec2', 'Diritto ed Economia', man), 'Diritto ed Economia (professionali) deve valere per gli IP');
   assert(!getProgrammaDisciplina('sec2', 'Diritto ed Economia', mec), 'Diritto ed Economia dei professionali non deve arrivare agli IT');
@@ -135,15 +135,15 @@ test('voci scritte per un solo tipo di scuola non vengono iniettate negli altri 
 });
 
 test('Licei migrati (Lotto 1): programmi vigenti D.M. 211/2010, copertura completa in biennio e triennio, mai la bozza 2026', () => {
-  assert(LICEI_2010_MIGRATI.size === 6, 'attesi 6 licei migrati nel Lotto 1');
+  assert(LICEI_2010_MIGRATI.size === 10, 'attesi 10 licei migrati (Lotti 1-3): tutti');
   for (const k of LICEI_2010_MIGRATI) {
     for (const eta of [14, 17]) {
       const mancanti = getDisciplineSec2(k, eta).filter(n => n !== 'Religione / Attività alternativa' && !getProgrammaDisciplina('sec2', n, k));
       assert(mancanti.length === 0, `${k} età ${eta}: senza voce ${mancanti.join(', ')}`);
     }
     const testo = getProgrammiPerDiscipline('sec2', getDisciplineSec2(k, 17), k);
-    assert(testo.startsWith('Programmi ministeriali di riferimento (Indicazioni nazionali per i licei, D.M. 211/2010'), `intestazione errata: ${k}`);
-    assert(!/bozza|2026/i.test(testo.split('D.M. 211/2010').join('')), `testo con riferimenti alla bozza 2026: ${k}`);
+    assert(testo.startsWith(riferimentoLiceo(k).intestazione), `intestazione errata: ${k}`);
+    assert(!/bozza|2026/i.test(testo), `testo con riferimenti alla bozza 2026: ${k}`);
   }
   // le voci della bozza non devono raggiungere i licei migrati
   const cla = 'Liceo Classico';
@@ -153,8 +153,46 @@ test('Licei migrati (Lotto 1): programmi vigenti D.M. 211/2010, copertura comple
   assert(sc && cl && sc !== cl && sc.competenze.includes('Liceo scientifico'), 'variante Matematica dello Scientifico assente');
   assert(getProgrammaDisciplina('sec2', 'Latino', 'Liceo Linguistico').competenze.includes('Liceo linguistico'), 'Latino del Linguistico');
   assert(getProgrammaDisciplina('sec2', 'Scienze Umane', 'Liceo delle Scienze Umane – opzione economico-sociale').competenze.includes('economico-sociale'), 'Scienze umane LES');
-  // gli altri licei restano (per ora) sul vecchio comportamento
-  assert(!LICEI_2010_MIGRATI.has('Liceo Artistico') && getProgrammaDisciplina('sec2', 'Italiano', 'Liceo Artistico'), 'Liceo Artistico non ancora migrato: deve avere ancora le voci esistenti');
+  // tutti i licei dell'app sono migrati: nessuno usa più le voci della bozza
+  for (const k of Object.keys(QUADRI_ORARI_SEC2).filter(x => x.startsWith('Liceo'))) assert(LICEI_2010_MIGRATI.has(k), `liceo non migrato: ${k}`);
+});
+
+test('Lotto 2 (Artistico, Musicale e coreutico): elenchi ufficiali DPR 89/2010 e alternative di indirizzo/sezione', () => {
+  const art = 'Liceo Artistico', mus = 'Liceo Musicale e Coreutico';
+  const b = getDisciplineSec2(art, 14), t = getDisciplineSec2(art, 17);
+  assert(b.includes('Storia e Geografia') && b.includes('Laboratorio Artistico') && !b.includes('Filosofia'), 'biennio Artistico errato');
+  assert(t.includes('Storia') && t.includes('Filosofia') && t.includes('Fisica') && !t.includes('Laboratorio Artistico'), 'triennio Artistico errato');
+  const opzA = getOpzionaliSec2(art, 17);
+  for (const n of ['Laboratorio della Figurazione', 'Laboratorio di Architettura', 'Laboratorio del Design', 'Laboratorio Audiovisivo e Multimediale', 'Laboratorio di Grafica', 'Laboratorio di Scenografia']) {
+    assert(opzA.includes(n) && t.includes(n), 'indirizzo mancante: ' + n);
+  }
+  assert(getOpzionaliSec2(art, 14).length === 0, 'biennio Artistico senza opzionali');
+  const bm = getDisciplineSec2(mus, 14), tm = getDisciplineSec2(mus, 17);
+  assert(bm.includes('Laboratorio Coreutico') && bm.includes('Tecnologie Musicali') && !tm.includes('Laboratorio Coreutico'), 'Laboratorio coreutico solo nel biennio');
+  assert(tm.includes('Storia della Danza') && !bm.includes('Storia della Danza') && tm.includes('Laboratorio Coreografico'), 'Storia della danza e Laboratorio coreografico solo nel triennio');
+  assert(getOpzionaliSec2(mus, 14).length === 9 && getOpzionaliSec2(mus, 17).length === 9, 'opzionali della sezione musicale/coreutica');
+  for (const k of [art, mus]) {
+    const v = QUADRI_ORARI_SEC2[k];
+    for (const o of v.biennioOpzionali) assert(v.biennio.includes(o), "opzionale biennio non nell'elenco: " + o);
+  }
+  assert(getProgrammaDisciplina('sec2', "Storia dell'Arte", art).competenze.includes('Liceo artistico'), "Storia dell'arte Artistico");
+  assert(getProgrammaDisciplina('sec2', "Storia dell'Arte", mus).competenze.includes('Indicazioni licei 2010'), "Storia dell'arte Musicale");
+});
+
+test('Lotto 3: sezione sportiva (DPR 52/2013) e Made in Italy (DPR 222/2024): fonti, elenchi e riferimenti', () => {
+  const sp = 'Liceo Scientifico – sezione a indirizzo sportivo', mi = 'Liceo del Made in Italy';
+  const bs = getDisciplineSec2(sp, 14), ts = getDisciplineSec2(sp, 17);
+  assert(!bs.includes('Latino') && !ts.includes('Latino'), 'lo sportivo non ha il Latino');
+  assert(!bs.includes('Diritto ed Economia dello Sport') && ts.includes('Diritto ed Economia dello Sport'), 'Diritto ed economia dello sport solo nel triennio');
+  assert(bs.includes('Discipline Sportive') && ts.includes('Discipline Sportive'), 'Discipline sportive in tutto il quinquennio');
+  assert(getProgrammaDisciplina('sec2', 'Italiano', sp).competenze.includes('Nella sezione sportiva'), 'Italiano sportivo: integrazione DPR 52/2013');
+  assert(getProgrammaDisciplina('sec2', 'Italiano', 'Liceo Classico').competenze.indexOf('Nella sezione sportiva') < 0, 'integrazione sportiva non deve trapelare nel Classico');
+  const bm = getDisciplineSec2(mi, 14), tm = getDisciplineSec2(mi, 17);
+  assert(bm.includes('Diritto') && bm.includes('Economia Politica') && !tm.includes('Diritto'), 'biennio: Diritto ed Economia politica');
+  assert(tm.includes('Scienze Giuridiche per il Made in Italy') && tm.includes('Scienze Economiche per il Made in Italy') && tm.includes('Laboratorio Interdisciplinare per il Made in Italy'), 'triennio Made in Italy');
+  assert(!bm.includes('Filosofia') && tm.includes('Filosofia') && tm.includes('Fisica') && !bm.includes('Fisica'), 'Filosofia e Fisica solo nel triennio');
+  assert(riferimentoLiceo(sp).nota.includes('DPR 52/2013') && riferimentoLiceo(mi).nota.includes('DPR 222/2024') && riferimentoLiceo('Liceo Classico').nota.includes('D.M. 211/2010'), 'riferimenti normativi per liceo');
+  assert(getProgrammaDisciplina('sec2', 'Matematica', mi).competenze.includes('made in italy') || getProgrammaDisciplina('sec2', 'Matematica', mi).competenze.includes('Liceo del made in Italy'), 'Matematica MiI');
 });
 
 test('alias: ogni alias punta a una voce base esistente e restituisce lo stesso contenuto', () => {

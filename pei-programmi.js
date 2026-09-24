@@ -1758,6 +1758,491 @@ delete PROGRAMMI_LICEI_2010_OVERRIDE["Liceo Scientifico – opzione Scienze Appl
 // Il Liceo Scientifico (tradizionale) e il Liceo delle scienze umane usano la stessa variante del Latino
 PROGRAMMI_LICEI_2010_OVERRIDE["Liceo Scientifico"] = { ...PROGRAMMI_LICEI_2010_OVERRIDE["Liceo Scientifico"], "Latino": PROGRAMMI_LICEI_2010_OVERRIDE["Liceo delle Scienze Umane"]["Latino"] };
 
+// ── Lotto 2: Liceo Artistico (6 indirizzi) e Liceo Musicale e coreutico — Indicazioni 2010 (D.M. 211/2010) ──
+Object.assign(PROGRAMMI_LICEI_2010, {
+  "Discipline Grafiche e Pittoriche": {
+    competenze: "Indicazioni licei 2010 – Discipline grafiche e pittoriche (Liceo artistico, primo biennio): competenze nell'uso dei materiali, delle tecniche e degli strumenti della produzione grafica e pittorica, terminologia tecnica essenziale, comprensione e applicazione dei principi che regolano la costruzione della forma attraverso il disegno e il colore; il disegno come linguaggio a sé e come strumento progettuale propedeutico agli indirizzi; metodologie di analisi ed elaborazione, organizzazione dei tempi e dello spazio di lavoro; disegno e pittura come forme di conoscenza della realtà oltre che atto tecnico.",
+    nuclei: [
+      "Elaborazione di manufatti con tecniche grafiche (grafite, sanguigna, carboncino, pastelli, inchiostri) e pittoriche (acquerello, tempera)",
+      "Genesi della forma grafica e pittorica: principi di costruzione della forma attraverso disegno e colore",
+      "Terminologia tecnica essenziale, materiali e strumenti della produzione grafica e pittorica",
+      "Disegno come linguaggio e come strumento progettuale propedeutico agli indirizzi",
+      "Organizzazione autonoma dei tempi e dello spazio di lavoro; rigore tecnico ed esercizio mentale",
+    ],
+  },
+  "Discipline Geometriche": {
+    competenze: "Indicazioni licei 2010 – Discipline geometriche (Liceo artistico, primo biennio): convenzioni e terminologia tecnica del linguaggio geometrico, strumenti e metodi proiettivi fondamentali per comprendere struttura geometrica, costruzione e rappresentazione della forma; disegno geometrico e proiettivo come strumento progettuale propedeutico agli indirizzi; metodologie di analisi ed elaborazione, organizzazione di tempi e spazio di lavoro; il disegno geometrico come forma di conoscenza della realtà.",
+    nuclei: [
+      "Elementi fondamentali della geometria euclidea, riferimento e orientamento nel piano e nello spazio",
+      "Convenzioni e terminologia tecnica del disegno geometrico",
+      "Metodi proiettivi fondamentali (proiezioni ortogonali e assonometriche) per rappresentare la forma",
+      "Uso degli strumenti del disegno geometrico e proiettivo",
+      "Disegno geometrico come strumento progettuale propedeutico agli indirizzi",
+    ],
+  },
+  "Discipline Plastiche e Scultoree": {
+    competenze: "Indicazioni licei 2010 – Discipline plastiche e scultoree (Liceo artistico, primo biennio): uso dei materiali, delle tecniche e degli strumenti della produzione plastico-scultorea, terminologia tecnica essenziale, principi che regolano la costruzione della forma attraverso volume e superficie, procedure di riproduzione tramite formatura, interazioni tra forma tridimensionale e spazio circostante; la forma tridimensionale come linguaggio e strumento propedeutico agli indirizzi.",
+    nuclei: [
+      "Elaborazione di manufatti in stiacciato, bassorilievo, altorilievo e tutto tondo di piccola dimensione (argilla, cera, plastilina, gesso)",
+      "Genesi della forma tridimensionale: volume e superficie",
+      "Procedure di riproduzione tramite formatura",
+      "Relazioni tra forma tridimensionale e spazio circostante",
+      "Terminologia tecnica, materiali e strumenti; organizzazione del lavoro",
+    ],
+  },
+  "Laboratorio Artistico": {
+    competenze: "Indicazioni licei 2010 – Laboratorio artistico (Liceo artistico, primo biennio): 'contenitore' di insegnamenti con funzione orientativa verso gli indirizzi attivi dal terzo anno, svolti con criterio modulare a rotazione nel biennio; pratica delle procedure e delle tecniche operative dei laboratori presenti negli indirizzi (pittura, scultura, architettura, ceramica, metalli, legno, tessuto, vetro, carta, fotografia, multimedialità, grafica informatica, restauro); elaborazione di manufatti da modello o progettati; competenze trasversali di base (ordine, spazi, tempi, autonomia operativa, proprietà dei materiali, uso corretto di strumenti e tecnologie, linguaggio tecnico).",
+    nuclei: [
+      "Moduli a rotazione nei laboratori degli indirizzi con funzione orientativa",
+      "Procedimenti operativi, materiali, tecniche e tecnologie dei diversi ambiti artistici",
+      "Elaborazione di manufatti da modello o progettati",
+      "Competenze trasversali: ordine, spazi e tempi, autonomia operativa, uso corretto di strumenti e tecnologie",
+      "Uso appropriato del linguaggio tecnico; scelta consapevole dell'indirizzo",
+    ],
+  },
+  "Chimica dei Materiali": {
+    competenze: "Indicazioni licei 2010 – Chimica dei materiali (Liceo artistico, secondo biennio): conoscenze chimiche e tecniche dei materiali utilizzati in ambito artistico; approfondisce la chimica del biennio (composti inorganici e nomenclatura, struttura della materia); caratteristiche fisico-chimiche e tecnologiche fondamentali, origine, preparazione e impieghi dei materiali di interesse per il proprio indirizzo; fondamenti delle tecniche impiegate; raccordo con fisica, matematica e con le discipline di laboratorio dell'indirizzo.",
+    nuclei: [
+      "Chimica generale e inorganica: classificazione dei composti, nomenclatura, struttura della materia",
+      "Caratteristiche fisico-chimiche e tecnologiche dei materiali di interesse dell'indirizzo",
+      "Origine, preparazione e impieghi dei materiali artistici",
+      "Fondamenti delle tecniche impiegate nei laboratori",
+      "Raccordo con fisica, matematica e discipline di indirizzo",
+    ],
+  },
+  "Laboratorio della Figurazione": {
+    competenze: "Indicazioni licei 2010 – Laboratorio della figurazione (Liceo artistico, indirizzo Arti figurative; pittura/scultura): conoscere e gestire in autonomia i processi progettuali e operativi della pittura (e della scultura), individuando aspetti estetici, concettuali, espressivi, comunicativi, funzionali e conservativi; impiego appropriato di tecniche, tecnologie, strumenti e materiali, principi della composizione e teorie della percezione visiva; fondamenti culturali, teorici, tecnici e storico-stilistici; analisi della produzione del passato e contemporanea; uso del disegno geometrico e proiettivo, dei mezzi multimediali e delle nuove tecnologie; 'pratica artistica' come strumento di autonomia creativa.",
+    nuclei: [
+      "Processi progettuali e operativi della pittura e della scultura",
+      "Tecniche, tecnologie, strumenti e materiali più diffusi; principi della composizione e della percezione visiva",
+      "Analisi della produzione pittorica, grafica e scultorea del passato e contemporanea",
+      "Disegno geometrico e proiettivo, mezzi multimediali e nuove tecnologie a supporto del progetto",
+      "Relazioni tra linguaggio artistico e contesto architettonico, urbano e paesaggistico; 'pratica artistica'",
+    ],
+  },
+  "Discipline Pittoriche e/o Discipline Plastiche e Scultoree": {
+    competenze: "Indicazioni licei 2010 – Discipline pittoriche e/o plastiche e scultoree (Liceo artistico, indirizzo Arti figurative, triennio): ampliamento della conoscenza e dell'uso di tecniche, tecnologie, strumenti e materiali della pittura e/o della scultura, in funzione dei processi progettuali e operativi dell'indirizzo, con analisi della produzione artistica del passato e della contemporaneità e uso del disegno e dei mezzi multimediali.",
+    nuclei: [
+      "Tecniche, tecnologie, strumenti e materiali della pittura e della scultura",
+      "Processi progettuali e operativi dell'indirizzo",
+      "Analisi della produzione artistica del passato e contemporanea",
+      "Disegno geometrico e proiettivo e mezzi multimediali a supporto del progetto",
+      "Composizione e percezione visiva",
+    ],
+  },
+  "Laboratorio di Architettura": {
+    competenze: "Indicazioni licei 2010 – Laboratorio di architettura (Liceo artistico, indirizzo Architettura e ambiente): conoscere e gestire in autonomia i processi progettuali e operativi dell'architettura e del contesto ambientale, individuando aspetti estetici, concettuali, espressivi, comunicativi, funzionali e conservativi; tecniche, tecnologie, strumenti e metodi della rappresentazione; principi della composizione e percezione visiva; analisi della produzione architettonica e urbanistica del passato e contemporanea; disegno geometrico, mezzi multimediali e disegno assistito; 'pratica artistico-progettuale'.",
+    nuclei: [
+      "Processi progettuali e operativi dell'architettura e del contesto ambientale",
+      "Metodi proiettivi del disegno tecnico e rappresentazione (tradizionale e digitale, disegno assistito)",
+      "Composizione architettonica e percezione visiva",
+      "Analisi della produzione architettonica e urbanistica del passato e contemporanea",
+      "Mezzi multimediali e nuove tecnologie per il progetto e la comunicazione",
+    ],
+  },
+  "Discipline Progettuali Architettura e Ambiente": {
+    competenze: "Indicazioni licei 2010 – Discipline progettuali Architettura e ambiente (triennio): ampliamento della conoscenza e dell'uso dei metodi proiettivi del disegno tecnico, orientati alla progettazione architettonica e ambientale; processi progettuali e operativi dell'indirizzo con analisi della produzione architettonica e urbanistica.",
+    nuclei: [
+      "Metodi proiettivi del disegno tecnico applicati al progetto architettonico",
+      "Progettazione architettonica e ambientale",
+      "Composizione e percezione visiva",
+      "Rappresentazione tradizionale e digitale (disegno assistito)",
+      "Analisi della produzione architettonica e urbanistica",
+    ],
+  },
+  "Laboratorio del Design": {
+    competenze: "Indicazioni licei 2010 – Laboratorio del design (Liceo artistico, indirizzo Design): conoscere e gestire in autonomia i processi progettuali e operativi del design (secondo lo specifico settore di produzione), individuando aspetti estetici, funzionali, comunicativi, espressivi, economici e concettuali; tecniche, tecnologie, strumenti, materiali e strumentazioni industriali, artigianali e informatiche; forma e funzione del prodotto in base ai materiali (ceramico, ligneo, metallico, tessile, vitreo, librario); analisi delle arti applicate del passato e del design contemporaneo; sviluppo del progetto, disegno a mano libera e tecnico, mezzi informatici, modellazione 3D.",
+    nuclei: [
+      "Processi progettuali e operativi del design secondo il settore di produzione",
+      "Forma e funzione del prodotto in relazione ai materiali (ceramico, ligneo, metallico, tessile, vitreo, librario)",
+      "Disegno a mano libera e tecnico, mezzi informatici, modellazione 3D",
+      "Analisi delle arti applicate del passato e del design contemporaneo",
+      "Rapporto tra forma estetica, esigenze strutturali e commerciali",
+    ],
+  },
+  "Discipline Progettuali Design": {
+    competenze: "Indicazioni licei 2010 – Discipline progettuali Design (triennio): sviluppo della conoscenza e dell'uso di tecniche, tecnologie, strumenti e materiali del design, in funzione dei processi progettuali e operativi dell'indirizzo, dal disegno e dai mezzi informatici alla modellazione tridimensionale.",
+    nuclei: [
+      "Tecniche, tecnologie, strumenti e materiali del design",
+      "Sviluppo del progetto di prodotto",
+      "Disegno a mano libera e tecnico, mezzi informatici e modellazione 3D",
+      "Composizione e percezione visiva",
+      "Analisi del design storico e contemporaneo",
+    ],
+  },
+  "Laboratorio Audiovisivo e Multimediale": {
+    competenze: "Indicazioni licei 2010 – Laboratorio audiovisivo e multimediale (Liceo artistico, indirizzo Audiovisivo e multimediale): conoscere e gestire in autonomia i processi progettuali e operativi del settore audiovisivo e multimediale, individuando aspetti espressivi, comunicativi, concettuali, narrativi, estetici e funzionali; tecniche, tecnologie e strumentazioni fotografiche, video e multimediali; elementi che costituiscono l'immagine ripresa o elaborata (fissa o in divenire, analogica o digitale); analisi della produzione audiovisiva del passato e contemporanea; uso dei mezzi informatici e delle nuove tecnologie.",
+    nuclei: [
+      "Processi progettuali e operativi del settore audiovisivo e multimediale",
+      "Tecniche e strumentazioni fotografiche, video e multimediali",
+      "Immagine ripresa o elaborata, fissa o in divenire, analogica o digitale",
+      "Analisi della produzione audiovisiva del passato e contemporanea; linguaggio audiovisivo e testo di riferimento",
+      "Mezzi informatici e nuove tecnologie; principi di composizione e percezione visiva",
+    ],
+  },
+  "Discipline Audiovisive e Multimediali": {
+    competenze: "Indicazioni licei 2010 – Discipline audiovisive e multimediali (triennio): sviluppo della conoscenza e dell'uso di tecniche, tecnologie e strumenti del settore audiovisivo e multimediale, in funzione dei processi progettuali e operativi dell'indirizzo, con analisi della produzione audiovisiva e uso dei mezzi informatici.",
+    nuclei: [
+      "Tecniche e tecnologie fotografiche, video e multimediali",
+      "Progettazione e realizzazione di prodotti audiovisivi e multimediali",
+      "Linguaggio e narrazione audiovisiva",
+      "Analisi della produzione audiovisiva storica e contemporanea",
+      "Mezzi informatici e nuove tecnologie",
+    ],
+  },
+  "Laboratorio di Grafica": {
+    competenze: "Indicazioni licei 2010 – Laboratorio di grafica (Liceo artistico, indirizzo Grafica): conoscere e gestire in autonomia i processi progettuali e operativi della grafica e del graphic design (tradizionale e digitale, editoriale, informativa e comunicativa, pubblicitaria, sociale), individuando aspetti comunicativi, estetici, concettuali, espressivi, commerciali e funzionali; tecniche, tecnologie, strumenti, materiali e strumentazioni fotografiche, informatiche e multimediali; analisi della produzione grafico-visiva del passato e contemporanea; disegno a mano libera e geometrico-descrittivo, software grafici e multimediali.",
+    nuclei: [
+      "Processi progettuali e operativi della grafica e del graphic design (tradizionale e digitale)",
+      "Grafica editoriale, informativa e comunicativa, pubblicitaria e sociale",
+      "Software grafici e multimediali, strumentazioni fotografiche e informatiche",
+      "Disegno a mano libera e geometrico-descrittivo; composizione e percezione visiva",
+      "Analisi della produzione grafico-visiva del passato e contemporanea; rapporto con prodotto, testo e pubblico destinatario",
+    ],
+  },
+  "Discipline Grafiche": {
+    competenze: "Indicazioni licei 2010 – Discipline grafiche (Liceo artistico, indirizzo Grafica, triennio): ampliamento della conoscenza e dell'uso di tecniche, tecnologie, strumenti e materiali della grafica, in funzione dei processi progettuali e operativi dell'indirizzo, con analisi della produzione grafico-visiva e uso dei software grafici.",
+    nuclei: [
+      "Tecniche e tecnologie della grafica tradizionale e digitale",
+      "Progettazione grafica e visual design",
+      "Software grafici e multimediali",
+      "Composizione, percezione visiva e comunicazione visiva",
+      "Analisi della produzione grafico-visiva storica e contemporanea",
+    ],
+  },
+  "Laboratorio di Scenografia": {
+    competenze: "Indicazioni licei 2010 – Laboratorio di scenografia (Liceo artistico, indirizzo Scenografia): conoscere e gestire in autonomia i processi progettuali e operativi della scenografia, individuando aspetti estetici, concettuali, espressivi, comunicativi e funzionali; tecniche grafiche, pittoriche, plastico-scultoree e geometriche per ideare e realizzare lo spazio scenico e i suoi elementi bidimensionali e tridimensionali; strumenti, materiali e strumentazioni artigianali; analisi della produzione scenografica, teatrale (prosa, lirica e di figura) e cinematografica; rapporto con allestimento espositivo e altri linguaggi artistici.",
+    nuclei: [
+      "Processi progettuali e operativi della scenografia: ideazione e realizzazione dello spazio scenico",
+      "Tecniche grafiche, pittoriche, plastico-scultoree e geometriche per elementi bi- e tridimensionali",
+      "Strumenti, materiali e strumentazioni artigianali",
+      "Analisi della produzione scenografica teatrale (prosa, lirica, di figura) e cinematografica",
+      "Allestimento espositivo; disegno a mano libera e geometrico-descrittivo",
+    ],
+  },
+  "Discipline Geometriche e Scenotecniche": {
+    competenze: "Indicazioni licei 2010 – Discipline geometriche e scenotecniche (Liceo artistico, indirizzo Scenografia): principi che regolano la restituzione geometrica e la realizzazione delle forme architettoniche e strutturali che costituiscono lo spazio scenico, con uso del disegno geometrico-descrittivo e delle tecniche della scenotecnica.",
+    nuclei: [
+      "Restituzione geometrica dello spazio scenico e delle sue strutture",
+      "Disegno geometrico-descrittivo e proiettivo applicato alla scena",
+      "Scenotecnica: strutture e realizzazione degli elementi scenici",
+      "Strumenti e materiali",
+      "Riferimenti storici e culturali della scenografia",
+    ],
+  },
+  "Discipline Progettuali Scenografiche": {
+    competenze: "Indicazioni licei 2010 – Discipline progettuali scenografiche (triennio): approfondimento della conoscenza e dell'uso di tecniche, tecnologie e strumenti per l'ideazione creativa e la progettazione dello spazio scenico, con analisi della produzione scenografica teatrale e cinematografica.",
+    nuclei: [
+      "Ideazione creativa e progettazione dello spazio scenico",
+      "Tecniche grafiche, pittoriche e plastiche per il progetto scenografico",
+      "Rappresentazione geometrica e disegno a mano libera",
+      "Analisi della produzione scenografica teatrale e cinematografica",
+      "Composizione e percezione visiva",
+    ],
+  },
+  "Esecuzione e Interpretazione": {
+    competenze: "Indicazioni licei 2010 – Esecuzione e interpretazione (Liceo musicale): nel quinquennio sviluppo di notevoli capacità tecnico-esecutive e interpretative con un primo strumento integrato da un secondo strumento di caratteristiche complementari (monodico/polifonico); metodo di studio proprio e autovalutazione; ricca letteratura strumentale solistica e d'insieme di diversi periodi fino all'età contemporanea; capacità analitiche a fondamento di scelte interpretative consapevoli e storicamente contestualizzate; tecniche improvvisative.",
+    nuclei: [
+      "Formazione del suono e tecniche di base dello strumento scelto",
+      "Primo strumento integrato da un secondo strumento complementare",
+      "Repertorio solistico e d'insieme di diverse epoche fino all'età contemporanea",
+      "Analisi a fondamento delle scelte interpretative; contesto storico",
+      "Metodo di studio, autovalutazione e tecniche improvvisative",
+    ],
+  },
+  "Teoria, Analisi e Composizione": {
+    competenze: "Indicazioni licei 2010 – Teoria, analisi e composizione (Liceo musicale): familiarità con strutture, codici e modalità organizzative ed espressive del linguaggio musicale (modalità, tonalità, sistemi popolari e contemporanei); produzione di semplici composizioni; padronanza dei codici di notazione in lettura e scrittura; lettura con voce e strumento di brani monodici e polifonici, anche in contrappunto imitato; trascrizione sotto dettatura; analisi all'ascolto e in partitura di opere di vario genere, stile ed epoca.",
+    nuclei: [
+      "Sistemi di regole grammaticali e sintattiche (modalità, tonalità, sistemi popolari e contemporanei)",
+      "Notazione: lettura e scrittura in autonomia",
+      "Lettura con voce e strumento di brani monodici e polifonici, anche in contrappunto imitato",
+      "Trascrizione sotto dettatura e sviluppo dell'orecchio musicale",
+      "Analisi all'ascolto e in partitura; composizione di semplici brani",
+    ],
+  },
+  "Storia della Musica": {
+    competenze: "Indicazioni licei 2010 – Storia della musica (Liceo musicale e coreutico): familiarità con la musica d'arte di tradizione occidentale, ascolto diretto di composizioni integrali coordinato con lettura ed analisi della partitura e del testo verbale; profilo complessivo della storia della musica occidentale di tradizione scritta dal canto gregoriano ai giorni nostri, con generi e autori principali nei contesti storico-culturali e sociali; fonti della storia della musica; evoluzione della scrittura musicale; caratteristiche degli strumenti (nella sezione coreutica, anche in rapporto con la storia della danza).",
+    nuclei: [
+      "Ascolto diretto di opere significative di ogni epoca, genere e stile con partitura e testo",
+      "Profilo della storia della musica occidentale di tradizione scritta, dal canto gregoriano a oggi",
+      "Generi musicali primari e autori preminenti nei contesti storico-culturali e sociali",
+      "Fonti della storia della musica e evoluzione della scrittura musicale",
+      "Strumenti musicali e loro caratteristiche; rapporto con la danza (sezione coreutica)",
+    ],
+  },
+  "Laboratorio di Musica d'Insieme": {
+    competenze: "Indicazioni licei 2010 – Laboratorio di musica d'insieme (Liceo musicale): nel quinquennio esecuzione/interpretazione di composizioni vocali e strumentali di musica d'insieme, diverse per epoche, generi, stili e tradizioni, in contesti musicali e in forma scenica (con danza, teatro); capacità sincroniche e sintoniche nella condivisione espressiva (ritmica, metrica, agogica, melodica, timbrica, dinamica, armonica, fraseggio); ascolto, valutazione e autovalutazione nelle esecuzioni di gruppo; lettura e interpretazione critica, anche filologica, delle partiture; capacità improvvisative nella musica d'insieme.",
+    nuclei: [
+      "Esecuzione di musica vocale e strumentale d'insieme di epoche, generi e stili diversi",
+      "Contesti musicali e forma scenica (rapporto con danza e teatro)",
+      "Capacità sincroniche e sintoniche; ascolto reciproco, valutazione e autovalutazione",
+      "Lettura e interpretazione critica, anche filologica, delle partiture",
+      "Capacità improvvisative nella musica d'insieme",
+    ],
+  },
+  "Tecnologie Musicali": {
+    competenze: "Indicazioni licei 2010 – Tecnologie musicali (Liceo musicale): padronanza delle tecnologie informatiche e multimediali; software di editing del suono e di notazione musicale, elaborazione di materiali audio di supporto allo studio e alle performance; interazioni tra suono e altre forme espressive (gestuali, visive, testuali); configurazione di uno studio di home recording; comunicazione e creazione condivisa di musica in rete; acquisizione, elaborazione e organizzazione di segnali da diverse sorgenti sonore per progetti compositivi.",
+    nuclei: [
+      "Software di editing del suono e di notazione musicale",
+      "Elaborazione di materiali audio di supporto allo studio e alle performance",
+      "Home recording: configurazione e uso di uno studio di produzione musicale",
+      "Musica in rete e creazione condivisa; sperimentazione su oggetti sonori",
+      "Interazioni tra suono e altre forme espressive (gestuali, visive, testuali)",
+    ],
+  },
+  "Storia della Danza": {
+    competenze: "Indicazioni licei 2010 – Storia della danza (Liceo coreutico, dal secondo biennio): materia culturale di indirizzo, complemento teorico di quanto appreso nelle tecniche, nei laboratori e nella pratica scenica; categorie concettuali e lessicali degli ambiti storici e teorici della danza, fonti documentarie, strumenti per esaminare i codici espressivi e i linguaggi comunicativi in campo coreutico; visione guidata di esempi della danza come espressione delle culture e delle sue funzioni (genere, potere politico, contesto sociale, ritualità e sacralità).",
+    nuclei: [
+      "Categorie concettuali e lessico degli ambiti storici e teorici della danza",
+      "Fonti documentarie della storia della danza",
+      "Codici espressivi e linguaggi comunicativi in campo coreutico",
+      "Funzioni della danza nelle diverse culture (genere, potere, contesto sociale, ritualità)",
+      "Visione guidata di esempi significativi e raccordo con tecnica, laboratori e pratica scenica",
+    ],
+  },
+  "Tecniche della Danza": {
+    competenze: "Indicazioni licei 2010 – Tecniche della danza (Liceo coreutico): tecnica della danza classica: nel quinquennio preparazione tecnica e teorica che consenta l'accesso all'Alta Formazione coreutica, piena padronanza del corpo e delle tecniche di movimento, esecuzione bilanciata negli aspetti tecnici, stilistici, espressivi e creativi, lettura critica di manuali della danza accademica; tecnica della danza contemporanea: primo approccio nel biennio, poi approfondimento nel triennio, per consentire una scelta responsabile della sezione (classica o contemporanea).",
+    nuclei: [
+      "Tecnica della danza classica: padronanza del corpo, tecniche di movimento, esecuzione tecnico-stilistica ed espressiva",
+      "Tecnica della danza contemporanea: primo approccio nel biennio, approfondimento nel triennio",
+      "Capacità di osservazione, ascolto e analisi integrando le discipline coreutiche e musicali",
+      "Lettura critica di manuali della danza accademica",
+      "Scelta responsabile della sezione (classica o contemporanea) e accesso all'Alta Formazione",
+    ],
+  },
+  "Laboratorio Coreutico": {
+    competenze: "Indicazioni licei 2010 – Laboratorio coreutico (Liceo coreutico, solo primo biennio): articolazione della tecnica della danza classica; percorso di esplorazione e approfondimento del movimento verso la piena consapevolezza del proprio corpo e degli elementi portanti della tecnica della danza.",
+    nuclei: [
+      "Esplorazione e approfondimento del movimento",
+      "Consapevolezza del proprio corpo",
+      "Elementi portanti della tecnica della danza",
+      "Raccordo con la tecnica della danza classica",
+      "Solo primo biennio",
+    ],
+  },
+  "Laboratorio Coreografico": {
+    competenze: "Indicazioni licei 2010 – Laboratorio coreografico (Liceo coreutico, dal terzo al quinto anno): articolazione della tecnica della danza classica o contemporanea; sezione classica: registri tecnici e linguistici del repertorio ottocentesco e dei primi del Novecento e capacità di interagire nelle esecuzioni collettive; sezione contemporanea: approfondimento stilistico ed espressivo, produzione coreografica e opere significative del repertorio d'indirizzo.",
+    nuclei: [
+      "Repertorio ottocentesco e dei primi del Novecento (sezione classica)",
+      "Danza contemporanea: aspetti stilistici ed espressivi (sezione contemporanea)",
+      "Esecuzioni collettive e interazione costruttiva nel gruppo",
+      "Aspetti e problemi della produzione coreografica",
+      "Confronto con opere significative del repertorio d'indirizzo",
+    ],
+  },
+  "Teoria e Pratica Musicale della Danza": {
+    competenze: "Indicazioni licei 2010 – Teoria e pratica musicale della danza (Liceo coreutico, primo biennio): consapevolezza degli elementi portanti del linguaggio musicale, in particolare del rapporto tra musica e danza: distinguere all'ascolto tempo, andamento, metro e modello ritmico di una composizione; individuare e memorizzare le frasi musicali; leggere e intonare facili melodie; usare piccole percussioni.",
+    nuclei: [
+      "Elementi del linguaggio musicale: tempo, andamento, metro, modello ritmico",
+      "Ascolto e memorizzazione delle frasi musicali di una composizione",
+      "Lettura e intonazione di facili melodie",
+      "Uso di piccole percussioni",
+      "Rapporto tra musica e danza",
+    ],
+  },
+});
+
+// Storia dell'arte del Liceo artistico: stesso impianto, con riferimento all'arte moderna e contemporanea
+PROGRAMMI_LICEI_2010_OVERRIDE["Liceo Artistico"] = {
+  "Storia dell'Arte": {
+    competenze: "Indicazioni licei 2010 – Storia dell'arte (Liceo artistico, cinque anni): comprensione del rapporto tra opere d'arte e situazione storica, con i legami con letteratura, pensiero filosofico e scientifico, politica, religione; confidenza con i linguaggi specifici delle diverse espressioni artistiche, con particolare riferimento alle principali linee di sviluppo dell'arte moderna e contemporanea; lettura delle opere con metodo e terminologia appropriati (aspetti iconografici e simbolici, caratteri stilistici, funzioni, materiali e tecniche); consapevolezza del valore del patrimonio e conoscenza delle questioni di tutela, conservazione e restauro; nell'opera d'arte, oltre a valori formali e simbolici, una specifica competenza tecnica. Primo biennio: dalle origini nell'area mediterranea alla fine del XIV secolo; quinto anno: arte del Novecento.",
+    nuclei: [
+      "Lettura dell'opera: metodo e terminologia, aspetti iconografici, simbolici, stilistici, materiali e tecniche",
+      "Inquadramento storico e legami con letteratura, pensiero filosofico e scientifico, politica, religione",
+      "Dalle origini nell'area mediterranea alla fine del XIV secolo (primo biennio); dal primo Quattrocento alla fine dell'Ottocento con l'Impressionismo (secondo biennio)",
+      "Arte moderna e contemporanea; quinto anno: arte del Novecento (dal Post-impressionismo alle avanguardie storiche e al Movimento Moderno), a supporto dei processi progettuali dell'indirizzo",
+      "Patrimonio culturale: tutela, conservazione, restauro; metodi storiografici e competenza tecnica dell'opera",
+    ],
+  },
+};
+LICEI_2010_MIGRATI.add("Liceo Artistico");
+LICEI_2010_MIGRATI.add("Liceo Musicale e Coreutico");
+
+// ── Lotto 3: Scientifico sezione a indirizzo sportivo (DPR 52/2013) e Liceo del Made in Italy (DPR 222/2024) ──
+// Fonti: DPR 5 marzo 2013 n. 52 (Allegato A: piano degli studi e Indicazioni della sezione sportiva, che integra quelle
+// del liceo scientifico con specificità per ogni disciplina); DPR 25 novembre 2024 n. 222 (G.U. 19/02/2025 n. 41:
+// Allegato A-bis profilo, A-ter Indicazioni, G-bis piano degli studi), in vigore dal 2025/26 — Indicazioni ufficiali,
+// non bozza.
+const _con = (base, agg, nucleo) => ({ competenze: `${base.competenze} ${agg}`, nuclei: [...base.nuclei, nucleo] });
+const _SCI = PROGRAMMI_LICEI_2010_OVERRIDE["Liceo Scientifico"];
+const _SPORT = "Liceo Scientifico – sezione a indirizzo sportivo";
+const _MII = "Liceo del Made in Italy";
+
+Object.assign(PROGRAMMI_LICEI_2010, {
+  "Diritto ed Economia dello Sport": {
+    competenze: "DPR 52/2013 – Diritto ed economia dello sport (sezione sportiva, triennio): Diritto: linguaggio giuridico e funzione sociale della norma, relatività storica e spaziale del fenomeno giuridico, interpretazione del fenomeno sportivo (soggetti, responsabilità, organi che le accertano alla luce delle fonti normative), conoscenza approfondita della Costituzione, confronto tra ordinamento statale e sportivo, integrazione europea e organi dell'Unione. Economia: categorie concettuali dell'economia, ruolo degli operatori pubblici e privati, dinamiche economiche del mondo sportivo, implicazioni economico-aziendali e gestionali dello sport, strategie di marketing e comunicazione applicate allo sport.",
+    nuclei: [
+      "Teoria generale dell'ordinamento giuridico dello sport e sistema delle fonti del diritto sportivo; rapporto tra ordinamento sportivo e statale",
+      "Soggetti del diritto e ordinamento sportivo italiano; tutela dello sportivo (sanitaria e previdenziale); ruolo dello sport nella Costituzione",
+      "Doping, comportamenti devianti e responsabilità nell'ordinamento sportivo; sanzioni",
+      "Contratto di lavoro sportivo, diritti soggettivi, obbligazioni e contratti; libera circolazione dei lavoratori sportivi",
+      "Economia dello sport: operatori economici, aspetti economico-aziendali e gestionali, marketing e comunicazione applicati allo sport",
+    ],
+  },
+  "Discipline Sportive": {
+    competenze: "DPR 52/2013 – Discipline sportive (sezione sportiva): orientare in modo autonomo e consapevole la propria pratica motoria e sportiva come stile di vita per salute e benessere psico-fisico e relazionale; letteratura scientifica e tecnica delle scienze motorie e sportive; principi di igiene degli sport, fisiologia dell'esercizio e prevenzione dei danni nella pratica agonistica; norme organizzative e tecniche delle pratiche sportive più diffuse e dello sport per disabili; fondamenti delle teorie dell'allenamento e della strategia competitiva; padronanza motoria e abilità specifiche delle discipline praticate con correzione degli errori di esecuzione; giuria, arbitraggio e organizzazione di tornei, gare e competizioni scolastiche. Primo biennio: biologia dell'azione motoria, meccanica applicata al movimento, analisi dei fattori della prestazione, fondamentali tecnici degli sport di base.",
+    nuclei: [
+      "Fitness e allenamento: costo energetico, adattamenti cardio-circolatori, rendimento e prestazione, metodi e test di misurazione e valutazione",
+      "Sport individuali: atletica leggera (concorsi e gare), orienteering, elementi di teoria e pratica di altri sport; tecniche esecutive e tattiche di gara",
+      "Sport di squadra: teoria e pratica di almeno due sport di squadra, applicazione nei diversi ruoli",
+      "Igiene degli sport, fisiologia dell'esercizio fisico e prevenzione dei danni nella pratica agonistica; sport per disabili",
+      "Giuria, arbitraggio e organizzazione di tornei e competizioni scolastiche; norme organizzative e tecniche",
+    ],
+  },
+  "Diritto": {
+    competenze: "DPR 222/2024 – Diritto (Liceo del made in Italy, primo biennio): significato e funzione della norma giuridica come fondamento della convivenza civile e distinzione dalle norme prive di rilevanza giuridica; fonti normative e gerarchia; uso di Costituzione e codici come fonti per la ricerca e l'applicazione della fattispecie astratta alla fattispecie concreta; evoluzione storica della disciplina giuridica delle attività economiche; ruolo di individuo e organizzazioni collettive, attori pubblici e privati del sistema economico; principi dello Stato, diritti e doveri fondamentali, libertà, sanzioni e sistema giudiziario, cittadinanza e sovranità popolare anche europea e internazionale; forme di Stato e di governo, organi dello Stato e istituzioni; soggetti giuridici, con riferimento a imprenditore e impresa.",
+    nuclei: [
+      "Norma giuridica, fonti normative e loro gerarchia; Costituzione e codici",
+      "Individuo e organizzazioni collettive; attori pubblici e privati del sistema economico",
+      "Stato, forme di Stato e di governo, organi dello Stato, istituzioni locali, nazionali e internazionali",
+      "Diritti e doveri fondamentali, libertà, comportamenti devianti, sanzioni e sistema giudiziario",
+      "Soggetti giuridici: imprenditore e impresa",
+    ],
+  },
+  "Economia Politica": {
+    competenze: "DPR 222/2024 – Economia politica (Liceo del made in Italy, primo biennio): primi rudimenti di microeconomia e macroeconomia; primo anno: decisioni di consumatori e imprese, funzionamento dei mercati in concorrenza e monopolio, formazione dei prezzi, soddisfazione dei consumatori; secondo anno: principali variabili macroeconomiche (PIL, mercato del lavoro, tassi di interesse, inflazione), fattori dei periodi di crisi o crescita e strumenti dei governi; attenzione alla sostenibilità ambientale, sociale e di governance dei sistemi produttivi; analisi dei fenomeni economici di immediata osservazione.",
+    nuclei: [
+      "Microeconomia: decisioni di consumatori e imprese, mercati (concorrenza, monopolio), formazione dei prezzi",
+      "Macroeconomia: PIL, mercato del lavoro, tassi di interesse, inflazione",
+      "Cicli di crisi e crescita e strumenti dei governi",
+      "Sostenibilità ambientale, sociale e di governance dei sistemi produttivi",
+      "Analisi di fenomeni economici di immediata osservazione",
+    ],
+  },
+  "Scienze Giuridiche per il Made in Italy": {
+    competenze: "DPR 222/2024 – Scienze giuridiche per il made in Italy (triennio): competenze giuridiche applicate ai diversi settori dell'attività d'impresa e al supporto delle filiere del made in Italy; diritto pubblico e fondamenti giuridici dell'attività economica; secondo biennio: diritti reali (proprietà, usufrutto), obbligazioni, negozi giuridici e contratti tipici e atipici, diritto dei contratti e autonomia privata, diritto dei consumatori e regolazione del mercato (concorrenza, tutela del consumatore, limiti alla libertà di iniziativa economica), diritto commerciale (imprenditore, società, vita dell'azienda, responsabilità d'impresa, fallimento); diritto industriale e proprietà intellettuale; quadro normativo del commercio internazionale (diritto doganale, politica commerciale dell'Unione europea, investimenti esteri).",
+    nuclei: [
+      "Diritto privato: diritti reali, obbligazioni, negozi giuridici, contratti tipici e atipici, autonomia privata",
+      "Diritto dei consumatori e regolazione del mercato: concorrenza, tutela del consumatore, limiti all'iniziativa economica",
+      "Diritto commerciale: imprenditore, tipi di società, responsabilità d'impresa, fallimento",
+      "Diritto industriale e difesa della proprietà intellettuale",
+      "Commercio internazionale: diritto doganale, politica commerciale dell'Unione europea, investimenti esteri (quinto anno)",
+    ],
+  },
+  "Scienze Economiche per il Made in Italy": {
+    competenze: "DPR 222/2024 – Scienze economiche per il made in Italy (triennio): lessico e fondamenti di economia politica, economia industriale ed economia aziendale con riferimento al modello produttivo del made in Italy e alla sua internazionalizzazione; comprensione dei fenomeni economici dal macro al micro fino alle dinamiche interne all'impresa; attività di produzione e commercio in chiave organizzativa e strategica; programmazione, organizzazione, conduzione e controllo di gestione, strumenti di marketing per promozione e valorizzazione; secondo biennio: vita dell'impresa nei settori tipici del made in Italy (filiere, distretti, catene del valore internazionali), assetti organizzativi e strategici, sviluppo sostenibile e responsabilità sociale d'impresa, modalità contabili, casi di studio; quinto anno: scenari macroeconomici, scelte dei policy maker e delle imprese, valorizzazione dei prodotti italiani (marketing, economia, politica economica, economia aziendale).",
+    nuclei: [
+      "Economia politica, industriale e aziendale applicate al made in Italy e alla sua internazionalizzazione",
+      "Filiere, distretti e catene del valore internazionali dei settori tipici del made in Italy",
+      "Organizzazione e strategia d'impresa, sviluppo sostenibile e responsabilità sociale; modalità contabili delle operazioni",
+      "Programmazione, controllo di gestione e strumenti di marketing per promozione e valorizzazione",
+      "Quinto anno: scenari macroeconomici, scelte dei policy maker e delle imprese, posizionamento dei prodotti italiani sui mercati globali",
+    ],
+  },
+  "Storia dell'Arte e del Design": {
+    competenze: "DPR 222/2024 – Storia dell'arte e del design (Liceo del made in Italy): comprensione del rapporto tra opere d'arte e di design e situazione storica in cui sono state prodotte, con i legami con letteratura, pensiero filosofico e scientifico, politica, religione; lettura delle opere pittoriche, scultoree, architettoniche e di design con metodo e terminologia appropriati (aspetti iconografici e simbolici, caratteri stilistici, funzioni, materiali e tecniche); valore del patrimonio archeologico, architettonico e artistico e questioni di tutela, conservazione e restauro. Primo biennio: linee essenziali della produzione artistica dalle origini nell'area mediterranea alla fine del XIV secolo (arte greca, arte e potere a Roma, prima arte cristiana, alto medioevo, romanico, gotico, Giotto e i maestri del Due-Trecento).",
+    nuclei: [
+      "Lettura dell'opera d'arte e di design: metodo, terminologia, aspetti iconografici, simbolici, stilistici, materiali e tecniche",
+      "Primo biennio: arte greca, arte e architettura a Roma, prima arte cristiana, arte alto-medievale, romanico, gotico, Giotto",
+      "Secondo biennio: produzione artistica, arti applicate e origini del design fino al XIX secolo; quinto anno: Novecento dalle avanguardie storiche a tutto il XX secolo, con uno sguardo sulle esperienze contemporanee",
+      "Rapporto tra opere e contesto storico; legami con letteratura, pensiero filosofico e scientifico, politica, religione",
+      "Patrimonio culturale: tutela, conservazione, restauro; metodi storiografici e competenza tecnica dell'opera",
+    ],
+  },
+  "Laboratorio Interdisciplinare per il Made in Italy": {
+    competenze: "DPR 222/2024 – Laboratori interdisciplinari (Liceo del made in Italy, dal secondo anno del primo biennio; 30, 40, 50 e 60 ore nel 2°, 3°, 4° e 5° anno): due laboratori, parte integrante e obbligatoria del percorso, che coinvolgono le discipline dell'ambito umanistico-linguistico ('Cultura e comunicazione del made in Italy': Italiano, Storia e geografia, Storia, Filosofia, Storia dell'arte e del design) e dell'ambito scientifico-giuridico-economico ('Dai distretti ai mercati globali: strumenti e strategie per il made in Italy': Matematica, Fisica, Diritto/Scienze giuridiche, Economia politica/Scienze economiche), con l'apporto delle lingue straniere; metodologie di apprendimento attivo e sviluppo di competenze imprenditoriali e trasversali.",
+    nuclei: [
+      "Laboratorio 'Cultura e comunicazione del made in Italy' (ambito umanistico-linguistico)",
+      "Laboratorio 'Dai distretti ai mercati globali: strumenti e strategie per il made in Italy' (ambito scientifico-giuridico-economico)",
+      "Tematica specifica di ciascun anno sviluppata in modo interdisciplinare",
+      "Apporto delle lingue straniere in entrambi i laboratori",
+      "Metodologie attive e partecipate; competenze imprenditoriali e trasversali",
+    ],
+  },
+});
+
+// Scientifico sezione sportiva: stesso impianto dello Scientifico con le specificità della sezione (DPR 52/2013)
+PROGRAMMI_LICEI_2010_OVERRIDE[_SPORT] = {
+  "Italiano": _con(PROGRAMMI_LICEI_2010["Italiano"],
+    "Nella sezione sportiva: consapevolezza della specificità della lingua italiana in ambito sportivo, autori e testi della letteratura sportiva, comunicazione legata al mondo dello sport (racconto e cronaca sportiva, parole dello sport) e testi antichi e moderni sui temi dell'agonismo e dell'etica sportiva.",
+    "Sezione sportiva: lingua e letteratura dello sport (racconto e cronaca sportiva, agonismo ed etica sportiva)"),
+  "Lingua Straniera (Inglese)": _con(PROGRAMMI_LICEI_2010["Lingua Straniera (Inglese)"],
+    "Nella sezione sportiva: consolidamento del vocabolario e della terminologia tecnica del linguaggio sportivo e uso della metodologia CLIL con riferimento ai contenuti delle discipline motorie e sportive.",
+    "Sezione sportiva: lessico e terminologia tecnica dello sport; CLIL con contenuti di scienze motorie e discipline sportive"),
+  "Storia e Geografia": _con(PROGRAMMI_LICEI_2010["Storia e Geografia"],
+    "Nella sezione sportiva: storia dello sport e dei giochi sportivi (Olimpiadi nel mondo antico), storia dell'educazione fisica e degli sport nei periodi studiati, interazione tra sport e territorio (eventi, manifestazioni, aspetti organizzativi e gestionali).",
+    "Sezione sportiva: storia dello sport e dei Giochi Olimpici, sinergie tra strutture sportive e territorio"),
+  "Storia": _con(PROGRAMMI_LICEI_2010["Storia"],
+    "Nella sezione sportiva: storia dell'educazione fisica e degli sport nei periodi considerati, con particolare riferimento ai Giochi Olimpici.",
+    "Sezione sportiva: storia dell'educazione fisica e dello sport, Giochi Olimpici"),
+  "Filosofia": _con(PROGRAMMI_LICEI_2010["Filosofia"],
+    "Nella sezione sportiva possono rientrare tra gli ambiti concettuali la filosofia della mente e il rapporto mente-corpo.",
+    "Sezione sportiva: filosofia della mente e rapporto mente-corpo"),
+  "Matematica": _SCI["Matematica"],
+  "Fisica": _con(_SCI["Fisica"],
+    "Nella sezione sportiva l'apprendimento avviene in stretto collegamento con Scienze motorie e sportive e Discipline sportive (cinematica, meccanica e altre tematiche del gesto sportivo), con competenze specifiche sulla misura e la teoria degli errori con applicazioni in campo sportivo.",
+    "Sezione sportiva: collegamento con scienze motorie e discipline sportive; misura, teoria degli errori e applicazioni allo sport"),
+  "Scienze Naturali": _con(_SCI["Scienze Naturali"],
+    "Nella sezione sportiva: metodologie dell'indagine scientifica in ambito sportivo, meteorologia applicata allo sport, relazione tra sport e alimentazione, fisiologia associata al gesto motorio nello studio degli apparati e sistemi dell'organismo umano.",
+    "Sezione sportiva: indagine scientifica in ambito sportivo, sport e alimentazione, fisiologia del gesto motorio"),
+};
+
+// Liceo del Made in Italy: Indicazioni proprie (DPR 222/2024, Allegato A-ter)
+PROGRAMMI_LICEI_2010_OVERRIDE[_MII] = {
+  "Storia e Geografia": _con(PROGRAMMI_LICEI_2010["Storia e Geografia"],
+    "Nel liceo del made in Italy: interdipendenza tra fenomeni economici, sociali, istituzionali, culturali e loro dimensione locale/globale, interdipendenze tra scienza, economia e tecnologia nel corso della storia nei settori di riferimento.",
+    "Made in Italy: fenomeni economici e loro dimensione locale/globale; scienza, economia e tecnologia nella storia"),
+  "Storia": _con(PROGRAMMI_LICEI_2010["Storia"],
+    "Nel liceo del made in Italy: interdipendenza tra fenomeni economici, sociali, istituzionali e culturali (locali e globali) e tra scienza, economia e tecnologia nei settori di riferimento.",
+    "Made in Italy: sviluppo economico e industriale nella storia"),
+  "Lingua Straniera (Inglese)": {
+    competenze: "DPR 222/2024 – Lingua e cultura straniera 1 (Liceo del made in Italy): due assi interrelati, competenze linguistico-comunicative e comprensione critica della cultura di riferimento; traguardo almeno B2 del QCER; comprensione e produzione di testi orali e scritti su temi personali e culturali (letterario, artistico, musicale, scientifico, sociale, economico-giuridico), interazione adeguata al contesto, analisi critica di aspetti culturali; inglese giuridico (lessico del diritto delle imprese e dei contratti); insegnamento nella lingua straniera 1 dei contenuti di una disciplina non linguistica (CLIL).",
+    nuclei: [
+      "Comprensione e produzione di testi orali e scritti su temi personali e culturali, anche economico-giuridici",
+      "Interazione adeguata a interlocutori e contesto",
+      "Riflessione sul sistema e sugli usi linguistici; strategie comunicative",
+      "Cultura dei Paesi di cui si parla la lingua: analisi critica di letteratura, arte e attualità",
+      "Inglese giuridico e CLIL con contenuti di una disciplina non linguistica",
+    ],
+  },
+  "Seconda Lingua Straniera": {
+    competenze: "DPR 222/2024 – Lingua e cultura straniera 2 (Liceo del made in Italy): stessi due assi della lingua 1 (competenze linguistico-comunicative e comprensione critica della cultura) con traguardo almeno B1 del QCER; comprensione e produzione di testi orali e scritti su temi personali e culturali (anche economico-giuridici), interazione adeguata al contesto.",
+    nuclei: [
+      "Comprensione di testi orali e scritti su temi personali e culturali",
+      "Produzione di testi orali e scritti per riferire fatti, descrivere situazioni, sostenere opinioni",
+      "Interazione nella lingua straniera adeguata al contesto",
+      "Riflessione sul sistema linguistico anche in ottica comparativa",
+      "Aspetti della cultura dei Paesi di cui si parla la lingua",
+    ],
+  },
+  "Matematica": {
+    competenze: "DPR 222/2024 – Matematica (Liceo del made in Italy): concetti e metodi elementari della matematica, interni alla disciplina e rilevanti per descrivere e prevedere fenomeni sia del mondo fisico sia della sfera sociale ed economica; visione storico-critica dei rapporti tra pensiero matematico e contesto filosofico, scientifico e tecnologico (matematica greca, calcolo infinitesimale, matematica moderna e nuova matematizzazione di tecnologia, scienze sociali, economiche, biologiche); geometria euclidea, calcolo algebrico e geometria analitica, funzioni e prime nozioni di analisi, probabilità e statistica, modelli matematici, elementi di informatica (Informatica nel primo biennio).",
+    nuclei: [
+      "Aritmetica e algebra: dal calcolo aritmetico al calcolo algebrico, equazioni e disequazioni",
+      "Geometria euclidea e analitica cartesiana",
+      "Relazioni e funzioni: funzioni elementari e prime nozioni di analisi",
+      "Dati e previsioni: statistica e calcolo delle probabilità, anche in ambito sociale ed economico",
+      "Modelli matematici di fenomeni fisici, sociali ed economici; strumenti informatici",
+    ],
+  },
+  "Fisica": {
+    competenze: "DPR 222/2024 – Fisica (Liceo del made in Italy, triennio): linguaggio della fisica classica (grandezze scalari e vettoriali, unità di misura), modellizzazione di situazioni reali, risoluzione di problemi con consapevolezza critica; approccio sperimentale, preferibilmente laboratoriale. Secondo biennio: equilibrio dei corpi e dei fluidi, moto (cinematica e dinamica, leggi di Newton), lavoro, energia e quantità di moto, gravitazione, fenomeni termici e principi della termodinamica, ottica geometrica, onde meccaniche. Quinto anno: fenomeni elettrici e magnetici, campo, induzione elettromagnetica, onde elettromagnetiche, cenni di fisica del XX secolo.",
+    nuclei: [
+      "Meccanica: equilibrio, moto (cinematica e dinamica, leggi di Newton), lavoro, energia, quantità di moto, gravitazione",
+      "Fenomeni termici: temperatura, calore, gas perfetto, principi della termodinamica",
+      "Ottica geometrica e onde meccaniche",
+      "Quinto anno: fenomeni elettrici e magnetici, campo, induzione elettromagnetica, onde elettromagnetiche",
+      "Metodo sperimentale in modo laboratoriale; percorsi di fisica del XX secolo",
+    ],
+  },
+};
+LICEI_2010_MIGRATI.add(_SPORT);
+LICEI_2010_MIGRATI.add(_MII);
+
+// Riferimento normativo per i licei con fonte diversa dal D.M. 211/2010
+const LICEI_RIFERIMENTO_SPECIALE = {
+  [_SPORT]: {
+    intestazione: 'Programmi ministeriali di riferimento (Indicazioni nazionali della sezione ad indirizzo sportivo, DPR 52/2013, che integrano quelle del liceo scientifico D.M. 211/2010; vigenti):',
+    etichetta: 'Indicazioni nazionali della sezione a indirizzo sportivo (DPR 52/2013, All. A), integrative del liceo scientifico (D.M. 211/2010)',
+    nota: 'Nota: i programmi ministeriali di riferimento sono le Indicazioni nazionali della sezione ad indirizzo sportivo (DPR 52/2013, Allegato A), che integrano quelle del liceo scientifico (D.M. 211/2010); le nuove Indicazioni per i licei sono previste dal 2027/28, per le sole classi prime.',
+  },
+  [_MII]: {
+    intestazione: 'Programmi ministeriali di riferimento (Indicazioni nazionali del liceo del made in Italy, DPR 222/2024, All. A-ter; vigenti):',
+    etichetta: 'Indicazioni nazionali del liceo del made in Italy (DPR 222/2024, All. A-ter) e piano degli studi (All. G-bis)',
+    nota: 'Nota: i programmi ministeriali di riferimento sono le Indicazioni nazionali del liceo del made in Italy (DPR 222/2024, Allegato A-ter) e il piano degli studi dell\'Allegato G-bis, in vigore dal 2025/26.',
+  },
+};
+
 const PROGRAMMI_PER_GRADO = {
   infanzia: PROGRAMMI_INFANZIA,
   primaria: PROGRAMMI_PRIMARIA,
@@ -1780,9 +2265,17 @@ function getProgrammaDisciplina(grado, nomeDisciplina, istituto = null) {
  * omesse dal blocco (degrado silenzioso: il prompt userà comunque il nome disciplina).
  */
 // Intestazione del blocco: indica il riferimento normativo effettivamente usato per quella scuola
+// Riferimento normativo dei licei migrati (D.M. 211/2010, salvo sezione sportiva e Made in Italy)
+function riferimentoLiceo(istituto) {
+  return LICEI_RIFERIMENTO_SPECIALE[istituto] || {
+    intestazione: 'Programmi ministeriali di riferimento (Indicazioni nazionali per i licei, D.M. 211/2010, vigenti):',
+    etichetta: 'Indicazioni nazionali per i licei (D.M. 211/2010, vigenti) e piano degli studi DPR 89/2010',
+    nota: 'Nota: i programmi ministeriali di riferimento sono le Indicazioni nazionali per i licei vigenti (D.M. 211/2010) e il piano degli studi del DPR 89/2010; le nuove Indicazioni per i licei sono previste dal 2027/28, per le sole classi prime.',
+  };
+}
 function _intestazioneProgrammi(grado, istituto) {
   if (grado === 'sec2' && istituto && LICEI_2010_MIGRATI.has(istituto)) {
-    return 'Programmi ministeriali di riferimento (Indicazioni nazionali per i licei, D.M. 211/2010, vigenti):';
+    return riferimentoLiceo(istituto).intestazione;
   }
   return 'Programmi ministeriali di riferimento (Indicazioni Nazionali 2025 / Linee Guida):';
 }
@@ -1835,6 +2328,7 @@ export {
   PROGRAMMI_LICEI_2010,
   PROGRAMMI_LICEI_2010_OVERRIDE,
   LICEI_2010_MIGRATI,
+  riferimentoLiceo,
   getProgrammaDisciplina,
   getProgrammiPerDiscipline,
   checkCoverage,

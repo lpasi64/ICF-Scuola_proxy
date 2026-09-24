@@ -200,8 +200,14 @@ function it(bV, tV, oV, bN, tN, oN) {
   };
 }
 // Licei: piano degli studi vigente (DPR 89/2010, Allegati B-G) con biennio e triennio distinti
-function lic(biennio, triennio) {
-  return { biennio: [...biennio], triennio: [...triennio], triennioOpzionali: [] };
+// biennioOpz/triennioOpz: discipline specifiche di indirizzo o sezione (alternative tra loro), incluse nell'elenco
+function lic(biennio, triennio, biennioOpz = [], triennioOpz = []) {
+  return {
+    biennio: [...biennio, ...biennioOpz],
+    triennio: [...triennio, ...triennioOpz],
+    biennioOpzionali: [...biennioOpz],
+    triennioOpzionali: [...triennioOpz],
+  };
 }
 function ip(biennioInd, triennioInd, opz = []) {
   return {
@@ -236,33 +242,30 @@ const QUADRI_ORARI_SEC2 = {
     ["Italiano","Storia e Geografia","Scienze Umane","Diritto ed Economia Politica","Lingua Straniera (Inglese)","Seconda Lingua Straniera","Matematica","Scienze Naturali","Scienze Motorie e Sportive","Religione / Attività alternativa"],
     ["Italiano","Storia","Filosofia","Scienze Umane","Diritto ed Economia Politica","Lingua Straniera (Inglese)","Seconda Lingua Straniera","Matematica","Fisica","Storia dell'Arte","Scienze Motorie e Sportive","Religione / Attività alternativa"]
   ),
-  "Liceo Scientifico – sezione a indirizzo sportivo": [
-    "Italiano","Storia e Filosofia","Geografia","Matematica","Fisica",
-    "Scienze Naturali","Lingua Straniera (Inglese)",
-    "Diritto ed Economia dello Sport","Discipline Sportive",
-    "Scienze Motorie e Sportive","Religione / Attività alternativa",
-  ],
-  "Liceo Artistico": [
-    "Italiano","Storia e Filosofia","Geografia","Matematica","Fisica","Scienze Naturali",
-    "Lingua Straniera (Inglese)","Storia dell'Arte",
-    "Discipline Pittoriche / Plastiche / Geometriche","Laboratorio Artistico",
-    "Scienze Motorie e Sportive","Religione / Attività alternativa",
-  ],
-  "Liceo del Made in Italy": [
-    "Italiano","Storia e Filosofia","Geografia","Matematica","Fisica","Lingua Straniera (Inglese)",
-    "Seconda Lingua Straniera","Economia e Diritto",
-    "Storia dell'Arte e del Design","Design e Progettazione",
-    "Scienze Naturali","Scienze Motorie e Sportive","Religione / Attività alternativa",
-  ],
-  "Liceo Musicale e Coreutico": [
-    "Italiano","Storia e Filosofia","Geografia","Matematica","Fisica","Scienze Naturali",
-    "Storia dell'Arte","Lingua Straniera (Inglese)",
-    "Laboratorio di Musica d'Insieme","Tecnologie Musicali",
-    "Storia della Musica / della Danza",
-    "Teoria, Analisi e Composizione / Tecniche della Danza",
-    "Esecuzione e Interpretazione / Laboratorio Coreutico",
-    "Scienze Motorie e Sportive","Religione / Attività alternativa",
-  ],
+  "Liceo Scientifico – sezione a indirizzo sportivo": lic(
+    ["Italiano","Lingua Straniera (Inglese)","Storia e Geografia","Matematica","Fisica","Scienze Naturali","Scienze Motorie e Sportive","Discipline Sportive","Religione / Attività alternativa"],
+    ["Italiano","Lingua Straniera (Inglese)","Storia","Filosofia","Matematica","Fisica","Scienze Naturali","Diritto ed Economia dello Sport","Scienze Motorie e Sportive","Discipline Sportive","Religione / Attività alternativa"],
+    [],
+    []
+  ),
+  "Liceo del Made in Italy": lic(
+    ["Italiano","Storia e Geografia","Diritto","Economia Politica","Lingua Straniera (Inglese)","Seconda Lingua Straniera","Matematica","Scienze Naturali","Storia dell'Arte e del Design","Scienze Motorie e Sportive","Religione / Attività alternativa"],
+    ["Italiano","Storia","Filosofia","Scienze Giuridiche per il Made in Italy","Scienze Economiche per il Made in Italy","Lingua Straniera (Inglese)","Seconda Lingua Straniera","Matematica","Fisica","Storia dell'Arte e del Design","Laboratorio Interdisciplinare per il Made in Italy","Scienze Motorie e Sportive","Religione / Attività alternativa"],
+    [],
+    []
+  ),
+  "Liceo Artistico": lic(
+    ["Italiano","Lingua Straniera (Inglese)","Storia e Geografia","Matematica","Scienze Naturali","Storia dell'Arte","Discipline Grafiche e Pittoriche","Discipline Geometriche","Discipline Plastiche e Scultoree","Laboratorio Artistico","Scienze Motorie e Sportive","Religione / Attività alternativa"],
+    ["Italiano","Lingua Straniera (Inglese)","Storia","Filosofia","Matematica","Fisica","Storia dell'Arte","Scienze Motorie e Sportive","Religione / Attività alternativa"],
+    [],
+    ["Chimica dei Materiali","Scienze Naturali","Laboratorio della Figurazione","Discipline Pittoriche e/o Discipline Plastiche e Scultoree","Laboratorio di Architettura","Discipline Progettuali Architettura e Ambiente","Laboratorio del Design","Discipline Progettuali Design","Laboratorio Audiovisivo e Multimediale","Discipline Audiovisive e Multimediali","Laboratorio di Grafica","Discipline Grafiche","Laboratorio di Scenografia","Discipline Geometriche e Scenotecniche","Discipline Progettuali Scenografiche"]
+  ),
+  "Liceo Musicale e Coreutico": lic(
+    ["Italiano","Lingua Straniera (Inglese)","Storia e Geografia","Matematica","Scienze Naturali","Storia dell'Arte","Religione / Attività alternativa"],
+    ["Italiano","Lingua Straniera (Inglese)","Storia","Filosofia","Matematica","Fisica","Storia dell'Arte","Religione / Attività alternativa"],
+    ["Scienze Motorie e Sportive","Esecuzione e Interpretazione","Teoria, Analisi e Composizione","Storia della Musica","Laboratorio di Musica d'Insieme","Tecnologie Musicali","Tecniche della Danza","Laboratorio Coreutico","Teoria e Pratica Musicale della Danza"],
+    ["Scienze Motorie e Sportive","Esecuzione e Interpretazione","Teoria, Analisi e Composizione","Storia della Musica","Laboratorio di Musica d'Insieme","Tecnologie Musicali","Storia della Danza","Tecniche della Danza","Laboratorio Coreografico"]
+  ),
   "IT – Amministrazione, finanza e marketing": it(
     ["Scienze Integrate (Fisica)","Scienze Integrate (Chimica)","Geografia","Informatica","Seconda Lingua Straniera","Economia Aziendale"],
     ["Informatica","Seconda Lingua Straniera","Economia Aziendale","Diritto","Economia Politica"],
@@ -445,11 +448,11 @@ function getDisciplineSec2(istituto, eta, asInizio = annoScolasticoInizio()) {
   if (Array.isArray(q)) return q;
   return annoCorsoSec2(eta) <= 2 ? q.biennio : q.triennio;
 }
-// Discipline opzionali/alternative presenti nell'elenco per la classe (solo triennio, solo se definite)
+// Discipline opzionali/alternative presenti nell'elenco per la classe (se definite per quel biennio/triennio)
 function getOpzionaliSec2(istituto, eta, asInizio = annoScolasticoInizio()) {
   const q = _quadro(istituto, eta, asInizio);
-  if (!q || Array.isArray(q) || annoCorsoSec2(eta) <= 2) return [];
-  return q.triennioOpzionali || [];
+  if (!q || Array.isArray(q)) return [];
+  return (annoCorsoSec2(eta) <= 2 ? q.biennioOpzionali : q.triennioOpzionali) || [];
 }
 
 /**
