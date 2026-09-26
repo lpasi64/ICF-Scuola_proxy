@@ -2,8 +2,8 @@
 // Porting ESM di server/prompt.js (progetto "Generatore PEI", G:\Il mio Drive\ICF_Scuola\PEI con Claude)
 // Nessuna modifica di logica — solo require/module.exports -> import/export.
 
-import { getConfig, getOrdinamentoSec2 } from './pei-gradi.js';
-import { getProgrammiPerDiscipline, LICEI_2010_MIGRATI, riferimentoLiceo } from './pei-programmi.js';
+import { getConfig, getOrdinamentoSec2, TERMINE_VALUTAZIONE } from './pei-gradi.js';
+import { getProgrammiPerDiscipline, getNucleiPerDiscipline, formattaNucleiPerPrompt, LICEI_2010_MIGRATI, riferimentoLiceo } from './pei-programmi.js';
 
 // ── Calcola classe frequentata dall'età ──────────────────────────────────────
 function calcolaClasse(eta, grado) {
@@ -314,12 +314,12 @@ ${jsonData}`;
 }
 
 // ── PARTE 4: Sezione 8 + Nota Metodologica ───────────────────────────────────
-function buildPromptPart4({ eta, sesso, grado, istituto, jsonData }) {
+function buildPromptPart4({ eta, sesso, grado, istituto, jsonData, dettaglio82 = false, profilo82 = '' }) {
   const { term, sez8, std81, discipline } = getConfig(grado, istituto, eta);
   const discStr    = discipline.join('; ');
   const campoLabel = grado === 'infanzia' ? 'campi di esperienza' : 'discipline';
   const ctx        = buildContext({ eta, sesso, grado, istituto }, term, discStr, campoLabel);
-  const bloccoSez8 = buildSez8Block(grado, sez8, std81, discStr, istituto, term, eta, discipline);
+  const bloccoSez8 = buildSez8Block(grado, sez8, std81, discStr, istituto, term, eta, discipline, dettaglio82, profilo82);
 
   const notaLabel = grado === 'infanzia'
     ? 'Nota Metodologica per il team di sezione'
@@ -360,11 +360,93 @@ ${jsonData}`;
 }
 
 // ── Blocco sezione 8 calibrato per grado ─────────────────────────────────────
-function buildSez8Block(grado, sez8, std81, discStr, istituto, term, eta = '', discipline = []) {
+// Blocco 8.2 esteso (Linee guida PEI, D.I. 153/2023 All. B): contenuti, adattamenti, verifica e valutazione per disciplina.
+function buildDisc82Block({ grado, istituto, eta, classe, refProgr, discStr, discipline, profilo82 }) {
+  const nuclei = formattaNucleiPerPrompt(getNucleiPerDiscipline(grado, discipline, istituto, eta));
+  const sec2 = grado === 'sec2';
+  const termine = TERMINE_VALUTAZIONE[grado];
+  const opzioni = sec2 ? 'A, B o C' : 'A o B';
+  const regolaOpzioni = sec2
+    ? `Opzione A: segue la progettazione della classe e gli stessi criteri di valutazione; per le verifiche valgono le personalizzazioni generali della riga VERGEN. Opzione B: personalizzazioni con verifiche identiche o equipollenti a quelle della classe (il percorso conserva la validità per il titolo di studio). NON proporre mai l'opzione C (percorso differenziato): è una scelta eccezionale del Consiglio di classe per impedimenti oggettivi, non per difficoltà di apprendimento; se il profilo sembra richiederla, scrivi B e segnala nella riga SPEC81 "valutare con il Consiglio di classe l'opzione C".`
+    : `Opzione A: segue la progettazione della classe e gli stessi criteri di valutazione; per le verifiche valgono le personalizzazioni generali della riga VERGEN. Opzione B: personalizzazioni rispetto alla progettazione della classe. Non esiste l'opzione C.`;
+  const campoProve = sec2
+    ? `  PROVE: IDENTICHE oppure EQUIPOLLENTI (obbligatorio per ogni B: le prove sono identiche o equipollenti a quelle della classe; è una proposta, l'equipollenza la decide il Consiglio di classe)\n`
+    : '';
+  const regolaVerif = sec2
+    ? `Distingui due casi. (a) Obiettivi analoghi a quelli della classe ma da valutare tenendo conto delle difficoltà aggiuntive (soprattutto nell'esposizione e nella produzione, scritta o orale): scrivi VERIF in modo dettagliato (formato della prova, supporti, tempi, cosa si valuta e cosa no). (b) Obiettivi nettamente diversi (solo con MODO: PROPRIA): VERIF può rinviare alla Sezione 5 ("metodi, criteri e strumenti di verifica indicati per la dimensione X"). Tieni conto della rilevanza della disciplina nell'indirizzo ${istituto || ''}.`
+    : `Nel campo VERIF indica il formato delle prove e i supporti specifici della disciplina (consegne semplificate, tempi aggiuntivi, strumenti compensativi).`;
+  return `Progettazione disciplinare (8.2) — segui le Linee guida ministeriali sul PEI: contenuti, adattamenti, verifica e criteri di valutazione devono discendere dal PROFILO FUNZIONALE di questo alunno.
+
+${profilo82 || 'PROFILO FUNZIONALE PER LA PROGETTAZIONE DISCIPLINARE: profilo funzionale non disponibile — usa cautela: scegli A per le discipline senza evidenze e non inventare adattamenti.'}
+
+${nuclei ? `NUCLEI TEMATICI NUMERATI per disciplina (riferimento: ${refProgr}). Per i contenuti puoi citare SOLO questi numeri, mai contenuti diversi, e solo i nuclei pertinenti alla classe frequentata (${classe}): salta quelli riferiti ad altri anni o cicli:\n${nuclei}\n` : ''}
+⚑ OBBLIGATORIO — PRIMA delle righe DISC scrivi UNA riga che inizia con "VERGEN:" con le modalità di verifica personalizzate valide per TUTTE le discipline (max 40 parole), derivate dalle aree trasversali del profilo (attenzione, stress, scrittura, organizzazione): ad esempio tempi aggiuntivi, verifiche programmate, consegne scritte chiare. Nei campi VERIF delle singole discipline scrivi solo ciò che è specifico di quella disciplina.
+
+Equità: le modalità di verifica non devono penalizzare per barriere legate a metodi e strumenti inadeguati; valuta l'esito rispetto agli obiettivi, non la forma (per esempio non abbassare il voto per errori di ortografia se l'obiettivo è il contenuto).
+
+${regolaOpzioni}
+
+Per ogni disciplina scrivi UNA riga che inizia con "DISC:" (OBBLIGATORIO). Campi separati da " | ", mai il carattere "|" dentro i testi. Ordine: nome disciplina | ${opzioni} | poi solo i campi etichettati pertinenti:
+- Opzione A: scrivi solo "DISC: nome | A" (nessun altro campo).
+- Opzione B, formula predefinita: "Segue la progettazione didattica della classe tranne questi adattamenti" (il sistema aggiunge la formula). Campi:
+  MANT: numeri dei nuclei tematici mantenuti (es. 1,2,4)
+  RID: numeri dei nuclei ridotti o semplificati
+  ADATT: adattamenti a strategie e metodologie, coerenti con le aree di difficoltà del profilo (max 25 parole)
+${campoProve}  VERIF: modalità di verifica specifiche della disciplina (max 25 parole). ${regolaVerif}
+  VALUT: criteri di valutazione come prestazioni attese per i livelli (es. "sufficienza con i nuclei 1-2 e supporti; livello alto se autonomo sui nuclei 1-4"); la valutazione formale della ${classe} è espressa in: ${termine}
+  SEZ5: dimensione/i della Sezione 5 collegate (A = Relazione, B = Comunicazione, C = Autonomia, D = Cognitiva/Apprendimento)
+- Solo se il profilo mostra difficoltà marcate (P3-P4) in almeno due aree collegate alla disciplina: aggiungi "MODO: PROPRIA" e "OBIETT: obiettivi disciplinari previsti e risultati attesi" (progettazione molto diversa da quella della classe); in tutti gli altri casi NON scrivere MODO.
+
+Regole di scelta: scegli B solo per le discipline collegate ad aree con difficoltà nel profilo; non copiare gli stessi adattamenti su tutte le discipline; per le discipline non collegate scrivi A. Se una disciplina non ha nuclei numerati, ometti MANT e RID. Nessun contenuto disciplinare fuori dall'elenco numerato.
+
+Esempio (nomi di discipline e numeri illustrativi):
+VERGEN: tempi aggiuntivi nelle prove scritte, verifiche programmate e annunciate, consegne scritte brevi
+DISC: Italiano | B | MANT: 1,2 | RID: 3 | ADATT: testi con lessico di base e schemi guida per la produzione | ${sec2 ? 'PROVE: EQUIPOLLENTI | ' : ''}VERIF: ${sec2 ? 'interrogazioni programmate con domande guidate e supporti visivi' : 'consegne brevi, prova suddivisa in parti'} | VALUT: sufficienza sui nuclei 1-2 con supporti | SEZ5: D
+DISC: Educazione motoria | A
+
+Discipline (usa ESATTAMENTE questi nomi): ${discStr}`;
+}
+
+function buildSez8Block(grado, sez8, std81, discStr, istituto, term, eta = '', discipline = [], dettaglio82 = false, profilo82 = '') {
   const classe   = calcolaClasse(eta, grado);
   const refProgr = labelProgrammi(grado, istituto, eta);
   const programmiBlock = getProgrammiPerDiscipline(grado, discipline, istituto, eta);
   const programmiSection = programmiBlock ? `${programmiBlock}\n\n` : '';
+  const disc82 = dettaglio82 && grado !== 'infanzia'
+    ? buildDisc82Block({ grado, istituto, eta, classe, refProgr, discStr, discipline, profilo82 })
+    : null;
+  // testo attuale (formato breve) dei tre gradi, invariato
+  const discAttuale = {
+    primaria: `Per ogni disciplina scrivi una riga che inizia con "DISC:" (OBBLIGATORIO — nessun altro formato):
+DISC: [nome disciplina] | [personalizzazioni: obiettivi calibrati sui programmi della ${classe} (${refProgr}), ridotti/semplificati; strategie; verifica; criteri di valutazione]
+
+Esempio corretto:
+DISC: Italiano | Testi semplificati, verifiche con supporto visivo, produzione guidata
+DISC: Educazione motoria | Nessuna modifica al programma ordinario
+
+Discipline: ${discStr}`,
+    sec1: `Per ogni disciplina scrivi una riga che inizia con "DISC:" (OBBLIGATORIO — nessun altro formato):
+DISC: [nome disciplina] | [A o B] | [personalizzazioni se B; vuoto se A]
+
+Opzione A: Educazione Fisica e Religione. Opzione B: tutte le altre discipline.
+Esempio corretto:
+DISC: Italiano | B | Testi semplificati, verifiche semplificate con tempi estesi
+DISC: Educazione Fisica | A |
+
+Discipline: ${discStr}`,
+    sec2: `Per ogni disciplina scrivi una riga che inizia con "DISC:" (OBBLIGATORIO — nessun altro formato):
+DISC: [nome disciplina] | [A, B o C] | [personalizzazioni se B o C; vuoto se A]
+
+Opzione A: Scienze Motorie e Sportive e Religione (di default). Opzione B: obiettivi differenziati. Opzione C: percorso differenziato (deliberato dal CdC).
+Per l'opzione B specifica sempre, dentro le personalizzazioni, se le verifiche sono identiche o equipollenti rispetto a quelle della classe (obbligatorio).
+Esempio corretto:
+DISC: Italiano | B | Testi semplificati, verifiche scritte equipollenti con supporto visivo, meno temi
+DISC: Matematica | B | Esercizi guidati passo-passo, calcolatrice, verifiche identiche con tempi estesi
+DISC: Scienze Motorie e Sportive | A |
+
+Discipline: ${discStr}`,
+  };
+  const bloccoDisc = programmiSection + (disc82 || discAttuale[grado] || '');
 
   if (grado === 'infanzia') {
     return `## Sezione 8 – Interventi sul percorso educativo nei Campi di Esperienza
@@ -394,14 +476,7 @@ SPEC81: [2-4 frasi specifiche per QUESTO studente: distribuzione ore sostegno ne
 **8.2 – Progettazione disciplinare**
 ${sez8.note82}
 
-${programmiSection}Per ogni disciplina scrivi una riga che inizia con "DISC:" (OBBLIGATORIO — nessun altro formato):
-DISC: [nome disciplina] | [personalizzazioni: obiettivi calibrati sui programmi della ${classe} (${refProgr}), ridotti/semplificati; strategie; verifica; criteri di valutazione]
-
-Esempio corretto:
-DISC: Italiano | Testi semplificati, verifiche con supporto visivo, produzione guidata
-DISC: Educazione motoria | Nessuna modifica al programma ordinario
-
-Discipline: ${discStr}
+${bloccoDisc}
 
 ⚑ OBBLIGATORIO — scrivi questa riga iniziando con "CRIT84:" (scegli A o B in base al profilo):
 CRIT84: A – stessi criteri della classe
@@ -423,15 +498,7 @@ SPEC81: [2-4 frasi specifiche per QUESTO studente: ore di sostegno nelle discipl
 **8.2 – Progettazione disciplinare**
 ${sez8.note82}
 
-${programmiSection}Per ogni disciplina scrivi una riga che inizia con "DISC:" (OBBLIGATORIO — nessun altro formato):
-DISC: [nome disciplina] | [A o B] | [personalizzazioni se B; vuoto se A]
-
-Opzione A: Educazione Fisica e Religione. Opzione B: tutte le altre discipline.
-Esempio corretto:
-DISC: Italiano | B | Testi semplificati, verifiche semplificate con tempi estesi
-DISC: Educazione Fisica | A |
-
-Discipline: ${discStr}
+${bloccoDisc}
 
 ⚑ OBBLIGATORIO — scrivi questa riga iniziando con "CRIT84:" (scegli A o B in base al profilo):
 CRIT84: A – stessi criteri della classe
@@ -453,17 +520,7 @@ SPEC81: [2-4 frasi specifiche per QUESTO studente: distribuzione ore sostegno ne
 **8.2 – Progettazione disciplinare**
 ${sez8.note82}
 
-${programmiSection}Per ogni disciplina scrivi una riga che inizia con "DISC:" (OBBLIGATORIO — nessun altro formato):
-DISC: [nome disciplina] | [A, B o C] | [personalizzazioni se B o C; vuoto se A]
-
-Opzione A: Scienze Motorie e Sportive e Religione (di default). Opzione B: obiettivi differenziati. Opzione C: percorso differenziato (deliberato dal CdC).
-Per l'opzione B specifica sempre, dentro le personalizzazioni, se le verifiche sono identiche o equipollenti rispetto a quelle della classe (obbligatorio).
-Esempio corretto:
-DISC: Italiano | B | Testi semplificati, verifiche scritte equipollenti con supporto visivo, meno temi
-DISC: Matematica | B | Esercizi guidati passo-passo, calcolatrice, verifiche identiche con tempi estesi
-DISC: Scienze Motorie e Sportive | A |
-
-Discipline: ${discStr}
+${bloccoDisc}
 
 ${sez8.percorsoDifferenziato}
 

@@ -3541,6 +3541,19 @@ function getProgrammiPerDiscipline(grado, nomiDiscipline, istituto = null, eta =
   return `${_intestazioneProgrammi(grado, istituto, eta)}\n${righe.join('\n')}`;
 }
 
+// Nuclei tematici strutturati (per il blocco 8.2 esteso): il prompt li numera e l'AI li cita per numero.
+function getNucleiPerDiscipline(grado, nomiDiscipline, istituto = null, eta = null) {
+  const voci = [];
+  for (const nome of nomiDiscipline) {
+    const prog = getProgrammaDisciplina(grado, nome, istituto, eta);
+    if (prog && Array.isArray(prog.nuclei) && prog.nuclei.length > 0) voci.push({ nome, nuclei: prog.nuclei });
+  }
+  return voci;
+}
+function formattaNucleiPerPrompt(voci) {
+  return voci.map(v => `- ${v.nome}:\n${v.nuclei.map((n, i) => `   ${i + 1}. ${n}`).join('\n')}`).join('\n');
+}
+
 /**
  * Verifica di copertura: confronta i nomi disciplina effettivamente in uso (da pei-gradi.js)
  * con quelli curati in questo file. Usata dal test automatico, non a runtime.
@@ -3587,5 +3600,7 @@ export {
   riferimentoLiceo,
   getProgrammaDisciplina,
   getProgrammiPerDiscipline,
+  getNucleiPerDiscipline,
+  formattaNucleiPerPrompt,
   checkCoverage,
 };

@@ -475,7 +475,17 @@ function getConfig(grado, istituto = null, eta = null, asInizio = annoScolastico
   return { term, sez8, std81, discipline, istituti: grado === 'sec2' ? ISTITUTI_SEC2 : null };
 }
 
+// Termine con cui si esprime la valutazione formale degli apprendimenti nelle 8.2 (Linee guida PEI, D.I. 153/2023, All. B).
+// primaria: dal 2024/25 giudizi sintetici correlati alla descrizione dei livelli (L. 150/2024; le Linee guida del 2023 dicono
+// ancora «giudizio descrittivo»; verificato il 2026-09-26 su scuola7.it, orizzontescuola.it, nota MIM 2867 del 23/01/2025).
+const TERMINE_VALUTAZIONE = {
+  primaria: 'giudizio sintetico correlato alla descrizione del livello di apprendimento raggiunto',
+  sec1: 'voto in decimi',
+  sec2: 'voto in decimi',
+};
+
 export {
+  TERMINE_VALUTAZIONE,
   TERMINOLOGIA,
   STRUTTURA_SEZ8,
   CAMPI_ESPERIENZA,

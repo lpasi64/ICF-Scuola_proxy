@@ -8,7 +8,7 @@ import {
   VerticalAlign, PageNumber, Footer, UnderlineType,
 } from 'docx';
 import { STRUTTURA_SEZ8, TERMINOLOGIA, testoStandard81, getOpzionaliSec2, getOrdinamentoSec2 } from './pei-gradi.js';
-import { LICEI_2010_MIGRATI, riferimentoLiceo } from './pei-programmi.js';
+import { LICEI_2010_MIGRATI, riferimentoLiceo, getNucleiPerDiscipline } from './pei-programmi.js';
 
 // ── Palette ───────────────────────────────────────────────────────────────────
 // Bianco e nero puro, come i modelli ministeriali ufficiali (Allegati A1-A4, D.I. 182/2020):
@@ -536,6 +536,97 @@ function _intervTable(rawText) {
   })];
 }
 
+// ── Sezione 8.2 esteso ────────────────────────────────────────────────────────
+// Riga: DISC: nome | A|B|C | ETICHETTA: testo | ETICHETTA: testo …   (etichette in qualsiasi ordine)
+const _ETICHETTE_82 = ['MODO', 'MANT', 'RID', 'ADATT', 'PROVE', 'VERIF', 'VALUT', 'SEZ5', 'OBIETT'];
+const _RX_ETICHETTA_82 = new RegExp('^(' + _ETICHETTE_82.join('|') + ')\\s*:\\s*(.*)$', 'i');
+
+function parseDisciplineEstese(text) {
+  const voci = [];
+  for (const line of String(text || '').split('\n')) {
+    const t = line.trim();
+    if (!/^DISC:/i.test(t)) continue;
+    const parti = t.slice(5).split('|').map(s => s.replace(/\*\*/g, '').trim());
+    if (!parti[0] || /^\[/.test(parti[0])) continue;                        // segnaposto
+    const voce = { nome: parti[0], opzione: '', campi: {}, libero: '' };
+    let resto = parti.slice(1);
+    if (resto.length && /^[ABC]$/i.test(resto[0])) { voce.opzione = resto[0].toUpperCase(); resto = resto.slice(1); }
+    let corrente = null;
+    for (const seg of resto) {
+      const m = seg.match(_RX_ETICHETTA_82);
+      if (m) { corrente = m[1].toUpperCase(); voce.campi[corrente] = m[2].trim(); }
+      else if (corrente) voce.campi[corrente] += ' | ' + seg;                // "|" dentro un testo
+      else if (seg) voce.libero += (voce.libero ? ' | ' : '') + seg;         // formato breve
+    }
+    voci.push(voce);
+  }
+  return voci;
+}
+
+function _risolviNuclei(elenco, nuclei) {
+  if (!Array.isArray(nuclei) || !nuclei.length) return '';
+  const idx = String(elenco || '').split(/[,;\s]+/).map(x => parseInt(x, 10)).filter(n => n >= 1 && n <= nuclei.length);
+  return [...new Set(idx)].map(n => nuclei[n - 1]).join('; ');
+}
+
+function modelloDiscipline(voci, nucleiPerNome = {}, { sec2 = false } = {}) {
+  const blocchi = [];
+  const soloA = [];
+  const esteso = voci.some(v => Object.keys(v.campi).length > 0);
+  for (const v of voci) {
+    const haContenuto = Object.keys(v.campi).length > 0 || v.libero;
+    if (v.opzione === 'A' || (!v.opzione && !haContenuto)) { soloA.push(v.nome); continue; }
+    const righe = [];
+    const propria = (v.campi.MODO || '').toUpperCase().startsWith('PROPRIA');
+    if (!propria) righe.push(['', 'Segue la progettazione didattica della classe tranne questi adattamenti:']);
+    const nuclei = nucleiPerNome[v.nome];
+    const mant = _risolviNuclei(v.campi.MANT, nuclei);
+    const rid = _risolviNuclei(v.campi.RID, nuclei);
+    if (mant) righe.push(['Contenuti mantenuti', mant]);
+    if (rid) righe.push(['Contenuti ridotti o semplificati', rid]);
+    if (v.campi.OBIETT) righe.push(['Obiettivi disciplinari previsti e risultati attesi', v.campi.OBIETT]);
+    if (v.campi.ADATT) righe.push(['Adattamenti (strategie e metodologie)', v.campi.ADATT]);
+    if (sec2) {   // modello A4: «con verifiche identiche ☐ equipollenti ☐» (l'equipollenza è decisa dal Consiglio di classe)
+      const pr = (v.campi.PROVE || '').toUpperCase();
+      righe.push(['Prove di verifica', `${pr.startsWith('IDENT') ? '☒' : '☐'} identiche a quelle della classe   ${pr.startsWith('EQUIP') ? '☒' : '☐'} equipollenti`]);
+    }
+    if (v.campi.VERIF) righe.push(['Modalità di verifica', v.campi.VERIF]);
+    if (v.campi.VALUT) righe.push(['Criteri di valutazione', v.campi.VALUT]);
+    if (v.campi.SEZ5) righe.push(['Collegamento con la Sezione 5', v.campi.SEZ5]);
+    if (v.libero) righe.push(['Personalizzazioni', v.libero]);
+    blocchi.push({ titolo: `${v.nome} — opzione ${v.opzione || 'B'}`, righe });
+  }
+  return { blocchi, soloA, esteso };
+}
+
+// Un riquadro per disciplina (come nel modello ministeriale): titolo, poi coppie etichetta/testo. Ogni riquadro resta intero.
+function renderDiscipline82(modello, { sec2 = false } = {}) {
+  const out = [];
+  const wL = 2500, wR = FULL - wL;
+  out.push(p('Contenuti, verifiche e criteri sono proposte generate sul profilo funzionale dell\'alunno: il GLO o il Consiglio di classe le conferma o le modifica.', { italic: true, size: 18 }));
+  if (sec2) out.push(p('Le prove sono indicate come identiche o equipollenti a titolo di proposta: l\'equipollenza delle prove e la validità del percorso ai fini del titolo di studio sono decise dal Consiglio di classe.', { italic: true, size: 18 }));
+  for (const b of modello.blocchi) {
+    out.push(keepTogether(() => new Table({
+      width: { size: FULL, type: WidthType.DXA },
+      columnWidths: [wL, wR],
+      rows: [
+        new TableRow({ tableHeader: false, children: [cell([p(b.titolo, { bold: true, size: 20, keepNext: true })], FULL, { span: 2, borders: allGrey })] }),
+        ...b.righe.map(([label, testo]) => label === ''
+          ? new TableRow({ children: [cell([p(testo, { italic: true, size: 19 })], FULL, { span: 2, borders: allGrey })] })
+          : new TableRow({ children: [
+              cell([p(label, { bold: true, size: 19 })], wL, { fill: C.LIGHTBLUE, borders: allGrey }),
+              cell(lines(testo, 20), wR, { borders: allGrey }),
+            ] })),
+      ],
+    })));
+    out.push(...empty(1));
+  }
+  if (modello.soloA.length) {
+    out.push(p(`Opzione A – segue la progettazione didattica della classe e si applicano gli stessi criteri di valutazione: ${modello.soloA.join('; ')}. Per le verifiche restano valide le personalizzazioni generali indicate in 8.1.`, { size: 20 }));
+  }
+  return out;
+}
+
 const CAMPI_INFANZIA = ["Il sé e l'altro", 'Il corpo e il movimento', 'Immagini, suoni, colori', 'I discorsi e le parole', 'La conoscenza del mondo'];
 function parseCampiBlocks(text) {
   const blocks = [];
@@ -848,10 +939,12 @@ function buildDocx(d, grado) {
   } else {
     // 8.1 — testo standard + eventuale aggiunta specifica studente (marker SPEC81:)
     const spec81 = parseMarker(d.sez8Raw, 'SPEC81');
+    const vergen = parseMarker(d.sez8Raw, 'VERGEN');
     children.push(
       h2(sez8.titolo81),
       ...lines(std81),
       ...(spec81 ? [p(''), ...lines(spec81)] : []),
+      ...(vergen ? [p(''), p([txt('Modalità di verifica personalizzate valide per tutte le discipline: ', { bold: true, size: 21 }), txt(vergen, { size: 21 })])] : []),
       ...notaIn81,
       ...empty(1),
     );
@@ -863,7 +956,12 @@ function buildDocx(d, grado) {
         h2('8.2 – Progettazione disciplinare'),
         p(sez8.note82 || '', { size: 18, italic: true, color: C.DARKGREY }),
         ...emptyK(1),
-        ...disciplineTable(sez82text, grado),
+        ...(() => {
+          const voci = parseDisciplineEstese(sez82text);
+          const nucleiMap = Object.fromEntries(getNucleiPerDiscipline(grado, voci.map(v => v.nome), d.istituto, d.eta).map(x => [x.nome, x.nuclei]));
+          const modello = modelloDiscipline(voci, nucleiMap, { sec2: grado === 'sec2' });
+          return modello.esteso ? renderDiscipline82(modello, { sec2: grado === 'sec2' }) : disciplineTable(sez82text, grado);
+        })(),
         ...empty(1),
       );
       // I programmi ministeriali di riferimento per i Licei (pei-programmi.js) sono basati
@@ -1086,4 +1184,4 @@ function extractPctoField(text, field) {
   return m2 ? m2[1].trim() : '';
 }
 
-export { buildDocx, normalizzaSoggetto };
+export { buildDocx, normalizzaSoggetto, parseDisciplineEstese, modelloDiscipline };

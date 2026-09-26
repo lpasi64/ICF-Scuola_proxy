@@ -6,6 +6,7 @@ import { Packer } from "docx";
 import { buildPromptPart1, buildPromptPart2, buildPromptPart3, buildPromptPart4 } from "./pei-prompt.js";
 import { buildDocx } from "./pei-docx-builder.js";
 import { ISTITUTI_SEC2 } from "./pei-gradi.js";
+import { parseMappaIcf, derivaProfiloApprendimento, formattaProfiloPerPrompt } from "./pei-profilo.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -528,7 +529,7 @@ app.post("/genera-pei", async (req, res) => {
     return res.status(500).json({ error: "ANTHROPIC_API_KEY non configurata sul server." });
   }
   try {
-    const { eta, sesso, grado, istituto, icf } = req.body;
+    const { eta, sesso, grado, istituto, icf, dettaglio82: dettaglio82Req } = req.body;
 
     if (!eta || !sesso || !grado) {
       return res.status(400).json({ error: "Campi obbligatori mancanti: eta, sesso, grado." });
@@ -551,6 +552,16 @@ app.post("/genera-pei", async (req, res) => {
       return d;
     })());
 
+    // Sezione 8.2 esteso (contenuti + verifiche dal profilo ICF): interruttore per richiesta o variabile d'ambiente
+    const dettaglio82 = dettaglio82Req !== undefined ? !!dettaglio82Req : process.env.PEI_DETTAGLIO_82 === '1';
+    // "presente" solo se la mappa contiene davvero codici d* (il ripiego "slim" di compactIcf può restituire un JSON di altra forma)
+    const mappaD = parseMappaIcf(jsonD);
+    const profiloPresente = Object.keys(mappaD).some(k => /^d\d/i.test(k));
+    const profilo82 = dettaglio82
+      ? formattaProfiloPerPrompt(derivaProfiloApprendimento(mappaD), { presente: profiloPresente })
+      : '';
+    console.log(`[PEI] dettaglio82=${dettaglio82}${dettaglio82 ? ` profiloPresente=${profiloPresente}` : ''}`);
+
     console.log(`[PEI] JSON sizes — full:${jsonFull.length} d:${jsonD.length} e:${jsonE.length} demo:${jsonDemo.length} chars`);
     console.log(`[PEI] Generazione: grado=${grado} eta=${eta} istituto=${istituto || '-'}`);
 
@@ -564,7 +575,7 @@ Restituisci SOLO il testo richiesto, senza preamboli o commenti aggiuntivi.`;
       anthropicClient.messages.create({ ...callOpts, messages: [{ role: 'user', content: buildPromptPart1({ eta, sesso, grado, istituto, jsonData: jsonFull }) }] }),
       anthropicClient.messages.create({ ...callOpts, messages: [{ role: 'user', content: buildPromptPart2({ eta, sesso, grado, istituto, jsonData: jsonD   }) }] }),
       anthropicClient.messages.create({ ...callOpts, messages: [{ role: 'user', content: buildPromptPart3({ eta, sesso, grado, istituto, jsonData: jsonE   }) }] }),
-      anthropicClient.messages.create({ ...callOpts, messages: [{ role: 'user', content: buildPromptPart4({ eta, sesso, grado, istituto, jsonData: jsonDemo}) }] }),
+      anthropicClient.messages.create({ ...callOpts, messages: [{ role: 'user', content: buildPromptPart4({ eta, sesso, grado, istituto, jsonData: jsonDemo, dettaglio82, profilo82 }) }] }),
     ]);
 
     const getText = m => m.content.filter(b => b.type === 'text').map(b => b.text).join('\n');
