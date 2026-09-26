@@ -32,6 +32,7 @@ const FULL = 9360;
 // restano con ciò che segue; le tabelle brevi (firme, orario, schede) restano intere (keepNext su ogni paragrafo).
 let _keepAll = false;
 function keepTogether(fn) { const prev = _keepAll; _keepAll = true; try { return fn(); } finally { _keepAll = prev; } }
+function keepTogetherIf(cond, fn) { return cond ? keepTogether(fn) : fn(); }
 const _kn = () => (_keepAll ? { keepNext: true } : {});
 function TableRow(o) { return new DocxTableRow({ cantSplit: true, ...o }); }
 
@@ -607,19 +608,20 @@ function renderDiscipline82(modello, { sec2 = false } = {}) {
   out.push(p('Contenuti, verifiche e criteri sono proposte generate sul profilo funzionale dell\'alunno: il GLO o il Consiglio di classe le conferma o le modifica.', { italic: true, size: 18 }));
   if (sec2) out.push(p('Le prove sono indicate come identiche o equipollenti a titolo di proposta: l\'equipollenza delle prove e la validità del percorso ai fini del titolo di studio sono decise dal Consiglio di classe.', { italic: true, size: 18 }));
   for (const b of modello.blocchi) {
-    out.push(keepTogether(() => new Table({
+    out.push((() => new Table({
       width: { size: FULL, type: WidthType.DXA },
       columnWidths: [wL, wR],
       rows: [
         new TableRow({ tableHeader: false, children: [cell([p(b.titolo, { bold: true, size: 20, keepNext: true })], FULL, { span: 2, borders: allGrey })] }),
-        ...b.righe.map(([label, testo]) => label === ''
+        // la penultima riga resta con l'ultima: niente riga finale isolata in cima a una pagina
+        ...b.righe.map(([label, testo], i) => keepTogetherIf(i === b.righe.length - 2, () => label === ''
           ? new TableRow({ children: [cell([p(testo, { italic: true, size: 19 })], FULL, { span: 2, borders: allGrey })] })
           : new TableRow({ children: [
               cell([p(label, { bold: true, size: 19 })], wL, { fill: C.LIGHTBLUE, borders: allGrey }),
               cell(lines(testo, 20), wR, { borders: allGrey }),
-            ] })),
+            ] }))),
       ],
-    })));
+    }))());
     out.push(...empty(1));
   }
   if (modello.soloA.length) {
