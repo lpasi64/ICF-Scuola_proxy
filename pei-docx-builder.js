@@ -590,8 +590,9 @@ function modelloDiscipline(voci, nucleiPerNome = {}, { sec2 = false } = {}) {
       const pr = (v.campi.PROVE || '').toUpperCase();
       righe.push(['Prove di verifica', `${pr.startsWith('IDENT') ? '☒' : '☐'} identiche a quelle della classe   ${pr.startsWith('EQUIP') ? '☒' : '☐'} equipollenti`]);
     }
-    if (v.campi.VERIF) righe.push(['Modalità di verifica', v.campi.VERIF]);
-    if (v.campi.VALUT) righe.push(['Criteri di valutazione', v.campi.VALUT]);
+    const conCampi = Object.keys(v.campi).length > 0;   // riga in formato esteso: verifica e criteri non restano mai vuoti
+    if (v.campi.VERIF || conCampi) righe.push(['Modalità di verifica', v.campi.VERIF || 'da definire a cura del Consiglio di classe (valgono intanto le verifiche generali indicate in 8.1)']);
+    if (v.campi.VALUT || conCampi) righe.push(['Criteri di valutazione', v.campi.VALUT || 'da definire a cura del Consiglio di classe']);
     if (v.campi.SEZ5) righe.push(['Collegamento con la Sezione 5', v.campi.SEZ5]);
     if (v.libero) righe.push(['Personalizzazioni', v.libero]);
     blocchi.push({ titolo: `${v.nome} — opzione ${v.opzione || 'B'}`, righe });

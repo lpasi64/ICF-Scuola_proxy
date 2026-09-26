@@ -5,37 +5,37 @@
 // comune), non norme: il prompt le presenta come esempi da scegliere solo se coerenti col profilo.
 
 const AREE = [
-  { id: 'lettura', etichetta: 'lettura e comprensione dei testi', codici: ['d166'],
+  { id: 'lettura', tipo: 'specifica', etichetta: 'lettura e comprensione dei testi', codici: ['d166'],
     adattamenti: 'testi semplificati o ad alta leggibilità, lettura ad alta voce o sintesi vocale, mappe e schemi in luogo di lunghi brani',
     verifica: 'consegne brevi e chiare, consegne lette dal docente, tempi aggiuntivi' },
-  { id: 'scrittura', etichetta: 'scrittura e produzione di testi', codici: ['d170'],
+  { id: 'scrittura', tipo: 'specifica', etichetta: 'scrittura e produzione di testi', codici: ['d170'],
     adattamenti: 'videoscrittura con correttore, schemi guida per la produzione, riduzione della lunghezza richiesta',
     verifica: 'valutare il contenuto oltre alla forma, integrazione orale, meno quesiti a risposta aperta' },
-  { id: 'calcolo', etichetta: 'calcolo e procedure numeriche', codici: ['d172'],
+  { id: 'calcolo', tipo: 'specifica', etichetta: 'calcolo e procedure numeriche', codici: ['d172'],
     adattamenti: 'calcolatrice, tabelle e formulari, esercizi scomposti in passaggi',
     verifica: 'meno esercizi a parità di obiettivi, procedimenti guidati, tempi aggiuntivi' },
-  { id: 'problemi', etichetta: 'soluzione di problemi e presa di decisioni', codici: ['d175', 'd177'],
+  { id: 'problemi', tipo: 'specifica', etichetta: 'soluzione di problemi e presa di decisioni', codici: ['d175', 'd177'],
     adattamenti: 'scomposizione del problema in sotto-passaggi (task analysis), esempi svolti, organizzatori grafici',
     verifica: 'problemi presentati in sequenza passo-passo, punteggio anche ai passaggi corretti' },
-  { id: 'attenzione', etichetta: 'attenzione e mantenimento sul compito', codici: ['d160'],
+  { id: 'attenzione', tipo: 'trasversale', etichetta: 'attenzione e mantenimento sul compito', codici: ['d160'],
     adattamenti: 'attività suddivise in fasi brevi, pause programmate, ambiente con pochi stimoli',
     verifica: 'prove suddivise in parti brevi, pause programmate, un solo compito per volta' },
-  { id: 'organizzazione', etichetta: 'organizzazione di compiti singoli e articolati', codici: ['d210', 'd220'],
+  { id: 'organizzazione', tipo: 'trasversale', etichetta: 'organizzazione di compiti singoli e articolati', codici: ['d210', 'd220'],
     adattamenti: 'agenda visiva, checklist operative, consegne sequenziali',
     verifica: 'prove strutturate in sequenze, indicazioni scritte dei passaggi, tempi aggiuntivi' },
-  { id: 'stress', etichetta: 'gestione dello stress e delle richieste', codici: ['d240'],
+  { id: 'stress', tipo: 'trasversale', etichetta: 'gestione dello stress e delle richieste', codici: ['d240'],
     adattamenti: 'anticipazione di attività e cambiamenti, momenti di decompressione, rinforzo positivo',
     verifica: 'verifiche programmate e annunciate, possibilità di ripetere, peso della valutazione formativa' },
-  { id: 'orale', etichetta: 'comunicazione orale e conversazione', codici: ['d330', 'd350'],
+  { id: 'orale', tipo: 'trasversale', etichetta: 'comunicazione orale e conversazione', codici: ['d330', 'd350'],
     adattamenti: 'domande guidate, supporti visivi per l\'esposizione, tempi di risposta più lunghi',
     verifica: 'interrogazioni programmate e strutturate, domande a risposta breve, esposizione con supporti' },
-  { id: 'comprensione', etichetta: 'comprensione di messaggi verbali', codici: ['d310'],
+  { id: 'comprensione', tipo: 'trasversale', etichetta: 'comprensione di messaggi verbali', codici: ['d310'],
     adattamenti: 'consegne brevi e riformulate, supporti visivi, controllo della comprensione',
     verifica: 'consegne semplificate e ripetute, esempi svolti' },
-  { id: 'motricita', etichetta: 'motricità fine e uso di strumenti', codici: ['d440'],
+  { id: 'motricita', tipo: 'specifica', etichetta: 'motricità fine e uso di strumenti', codici: ['d440'],
     adattamenti: 'strumenti alternativi (tastiera, ausili), riduzione delle richieste grafiche, moduli precompilati',
     verifica: 'prove con minore componente grafica, tempi aggiuntivi, risposte a scelta o orali' },
-  { id: 'relazione', etichetta: 'lavoro con i pari e interazioni sociali', codici: ['d710', 'd720', 'd750'],
+  { id: 'relazione', tipo: 'trasversale', etichetta: 'lavoro con i pari e interazioni sociali', codici: ['d710', 'd720', 'd750'],
     adattamenti: 'lavori di gruppo strutturati con ruoli definiti, tutoring tra pari',
     verifica: 'verifiche individuali con supporto anziché prove di gruppo non strutturate' },
 ];
@@ -60,7 +60,7 @@ export function derivaProfiloApprendimento(mappa) {
         P = P === null ? e.P : Math.max(P, e.P);
       }
       if (P === null) continue;
-      aree.push({ id: a.id, etichetta: a.etichetta, P, livello: P >= 3 ? 'marcata' : P === 2 ? 'moderata' : 'lieve', codici: presenti });
+      aree.push({ id: a.id, tipo: a.tipo, etichetta: a.etichetta, P, livello: P >= 3 ? 'marcata' : P === 2 ? 'moderata' : 'lieve', codici: presenti });
     }
   }
   const rilevanti = aree.filter(a => a.P >= 2);
@@ -73,10 +73,20 @@ export function formattaProfiloPerPrompt(profilo, { presente = true } = {}) {
   if (profilo.vuoto) {
     return `${intest}\nNessuna area di apprendimento con difficoltà rilevante (P≥2): per la maggior parte delle discipline scegli l'opzione A e non inventare adattamenti.`;
   }
-  const righe = profilo.rilevanti.map(a => {
+  const riga = a => {
     const def = AREE.find(x => x.id === a.id);
     return `- ${a.etichetta}: difficoltà ${a.livello} (P${a.P}) [${a.codici.join(', ')}] → adattamenti possibili: ${def.adattamenti}; verifica: ${def.verifica}`;
-  });
+  };
+  const specifiche = profilo.rilevanti.filter(a => a.tipo === 'specifica');
+  const trasversali = profilo.rilevanti.filter(a => a.tipo !== 'specifica');
+  const blocchi = [intest];
+  blocchi.push(specifiche.length
+    ? `Aree specifiche di apprendimento (possono giustificare l'opzione B nelle discipline collegate):\n${specifiche.map(riga).join('\n')}`
+    : `Nessuna area specifica di apprendimento (lettura, scrittura, calcolo, problemi, motricità fine) con difficoltà rilevante: le discipline restano in opzione A salvo eccezioni motivate dalle aree trasversali marcate (P3-P4).`);
+  if (trasversali.length) {
+    blocchi.push(`Aree trasversali (si gestiscono con la riga VERGEN e con la didattica; da sole NON giustificano l'opzione B):\n${trasversali.map(riga).join('\n')}`);
+  }
   const senza = profilo.aree.filter(a => a.P < 2).map(a => a.etichetta);
-  return `${intest}\n${righe.join('\n')}${senza.length ? `\nAree senza difficoltà rilevante: ${senza.join('; ')}.` : ''}`;
+  if (senza.length) blocchi.push(`Aree senza difficoltà rilevante: ${senza.join('; ')}.`);
+  return blocchi.join('\n');
 }

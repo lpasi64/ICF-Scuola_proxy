@@ -397,6 +397,9 @@ ${campoProve}  VERIF: modalità di verifica specifiche della disciplina (max 25 
   SEZ5: dimensione/i della Sezione 5 collegate (A = Relazione, B = Comunicazione, C = Autonomia, D = Cognitiva/Apprendimento)
 - Solo se il profilo mostra difficoltà marcate (P3-P4) in almeno due aree collegate alla disciplina: aggiungi "MODO: PROPRIA" e "OBIETT: obiettivi disciplinari previsti e risultati attesi" (progettazione molto diversa da quella della classe); in tutti gli altri casi NON scrivere MODO.
 
+Per ogni B scrivi SEMPRE ADATT, ${sec2 ? 'PROVE, ' : ''}VERIF, VALUT e SEZ5: nessuno di questi campi può mancare, neppure nell'ultima disciplina dell'elenco.
+Le difficoltà trasversali (attenzione, stress, comunicazione orale, relazione, organizzazione) NON giustificano da sole l'opzione B: si gestiscono con la riga VERGEN e con la didattica. Scegli B per una disciplina solo se un'area specifica (lettura, scrittura, calcolo, problemi, motricità fine) o una difficoltà trasversale marcata (P3-P4) con impatto diretto su quella disciplina rende necessario modificarne contenuti o prove.
+
 Regole di scelta: scegli B solo per le discipline collegate ad aree con difficoltà nel profilo; non copiare gli stessi adattamenti su tutte le discipline; per le discipline non collegate scrivi A. Se una disciplina non ha nuclei numerati, ometti MANT e RID. Nessun contenuto disciplinare fuori dall'elenco numerato.
 
 Esempio (nomi di discipline e numeri illustrativi):
