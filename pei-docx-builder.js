@@ -922,17 +922,18 @@ function buildDocx(d, grado) {
 
   // ── SEZ. 8 (differenziata per grado) ─────────────────────────────────────
   // Nota metodologica per il Consiglio di classe / team: nel modello ministeriale non ha una sezione propria, quindi
-  // viene inserita nella 8.1 come testo continuo, senza titolo
+  // viene inserita in apertura della 8.1 come testo continuo, senza titolo — prima delle specifiche sul docente
+  // di sostegno, perché si rivolge al Consiglio di classe/team nel suo insieme.
   const notaMetod = lines(d.notaMetodologica);
-  const notaIn81 = notaMetod.length ? [p(''), ...notaMetod] : [];
+  const notaIn81 = notaMetod.length ? [...notaMetod, p('')] : [];
 
   children.push(h1('Sezione 8 – Interventi sul percorso ' + (grado === 'infanzia' ? 'educativo' : 'curricolare')));
 
   if (grado === 'infanzia') {
     children.push(
       h2(sez8.titolo81),
-      ...lines(std81),
       ...notaIn81,
+      ...lines(std81),
       ...emptyK(1),
       ...disciplineTable(d.sez8Raw, grado),
       ...empty(1),
@@ -945,10 +946,10 @@ function buildDocx(d, grado) {
     const vergen = parseMarker(d.sez8Raw, 'VERGEN');
     children.push(
       h2(sez8.titolo81),
+      ...notaIn81,
       ...lines(std81),
       ...(spec81 ? [p(''), ...lines(spec81)] : []),
       ...(vergen ? [p(''), p([txt('Modalità di verifica personalizzate valide per tutte le discipline: ', { bold: true, size: 21 }), txt(vergen, { size: 21 })])] : []),
-      ...notaIn81,
       ...empty(1),
     );
 
