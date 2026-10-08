@@ -747,7 +747,7 @@ function disciplineTable(rawText, grado) {
       new TableRow({ tableHeader: true, children: headers.map((h, i) => hCell(h, cols[i], C.MIDBLUE)) }),
       ...dataRows.map((row, ri) => new TableRow({
         children: row.map((val, ci) => cell(
-          (haABC && ci === 2) ? cellaPersonalizzazioni(val) : [p(String(val), { size: 20 })], cols[ci],
+          (ci === headers.length - 1 && !isInfanzia) ? cellaPersonalizzazioni(val) : [p(String(val), { size: 20 })], cols[ci],
           { fill: ci === 0 ? C.LIGHTBLUE : (ri % 2 === 0 ? C.WHITE : C.GREY), borders: allGrey }
         )),
       })),

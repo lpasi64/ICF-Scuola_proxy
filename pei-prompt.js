@@ -421,10 +421,17 @@ function buildSez8Block(grado, sez8, std81, discStr, istituto, term, eta = '', d
   // testo attuale (formato breve) dei tre gradi, invariato
   const discAttuale = {
     primaria: `Per ogni disciplina scrivi una riga che inizia con "DISC:" (OBBLIGATORIO — nessun altro formato):
-DISC: [nome disciplina] | [personalizzazioni: obiettivi calibrati sui programmi della ${classe} (${refProgr}), ridotti/semplificati; strategie; verifica; criteri di valutazione]
+DISC: [nome disciplina] | [personalizzazioni]
+
+Per ogni disciplina con personalizzazioni scrivi, nello stesso campo e con queste etichette esatte, tre parti:
+  Obiettivi: obiettivi calibrati sui programmi della ${classe} (${refProgr}), ridotti o semplificati secondo il profilo e la Sezione 5
+  Modalità di verifica: tipo di prova (osservazione sistematica, prova pratica, prova orale guidata, domande chiuse o a scelta multipla, uso di immagini/simboli), supporti, tempi e frequenza
+  Criteri di valutazione: riferiti agli obiettivi del PEI (livello di autonomia e di aiuto richiesto, progressi rispetto alla situazione di partenza); la valutazione è espressa con il ${TERMINE_VALUTAZIONE.primaria}
+Per le discipline senza modifiche scrivi solo "Nessuna modifica al programma ordinario".
+Non usare mai la parola «differenziato/a/i» (nella scuola primaria non esiste il percorso differenziato): usa «ridotti», «semplificati», «individualizzati».
 
 Esempio corretto:
-DISC: Italiano | Testi semplificati, verifiche con supporto visivo, produzione guidata
+DISC: Italiano | Obiettivi: leggere e comprendere brevi testi di due-tre frasi con il supporto di immagini; Modalità di verifica: prove orali guidate e brevi prove scritte con supporto visivo, tempi estesi, una prova al mese; Criteri di valutazione: livello di autonomia e progressi rispetto agli obiettivi del PEI
 DISC: Educazione motoria | Nessuna modifica al programma ordinario
 
 Discipline: ${discStr}`,
@@ -432,8 +439,13 @@ Discipline: ${discStr}`,
 DISC: [nome disciplina] | [A o B] | [personalizzazioni se B; vuoto se A]
 
 Opzione A: Educazione Fisica e Religione. Opzione B: tutte le altre discipline.
+Per ogni disciplina in opzione B scrivi, nello stesso campo e con queste etichette esatte, tre parti:
+  Obiettivi: obiettivi calibrati sui programmi della ${classe} (${refProgr}), ridotti o semplificati secondo il profilo e la Sezione 5
+  Modalità di verifica: tipo di prova (osservazione sistematica, prova pratica, prova orale guidata, domande chiuse o a scelta multipla, uso di immagini/simboli), supporti, tempi e frequenza
+  Criteri di valutazione: riferiti agli obiettivi del PEI (livello di autonomia e di aiuto richiesto, progressi rispetto alla situazione di partenza); la valutazione è espressa con il ${TERMINE_VALUTAZIONE.sec1}
+Non usare mai la parola «differenziato/a/i» (nella scuola secondaria di primo grado non esiste il percorso differenziato): usa «ridotti», «semplificati», «individualizzati».
 Esempio corretto:
-DISC: Italiano | B | Testi semplificati, verifiche semplificate con tempi estesi
+DISC: Italiano | B | Obiettivi: produrre brevi testi guidati su esperienze vissute; Modalità di verifica: verifiche scritte semplificate con tempi estesi e interrogazioni programmate con domande guida; Criteri di valutazione: autonomia e progressi rispetto agli obiettivi del PEI
 DISC: Educazione Fisica | A |
 
 Discipline: ${discStr}`,
