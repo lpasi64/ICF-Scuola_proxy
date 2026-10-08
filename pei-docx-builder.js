@@ -288,12 +288,33 @@ function annoCorsoSec2(eta) {
 // Deriva il riquadro di riepilogo A/B/C dalle opzioni scelte disciplina per disciplina
 // (Linee Guida PEI, Decreto Interm. 153/2023: C se almeno una disciplina è C,
 // altrimenti B se almeno una è B, altrimenti A).
+function esitoPercorso(sez82text) {
+  const opzioni = parseDisciplineMarkers(sez82text).map(r => (r[1] || '').trim().toUpperCase());
+  return opzioni.includes('C') ? 'C' : opzioni.includes('B') ? 'B' : 'A';
+}
 function riepilogoPercorso(sez82text) {
-  const rows = parseDisciplineMarkers(sez82text);
-  const opzioni = rows.map(r => (r[1] || '').trim().toUpperCase());
-  const esito = opzioni.includes('C') ? 'C' : opzioni.includes('B') ? 'B' : 'A';
+  const esito = esitoPercorso(sez82text);
   const box = (letter) => (esito === letter ? '☒' : '☐');
   return `Lo/a studente/essa segue un percorso didattico di tipo: ${box('A')} A. ordinario  ${box('B')} B. personalizzato (con prove equipollenti)  ${box('C')} C. differenziato`;
+}
+// Avvertenza che accompagna il riquadro quando l'esito è C (Linee guida PEI, D.I. 153/2023 All. B)
+const NOTA_PERCORSO_C = 'Percorso differenziato (C): conduce al rilascio dell\'attestato dei crediti formativi e non al diploma; anche una sola disciplina in C rende differenziato l\'intero percorso. È una scelta eccezionale, derivante da impedimenti oggettivi o da incompatibilità e non da mere difficoltà di apprendimento. È proposta dal Consiglio di classe e richiede l\'accordo dei genitori, che possono non accettarla: in tal caso le prove sono equipollenti in tutte le discipline. Per le discipline in C sono indicate le attività alternative svolte in quelle ore.';
+
+// Cella «Personalizzazioni»: se il testo contiene le etichette (Obiettivi, Modalità di verifica, Criteri di valutazione,
+// Attività alternativa) ogni parte va su una riga a sé con l'etichetta in grassetto; altrimenti resta un unico paragrafo.
+const ETICHETTE_C = ['Obiettivi', 'Modalità di verifica', 'Criteri di valutazione', 'Attività alternativa'];
+function cellaPersonalizzazioni(val) {
+  const s = String(val || '');
+  const rx = new RegExp('(?=(?:' + ETICHETTE_C.join('|') + ')\\s*:)');
+  const parti = s.split(rx).map(x => x.trim().replace(/[;,]\s*$/, '')).filter(Boolean);
+  const conEtichetta = parti.filter(x => new RegExp('^(?:' + ETICHETTE_C.join('|') + ')\\s*:').test(x));
+  if (conEtichetta.length < 2) return [p(s, { size: 20 })];
+  return parti.map(x => {
+    const m = x.match(/^([^:]+):\s*(.*)$/);
+    return m && ETICHETTE_C.includes(m[1].trim())
+      ? p([txt(m[1].trim() + ': ', { bold: true, size: 20 }), txt(m[2], { size: 20 })], { size: 20 })
+      : p(x, { size: 20 });
+  });
 }
 
 // Parser a blocchi per formato multi-riga delle discipline (legacy fallback):
@@ -726,7 +747,7 @@ function disciplineTable(rawText, grado) {
       new TableRow({ tableHeader: true, children: headers.map((h, i) => hCell(h, cols[i], C.MIDBLUE)) }),
       ...dataRows.map((row, ri) => new TableRow({
         children: row.map((val, ci) => cell(
-          [p(String(val), { size: 20 })], cols[ci],
+          (haABC && ci === 2) ? cellaPersonalizzazioni(val) : [p(String(val), { size: 20 })], cols[ci],
           { fill: ci === 0 ? C.LIGHTBLUE : (ri % 2 === 0 ? C.WHITE : C.GREY), borders: allGrey }
         )),
       })),
@@ -1011,7 +1032,11 @@ function buildDocx(d, grado) {
         );
       }
       if (grado === 'sec2' && sez8.percorsoDifferenziato) {
-        children.push(p(riepilogoPercorso(sez82text), { size: 20, bold: true }), ...empty(1));
+        children.push(
+          p(riepilogoPercorso(sez82text), { size: 20, bold: true, keepNext: esitoPercorso(sez82text) === 'C' }),
+          ...(esitoPercorso(sez82text) === 'C' ? [p(NOTA_PERCORSO_C, { size: 18, italic: true, color: C.DARKGREY })] : []),
+          ...empty(1),
+        );
       }
     }
 
