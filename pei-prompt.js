@@ -424,7 +424,7 @@ function buildSez8Block(grado, sez8, std81, discStr, istituto, term, eta = '', d
 DISC: [nome disciplina] | [personalizzazioni]
 
 Per ogni disciplina con personalizzazioni scrivi, nello stesso campo e con queste etichette esatte, tre parti:
-  Obiettivi: obiettivi calibrati sui programmi della ${classe} (${refProgr}), ridotti o semplificati secondo il profilo e la Sezione 5
+  Obiettivi: due modalità, secondo quanto la progettazione si discosta da quella della classe (programmi della ${classe}: ${refProgr}). (a) Se le differenze non sono rilevanti: inizia con "Segue la progettazione didattica della classe tranne questi adattamenti:" ed elenca solo riduzione dei contenuti, semplificazioni o facilitazioni, eventuali obiettivi ridotti. (b) Se la progettazione personalizzata è molto diversa da quella della classe: indica gli obiettivi disciplinari previsti con i risultati attesi, calibrati sul profilo e sulla Sezione 5. Se per quella disciplina gli obiettivi restano quelli della classe e cambiano solo strategie o verifiche, scrivi "comuni a quelli della classe"
   Modalità di verifica: tipo di prova (osservazione sistematica, prova pratica, prova orale guidata, domande chiuse o a scelta multipla, uso di immagini/simboli), supporti, tempi e frequenza
   Criteri di valutazione: riferiti agli obiettivi del PEI (livello di autonomia e di aiuto richiesto, progressi rispetto alla situazione di partenza); la valutazione è espressa con il ${TERMINE_VALUTAZIONE.primaria}
 Per le discipline senza modifiche scrivi solo "Nessuna modifica al programma ordinario".
@@ -440,7 +440,7 @@ DISC: [nome disciplina] | [A o B] | [personalizzazioni se B; vuoto se A]
 
 Opzione A: Educazione Fisica e Religione. Opzione B: tutte le altre discipline.
 Per ogni disciplina in opzione B scrivi, nello stesso campo e con queste etichette esatte, tre parti:
-  Obiettivi: obiettivi calibrati sui programmi della ${classe} (${refProgr}), ridotti o semplificati secondo il profilo e la Sezione 5
+  Obiettivi: due modalità, secondo quanto la progettazione si discosta da quella della classe (programmi della ${classe}: ${refProgr}). (a) Se le differenze non sono rilevanti: inizia con "Segue la progettazione didattica della classe tranne questi adattamenti:" ed elenca solo riduzione dei contenuti, semplificazioni o facilitazioni, eventuali obiettivi ridotti. (b) Se la progettazione personalizzata è molto diversa da quella della classe: indica gli obiettivi disciplinari previsti con i risultati attesi, calibrati sul profilo e sulla Sezione 5. Se per quella disciplina gli obiettivi restano quelli della classe e cambiano solo strategie o verifiche, scrivi "comuni a quelli della classe"
   Modalità di verifica: tipo di prova (osservazione sistematica, prova pratica, prova orale guidata, domande chiuse o a scelta multipla, uso di immagini/simboli), supporti, tempi e frequenza
   Criteri di valutazione: riferiti agli obiettivi del PEI (livello di autonomia e di aiuto richiesto, progressi rispetto alla situazione di partenza); la valutazione è espressa con il ${TERMINE_VALUTAZIONE.sec1}
 Non definire mai «differenziati» gli obiettivi (nella scuola secondaria di primo grado non esiste il percorso differenziato): usa «ridotti», «semplificati», «individualizzati».
