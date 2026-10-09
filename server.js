@@ -586,9 +586,7 @@ Restituisci SOLO il testo richiesto, senza preamboli o commenti aggiuntivi.`;
 
     const peiData = parsePeiText(peiText, grado, istituto, eta, sesso, jsonData);
 
-    console.log('[PEI] sez7Raw (300):', JSON.stringify((peiData.sez7Raw || '').slice(0, 300)));
-    console.log('[PEI] sez8Raw (500):', JSON.stringify((peiData.sez8Raw || '').slice(0, 500)));
-
+    // nei log non finisce mai testo del PEI né il nome dell'alunno: solo dimensioni e parametri tecnici
     const doc    = buildDocx(peiData, grado, { anonimo });
     const buffer = await Packer.toBuffer(doc);
 
@@ -600,7 +598,7 @@ Restituisci SOLO il testo richiesto, senza preamboli o commenti aggiuntivi.`;
       // due file in una sola risposta: il PEI e l'esportazione per SIDI
       const bufferSidi = await Packer.toBuffer(buildSidiDocx(peiData, grado));
       const nomeSidi = `PEI_per_SIDI_${grado}_${new Date().getFullYear()}.docx`;
-      console.log(`[PEI] ✅ Generati: ${nomeFile} (${buffer.length} bytes) + ${nomeSidi} (${bufferSidi.length} bytes)`);
+      console.log(`[PEI] ✅ Generati PEI (${buffer.length} bytes) + esportazione SIDI (${bufferSidi.length} bytes)`);
       return res.json({ files: [{ nome: nomeFile, base64: buffer.toString('base64') }, { nome: nomeSidi, base64: bufferSidi.toString('base64') }] });
     }
 
@@ -611,7 +609,7 @@ Restituisci SOLO il testo richiesto, senza preamboli o commenti aggiuntivi.`;
     });
     res.send(buffer);
 
-    console.log(`[PEI] ✅ Generato: ${nomeFile} (${buffer.length} bytes)`);
+    console.log(`[PEI] ✅ Generato PEI (${buffer.length} bytes)`);
 
   } catch (err) {
     console.error('[PEI] ❌ Errore:', err.message);
