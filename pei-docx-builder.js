@@ -41,8 +41,9 @@ function TableRow(o) { return new DocxTableRow({ cantSplit: true, ...o }); }
 // "sul/sulla alunno/a"…) prodotte dall'AI o presenti nei moduli vengono rese col nome proprio ("Giulia", "di Giulia", "su Giulia").
 const _NOUN = '(?:studente\\/essa|alunno\\/a|bambino\\/a)';
 const _RX_SOGG = new RegExp("\\b(dello|del|dell'|allo|al|all'|sullo|sul|sull'|dallo|dal|dall'|nello|nel|nell'|lo|il|l')(?:\\/(?:della|alla|sulla|dalla|nella|la|a))?\\s*(" + _NOUN + ')', 'gi');
-function normalizzaSoggetto(text, nome, sesso) {
+function normalizzaSoggetto(text, nome, sesso, { anonimo = false } = {}) {
   const completo = String(nome || '').trim().replace(/\s+/g, ' ');
+  if (anonimo) return anonimizzaSoggetto(String(text), completo, sesso);
   const n = completo.split(' ')[0];
   if (!n) return text;
   // Il campo con il nome completo (es. "Giulia Conti" accanto a "ALUNNO/A") resta intero; nel testo si usa il solo nome di battesimo
@@ -62,12 +63,62 @@ function normalizzaSoggetto(text, nome, sesso) {
     .replace(/\balunno\/a\b/g, sesso === 'F' ? 'alunna' : 'alunno')
     .replace(/\bbambino\/a\b/g, sesso === 'F' ? 'bambina' : 'bambino');
 }
-let _soggetto = { nome: '', sesso: '' };
+
+// ── Versione anonimizzata ─────────────────────────────────────────────────────
+// Per il caricamento del PEI nel SIDI (Gestione Fascicolo – Certificazioni) la nota MIM prot. 4316 del 19/10/2023 richiede un
+// PDF «privo di tutti i dati identificativi dell'alunno»: nome e cognome diventano «l'alunno/a» con la preposizione giusta.
+const _NOMI_ANON = { studente: { M: 'studente', F: 'studentessa', cls: 'sc' }, alunno: { M: 'alunno', F: 'alunna', cls: 'v' }, bambino: { M: 'bambino', F: 'bambina', cls: 'c' } };
+const _ART_ANON = {
+  '':   { v: "l'",     sc: 'lo ',   c: 'il ',  f: 'la ' },
+  di:   { v: "dell'",  sc: 'dello ', c: 'del ', f: 'della ' },
+  a:    { v: "all'",   sc: 'allo ',  c: 'al ',  f: 'alla ' },
+  su:   { v: "sull'",  sc: 'sullo ', c: 'sul ', f: 'sulla ' },
+  da:   { v: "dall'",  sc: 'dallo ', c: 'dal ', f: 'dalla ' },
+  in:   { v: "nell'",  sc: 'nello ', c: 'nel ', f: 'nella ' },
+};
+const _PARTICELLE = new Set(['di', 'de', 'del', 'della', 'da', 'dal', 'van', 'von', 'la', 'le', 'lo', 'dei', 'degli', 'delle']);
+const _cap = (t) => t.charAt(0).toUpperCase() + t.slice(1);
+const _inizioFrase = (text, offset) => /(?:^|[.!?]\s+|\n\s*)$/.test(text.slice(0, offset));
+
+function anonimizzaSoggetto(text, completo, sesso) {
+  const sex = sesso === 'F' || sesso === 'M' ? sesso : '';
+  // 1) forme generiche con la barra («Lo/la studente/essa», «del/della alunno/a»…): articolo e nome corretti per il sesso noto
+  let out = sex
+    ? text.replace(_RX_SOGG, (m, art, noun, offset) => {
+        const a = art.toLowerCase();
+        const prep = a.startsWith('del') ? 'di' : a.startsWith('al') ? 'a' : a.startsWith('sul') ? 'su' : a.startsWith('dal') ? 'da' : a.startsWith('nel') ? 'in' : '';
+        const info = _NOMI_ANON[noun.toLowerCase().split('/')[0]];
+        const forma = (sex === 'F' && info.cls !== 'v' ? _ART_ANON[prep].f : _ART_ANON[prep][info.cls]) + info[sex];
+        return _inizioFrase(text, offset) ? _cap(forma) : forma;
+      })
+    : text;
+  // 2) nome completo, nome e cognome da soli (le particelle e le parole di meno di 3 lettere non contano)
+  const parole = completo.split(' ').filter(w => w.length >= 3 && !_PARTICELLE.has(w.toLowerCase()));
+  const alt = [completo, ...parole].filter((v, i, arr) => v && arr.indexOf(v) === i)
+    .sort((x, y) => y.length - x.length).map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+  const noun = sex === 'F' ? 'alunna' : sex === 'M' ? 'alunno' : 'alunno/a';
+  if (alt) {
+    const rx = new RegExp("(?:\\b(di|a|da|su|in|con|per|tra|fra)\\s+)?(?<![\\p{L}'])(?:" + alt + ")(?![\\p{L}])", 'gu');
+    out = out.replace(rx, (m, prep, offset, whole) => {
+      const p0 = (prep || '').toLowerCase();
+      let forma = _ART_ANON[p0] ? _ART_ANON[p0].v + noun : (p0 ? p0 + " l'" + noun : "l'" + noun);
+      if (prep && prep[0] !== prep[0].toLowerCase()) forma = _cap(forma);
+      else if (!prep && _inizioFrase(whole, offset)) forma = _cap(forma);
+      return forma;
+    });
+  }
+  // 3) le forme con la barra rimaste (sesso non noto o nessun articolo davanti)
+  return out
+    .replace(/\bstudente\/essa\b/g, sex === 'F' ? 'studentessa' : sex === 'M' ? 'studente' : 'studente/essa')
+    .replace(/\balunno\/a\b/g, sex === 'F' ? 'alunna' : sex === 'M' ? 'alunno' : 'alunno/a')
+    .replace(/\bbambino\/a\b/g, sex === 'F' ? 'bambina' : sex === 'M' ? 'bambino' : 'bambino/a');
+}
+let _soggetto = { nome: '', sesso: '', anonimo: false };
 
 // ── Primitivi ─────────────────────────────────────────────────────────────────
 function txt(t, o = {}) {
   return new TextRun({
-    text: normalizzaSoggetto(String(t ?? ''), _soggetto.nome, _soggetto.sesso), font: 'Calibri',
+    text: normalizzaSoggetto(String(t ?? ''), _soggetto.nome, _soggetto.sesso, { anonimo: _soggetto.anonimo }), font: 'Calibri',
     size: o.size || 22, bold: !!o.bold, italics: !!o.italic,
     color: o.color || C.BLACK,
     underline: o.underline ? { type: UnderlineType.SINGLE } : undefined,
@@ -801,8 +852,8 @@ const twoCol = (...a) => keepTogether(() => _twoCol(...a));
 const sez7Block = (...a) => keepTogether(() => _sez7Block(...a));
 
 // ── BUILDER PRINCIPALE ────────────────────────────────────────────────────────
-function buildDocx(d, grado) {
-  _soggetto = { nome: d.nomeStudente, sesso: d.sesso };
+function buildDocx(d, grado, { anonimo = false } = {}) {
+  _soggetto = { nome: d.nomeStudente, sesso: d.sesso, anonimo };
   const term  = TERMINOLOGIA[grado];
   const sez8  = STRUTTURA_SEZ8[grado];
   const std81 = testoStandard81(term);
@@ -833,7 +884,8 @@ function buildDocx(d, grado) {
       children: [txt('Anno Scolastico ', { bold: true, size: 22 }), txt(d.annoScolastico || '__________', { size: 22 })],
       alignment: AlignmentType.CENTER, spacing: { before: 80, after: 240 },
     }),
-    p([txt('ALUNNO/A ', { bold: true }), txt(d.nomeStudente || '____________________________', {})]),
+    p([txt('ALUNNO/A ', { bold: true }), txt(anonimo ? 'dato omesso' : (d.nomeStudente || '____________________________'), {})]),
+    ...(anonimo ? [p("Documento anonimizzato: privo dei dati identificativi dell'alunno, per il caricamento nel SIDI (Gestione Fascicolo – Certificazioni; nota MIM prot. 4316 del 19/10/2023).", { italic: true, size: 18 })] : []),
     p([txt('codice sostitutivo personale ', {}), txt(d.codice || '____________', {})]),
     p([
       txt('Classe ', { bold: true }), txt(d.classe || '________________', {}),
