@@ -351,15 +351,22 @@ function riepilogoPercorso(sez82text) {
 // Avvertenza che accompagna il riquadro quando l'esito è C (Linee guida PEI, D.I. 153/2023 All. B)
 const NOTA_PERCORSO_C = 'Percorso differenziato (C): conduce al rilascio dell\'attestato dei crediti formativi e non al diploma; anche una sola disciplina in C rende differenziato l\'intero percorso. È una scelta eccezionale, derivante da impedimenti oggettivi o da incompatibilità e non da mere difficoltà di apprendimento. È proposta dal Consiglio di classe e richiede l\'accordo dei genitori, che possono non accettarla: in tal caso le prove sono equipollenti in tutte le discipline. Per le discipline in C sono indicate le attività alternative svolte in quelle ore.';
 
-// Cella «Personalizzazioni»: se il testo contiene le etichette (Obiettivi, Modalità di verifica, Criteri di valutazione,
-// Attività alternativa) ogni parte va su una riga a sé con l'etichetta in grassetto; altrimenti resta un unico paragrafo.
-const ETICHETTE_C = ['Obiettivi', 'Modalità di verifica', 'Criteri di valutazione', 'Attività alternativa'];
-function cellaPersonalizzazioni(val) {
+// Cella «Personalizzazioni»: se il testo contiene le etichette (Obiettivi, Strategie e metodologie, Modalità di verifica,
+// Criteri di valutazione, Attività alternativa) ogni parte va su una riga a sé con l'etichetta in grassetto; altrimenti resta
+// un unico paragrafo.
+const ETICHETTE_C = ['Obiettivi', 'Strategie e metodologie', 'Modalità di verifica', 'Criteri di valutazione', 'Attività alternativa'];
+// Le parti etichettate del testo, oppure null se le etichette sono meno di due
+function partiEtichettate(val) {
   const s = String(val || '');
   const rx = new RegExp('(?=(?:' + ETICHETTE_C.join('|') + ')\\s*:)');
   const parti = s.split(rx).map(x => x.trim().replace(/[;,]\s*$/, '')).filter(Boolean);
   const conEtichetta = parti.filter(x => new RegExp('^(?:' + ETICHETTE_C.join('|') + ')\\s*:').test(x));
-  if (conEtichetta.length < 2) return [p(s, { size: 20 })];
+  return conEtichetta.length < 2 ? null : parti;
+}
+function cellaPersonalizzazioni(val) {
+  const s = String(val || '');
+  const parti = partiEtichettate(s);
+  if (!parti) return [p(s, { size: 20 })];
   return parti.map(x => {
     const m = x.match(/^([^:]+):\s*(.*)$/);
     return m && ETICHETTE_C.includes(m[1].trim())
@@ -425,15 +432,11 @@ const DIM_LABEL = {
   _: 'Dimensione non specificata',
 };
 
-// Render sezione 5: PRIMA la Dimensione, POI gli obiettivi raggruppati sotto
-function objectivesBlock(rawText) {
-  const result = [];
-  if (!rawText) return result;
-
-  // ── 1. Parse obiettivi ────────────────────────────────────────────────────
+// Obiettivi della Sezione 5: [{ num, title, dim, lines }] (dim = A-D, oppure '_' se non indicata)
+function parseObiettivi(rawText) {
   const objectives = [];
   let cur = null;
-  for (const line of rawText.split('\n')) {
+  for (const line of String(rawText || '').split('\n')) {
     const t = line.trim();
     const om = t.match(/^#{2,4}\s*Obiettivo\s+(\d+)\s*[–\-:]+\s*(.+)$/i);
     if (om) {
@@ -450,6 +453,16 @@ function objectivesBlock(rawText) {
     }
   }
   if (cur) objectives.push(cur);
+  return objectives;
+}
+
+// Render sezione 5: PRIMA la Dimensione, POI gli obiettivi raggruppati sotto
+function objectivesBlock(rawText) {
+  const result = [];
+  if (!rawText) return result;
+
+  // ── 1. Parse obiettivi ────────────────────────────────────────────────────
+  const objectives = parseObiettivi(rawText);
   if (objectives.length === 0) return lines(rawText);
 
   // ── 2. Raggruppa per dimensione (ordine di prima comparsa) ───────────────
@@ -1248,7 +1261,9 @@ function buildDocx(d, grado, { anonimo = false } = {}) {
 function extractSection(text, from, to) {
   if (!text) return '';
   const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const rx = new RegExp(`(?:${esc(from)}[^\n]*\n)([\s\S]*?)(?=${to ? esc(to) : '$'})`, 'i');
+  // i titoli stanno a inizio riga, anche in markdown («**8.2 – …**», «## 8.3 …»): un rimando dentro un testo non conta
+  const titolo = s => '(?:^|\\n)[ \\t#*]*' + esc(s);
+  const rx = new RegExp(titolo(from) + '[^\\n]*\\n([\\s\\S]*?)(?=' + (to ? titolo(to) : '$') + ')', 'i');
   const m = text.match(rx);
   return m ? m[1].trim() : '';
 }
@@ -1265,4 +1280,211 @@ function extractPctoField(text, field) {
   return m2 ? m2[1].trim() : '';
 }
 
-export { buildDocx, normalizzaSoggetto, parseDisciplineEstese, modelloDiscipline };
+// ── Esportazione per SIDI ─────────────────────────────────────────────────────
+// Il SIDI (Gestione Alunni con Disabilità → Gestione Fascicolo → Certificazioni → Registrazione PEI) si compila campo per campo,
+// con aree di testo libero e senza tabelle (guida rapida «Gestione Alunni con Disabilità – Utente Scuola», v. 4.0, ottobre 2023).
+// L'esportazione riporta, nell'ordine e con le etichette del SIDI, un blocco di testo semplice per ciascun campo da copiare e incollare.
+function testoSemplice(str) {
+  const out = [];
+  for (const riga of String(str || '').split('\n')) {
+    let t = riga.replace(/\*\*/g, '').replace(/^#{1,4}\s*/, '').replace(/^\s*•\s*/, '- ').trim();
+    if (!t || /^-{3,}$/.test(t)) continue;
+    if (t.startsWith('|') && t.endsWith('|')) {
+      const celle = t.split('|').map(c => c.trim()).filter(Boolean);
+      if (!celle.length || celle.every(c => /^[-:]+$/.test(c))) continue;
+      t = celle.join(' — ');
+    }
+    out.push(t);
+  }
+  return out;
+}
+
+const _DIM_SIDI = {
+  A: 'Dimensione A – Relazione, interazione e socializzazione',
+  B: 'Dimensione B – Comunicazione e linguaggio',
+  C: 'Dimensione C – Autonomia e orientamento',
+  D: 'Dimensione D – Cognitiva, neuropsicologica e dell\'apprendimento',
+  _: 'Dimensione non specificata',
+};
+
+// I tre campi del SIDI per ciascuna dimensione della Sezione 5, ricavati dagli obiettivi (due per dimensione)
+function _campiSez5Sidi(rawText) {
+  const per = {};
+  for (const o of parseObiettivi(rawText)) {
+    const c = per[o.dim] || (per[o.dim] = { ob: [], str: [], ver: [] });
+    c.ob.push(`Obiettivo ${o.num} – ${o.title}`);
+    for (const l of testoSemplice(o.lines.join('\n'))) {
+      const m = l.match(/^([^:]+):\s*(.*)$/);
+      const et = m ? m[1].toLowerCase() : '';
+      if (/^dimensione/.test(et)) continue;
+      if (/^interventi e strategie/.test(et)) c.str.push(`Obiettivo ${o.num}: ${m[2]}`);
+      else if (/^modalit[àa] di verifica|^verifica/.test(et)) c.ver.push(`Obiettivo ${o.num}: ${m[2]}`);
+      else c.ob.push(l);
+    }
+  }
+  return per;
+}
+
+// Discipline della 8.3: opzione A/B/C, verifiche (identiche/equipollenti/non equipollenti) e testo, dal formato esteso o dal breve
+function _vociSidi(d, grado, sez82text) {
+  const sec2 = grado === 'sec2';
+  const voci = parseDisciplineEstese(sez82text);
+  const nucleiMap = Object.fromEntries(getNucleiPerDiscipline(grado, voci.map(v => v.nome), d.istituto, d.eta).map(x => [x.nome, x.nuclei]));
+  return voci.map(v => {
+    const conCampi = Object.keys(v.campi).length > 0;
+    const nessunaModifica = /^nessuna modifica/i.test(v.libero);
+    const opzione = v.opzione || ((conCampi || (v.libero && !nessunaModifica)) ? 'B' : 'A');
+    if (opzione === 'A') return { nome: v.nome, opzione, righe: [], prove: '' };
+    let righe;
+    if (conCampi) {
+      const blocco = modelloDiscipline([{ ...v, opzione }], nucleiMap, { sec2 }).blocchi[0];
+      righe = (blocco ? blocco.righe : []).filter(([label]) => label !== 'Prove di verifica').map(([label, testo]) => (label === '' ? testo : `${label}: ${testo}`));
+    } else {
+      righe = partiEtichettate(v.libero) || (v.libero ? [v.libero] : []);
+    }
+    let prove = '';
+    if (sec2) {
+      const pr = (v.campi.PROVE || '').toUpperCase();
+      if (opzione === 'C') prove = 'non equipollenti';
+      else if (pr.startsWith('EQUIP') || (!pr && /equipollent/i.test(v.libero) && !/non equipollent/i.test(v.libero))) prove = 'equipollenti';
+      else if (pr.startsWith('IDENT') || (!pr && /identich/i.test(v.libero))) prove = 'identiche';
+    }
+    return { nome: v.nome, opzione, righe, prove };
+  });
+}
+
+function buildSidiDocx(d, grado) {
+  _soggetto = { nome: d.nomeStudente, sesso: d.sesso, anonimo: false };
+  const term = TERMINOLOGIA[grado];
+  const sez8 = STRUTTURA_SEZ8[grado];
+  const sec = grado === 'sec1' || grado === 'sec2';
+  const children = [];
+
+  // un campo del SIDI: etichetta in evidenza, eventuale nota, poi il testo semplice da copiare
+  const campo = (etichetta, righe, nota) => {
+    children.push(
+      p(etichetta, { bold: true, size: 21, color: C.BLUE, keepNext: true, before: 220 }),
+      ...(nota ? [p(nota, { italic: true, size: 18, color: C.DARKGREY, keepNext: true })] : []),
+    );
+    if (righe.length) righe.forEach(r => children.push(p(r, { size: 21 })));
+    else children.push(p('(nessun testo generato: da compilare direttamente nel SIDI)', { italic: true, size: 19, color: C.DARKGREY }));
+  };
+
+  // ── Intestazione ─────────────────────────────────────────────────────────
+  children.push(
+    new Paragraph({ children: [txt('Esportazione per il SIDI', { bold: true, size: 34, color: C.BLACK })], spacing: { before: 0, after: 60 } }),
+    p(`PEI – ${term.intestazione}`, { size: 22, bold: true }),
+    p('Come usarla: nel portale SIDI apri Gestione Alunni con Disabilità → Gestione Fascicolo → Certificazioni → Registrazione PEI, scegli la classe e l\'alunno, poi copia ogni blocco qui sotto nel campo con lo stesso nome. I testi sono privi di formattazione, perché i campi del SIDI sono aree di testo libero.', { size: 20 }),
+    p('Le etichette seguono la guida rapida SIDI (v. 4.0, ottobre 2023). La numerazione dei campi del SIDI può differire da quella dei modelli ministeriali stampati: per esempio, nel SIDI le modalità di verifica generali (secondarie) sono il campo 8.2 e i percorsi per le competenze trasversali e l\'orientamento il campo 8.4.', { size: 18, italic: true, color: C.DARKGREY }),
+    p('Da compilare direttamente nel SIDI (non generati qui): composizione del GLO, livello del debito di funzionamento per dimensione (Allegato C1), sezione 9 (organizzazione e risorse), certificazione delle competenze, verifiche intermedie e finale, PEI provvisorio. I testi generati vanno riletti e approvati dal GLO.', { size: 18, italic: true, color: C.DARKGREY }),
+  );
+
+  // ── F2 · Osservazioni propedeutiche ──────────────────────────────────────
+  children.push(h1('F2 – Osservazioni propedeutiche (sezioni 1, 2, 3)'));
+  campo('Sezione 1 – Quadro informativo · Situazione familiare / descrizione dello studente o della studentessa',
+    [...testoSemplice(d.sez1a), ...testoSemplice(d.sez1b)],
+    grado === 'sec2' ? 'Il secondo campo («Elementi desunti dalla descrizione di sé dello Studente o della Studentessa») si compila con i colloqui con l\'alunno.' : '');
+  campo('Sezione 2 – Elementi generali desunti dal Profilo di Funzionamento · dimensioni',
+    testoSemplice(d.sez2Raw).filter(r => !/^dimensione\b/i.test(r)).map(r => r.replace(/\s+—\s+/g, ' — ')),
+    'Nel SIDI, per ogni dimensione, si selezionano da elenco se va definita o omessa e il livello del debito di funzionamento (Allegato C1): le righe seguenti sono la motivazione di partenza.');
+  campo('Sezione 3 – Raccordo con il Progetto Individuale (art. 14 L. 328/2000)', testoSemplice(d.sez3));
+
+  // ── F3 · Valutazione dimensioni ──────────────────────────────────────────
+  children.push(h1('F3 – Valutazione delle dimensioni (sezioni 4, 5)'));
+  [['a', 'Dimensione della relazione, dell\'interazione e della socializzazione', 'sez4a'],
+   ['b', 'Dimensione della comunicazione e del linguaggio', 'sez4b'],
+   ['c', 'Dimensione dell\'autonomia e dell\'orientamento', 'sez4c'],
+   ['d', 'Dimensione cognitiva, neuropsicologica e dell\'apprendimento', 'sez4d']]
+    .forEach(([l, nome, key]) => campo(`Sezione 4 – ${l}. ${nome}`, testoSemplice(d[key])));
+  const per5 = _campiSez5Sidi(d.sez5Raw);
+  const dimOrdine = ['A', 'B', 'C', 'D', '_'].filter(k => per5[k]);
+  if (!dimOrdine.length) campo('Sezione 5 – Interventi per lo/a studente/essa', testoSemplice(d.sez5Raw));
+  for (const k of dimOrdine) {
+    campo(`${_DIM_SIDI[k]} (Sezione 5) · OBIETTIVI, specificando anche gli esiti attesi`, per5[k].ob);
+    campo(`${_DIM_SIDI[k]} (Sezione 5) · INTERVENTI DIDATTICI E METODOLOGICI, STRATEGIE E STRUMENTI finalizzati al raggiungimento degli obiettivi`, per5[k].str);
+    campo(`${_DIM_SIDI[k]} (Sezione 5) · VERIFICA (metodi, criteri e strumenti utilizzati per verificare se gli obiettivi sono stati raggiunti)`, per5[k].ver);
+  }
+
+  // ── F4 · Contesto ────────────────────────────────────────────────────────
+  children.push(h1('F4 – Contesto: barriere e facilitatori (sezioni 6, 7)'));
+  campo('Sezione 6 – Osservazioni sul contesto: barriere e facilitatori', [
+    'Ambiente fisico, prodotti e tecnologie:', ...testoSemplice(d.sez6a1),
+    'Relazioni e supporti sociali:', ...testoSemplice(d.sez6a2),
+    'Atteggiamenti:', ...testoSemplice(d.sez6a3),
+  ].filter((r, i, a) => !(r.endsWith(':') && (i === a.length - 1 || a[i + 1].endsWith(':')))));
+  const cat7 = [['Categoria 1 – Rimozione delle barriere', d.sez7cat1], ['Categoria 2 – Facilitatori universali', d.sez7cat2], ['Categoria 3 – Facilitatori personalizzati', d.sez7cat3]];
+  const righe7 = [];
+  for (const [titolo, raw] of cat7) {
+    const azioni = [];
+    for (const l of String(raw || '').split('\n')) {
+      const c = parseCells(l);
+      if (c && c.length >= 2 && !/^azione|^-+/i.test(c[0])) azioni.push(`- ${c[0].replace(/\*\*/g, '')}${c[1] ? ` (destinatari: ${c[1].replace(/\*\*/g, '')}${c[2] ? `; tempi: ${c[2].replace(/\*\*/g, '')}` : ''})` : ''}`);
+    }
+    if (azioni.length) righe7.push(titolo, ...azioni);
+  }
+  campo('Sezione 7 – Interventi sul contesto per realizzare un ambiente di apprendimento inclusivo', righe7.length ? righe7 : testoSemplice(d.sez7Raw));
+
+  // ── F9 · Interventi sul percorso curricolare ─────────────────────────────
+  children.push(h1(`F9 – Interventi sul percorso ${grado === 'infanzia' ? 'educativo' : 'curricolare'} (8.1, 8.2, 8.3, 8.5)`));
+  const spec81 = parseMarker(d.sez8Raw, 'SPEC81');
+  const vergen = parseMarker(d.sez8Raw, 'VERGEN');
+  const campiInf = grado === 'infanzia'
+    ? parseCampiBlocks(d.sez8Raw).map(([c, a, s]) => `${c} – Attività: ${a}${s ? `; Strategie e strumenti: ${s}` : ''}`) : [];
+  campo(`8.1 – Modalità di sostegno didattico e ulteriori interventi di inclusione`, [
+    ...testoSemplice(d.notaMetodologica), ...testoSemplice(testoStandard81(term)), ...testoSemplice(spec81),
+    ...(campiInf.length ? ['Campi di esperienza:', ...campiInf] : []),
+  ], grado === 'infanzia' ? 'Per l\'infanzia il SIDI non ha un campo dedicato ai campi di esperienza: sono riportati in coda a questo testo.' : '');
+
+  const sez82text = extractSection(d.sez8Raw, '8.2', '8.3') || d.sez8Raw;
+  if (sec) {
+    campo('8.2 – Modalità di verifica (personalizzazioni valide per tutte le discipline)',
+      vergen ? testoSemplice(vergen) : ['Le modalità di verifica personalizzate sono indicate disciplina per disciplina nel campo 8.3.']);
+  } else if (grado === 'primaria') {
+    campo('8.2 – Modalità di verifica', ['Campo non previsto per la scuola primaria: le eventuali modalità di verifica personalizzate si indicano in 8.1 e disciplina per disciplina in 8.3.']);
+  }
+  if (grado !== 'infanzia') {
+    campo('8.3 – Progettazione disciplinare', [], 'Nel SIDI si usa «Aggiungi Disciplina» per ciascuna disciplina: scegliere l\'opzione indicata e incollare il testo.');
+    children.pop();   // la nota basta come introduzione; le discipline seguono come campi a sé
+    const voci = _vociSidi(d, grado, sez82text);
+    const inA = voci.filter(v => v.opzione === 'A').map(v => v.nome);
+    for (const v of voci.filter(x => x.opzione !== 'A')) {
+      const verifiche = v.opzione === 'C' ? 'non equipollenti' : (v.prove || '');
+      const righe = [...(grado === 'sec2' ? [`Verifiche: ${verifiche || 'da indicare (identiche o equipollenti)'}`] : []), ...v.righe];
+      campo(`8.3 – Disciplina: ${v.nome} · Opzione ${v.opzione}${grado === 'sec2' && verifiche ? ` · verifiche ${verifiche}` : ''}`, righe);
+    }
+    if (!voci.length) campo('8.3 – Progettazione disciplinare', testoSemplice(sez82text));
+    if (inA.length) campo('8.3 – Discipline da inserire in opzione A (nessun testo da incollare)', [`Discipline in opzione A: ${inA.join('; ')}`],
+      'A – Segue la progettazione didattica della classe e si applicano gli stessi criteri di valutazione.');
+  }
+  if (sez8.haValutazioneComportamento) {
+    const crit = parseMarker(d.sez8Raw, 'CRIT84').replace(/\*\*/g, '').trim();
+    const righeCrit = !crit ? [] : /^B\b/i.test(crit)
+      ? ['Opzione B – Il comportamento è valutato in base ai seguenti criteri personalizzati e al raggiungimento dei seguenti obiettivi:', crit.replace(/^B\s*[–\-:]*\s*/i, '')]
+      : ['Opzione A – Il comportamento è valutato in base agli stessi criteri adottati per la classe'];
+    campo('8.5 – Criteri di valutazione del comportamento ed eventuali obiettivi specifici', righeCrit);
+  }
+  if (grado === 'sec2' && sez8.percorsoDifferenziato) {
+    campo('Quadro riassuntivo – tipo di percorso didattico', [riepilogoPercorso(sez82text), ...(esitoPercorso(sez82text) === 'C' ? [NOTA_PERCORSO_C] : [])]);
+  }
+
+  // ── F6 · Percorsi per le competenze trasversali e l'orientamento ─────────
+  if (sez8.haFSL && annoCorsoSec2(d.eta) >= 3) {
+    children.push(h1('F6 – Percorsi per le competenze trasversali e l\'orientamento'));
+    const f = (rx) => extractPctoField(d.sez8Raw, rx);
+    const campiFsl = [['Tipologia di percorso', f('Tipologia')], ['Ente / azienda ospitante', f('Ente')], ['Tutor scolastico (interno)', f('Tutor.*interno')],
+      ['Tutor aziendale (esterno)', f('Tutor.*esterno')], ['Durata e organizzazione temporale', f('Durata')], ['Obiettivi di competenza del progetto formativo', f('Obiettivi')],
+      ['Barriere e facilitatori nel contesto', f('Barriere')], ['Tipologie di attività', f('Tipologie')], ['Monitoraggio e valutazione', f('Monitoraggio')],
+      ['Osservazioni dello studente o della studentessa', f('Osservazioni')]];
+    campo('8.4 – Percorsi per le competenze trasversali e l\'orientamento (dalla classe III)', campiFsl.filter(([, v]) => v).map(([e, v]) => `${e}: ${v}`));
+  }
+
+  return new Document({
+    styles: { default: { document: { run: { font: 'Calibri', size: 22 } } } },
+    sections: [{
+      properties: { page: { size: { width: 11906, height: 16838 }, margin: { top: 1020, right: 1020, bottom: 1020, left: 1020 } } },
+      children,
+    }],
+  });
+}
+
+export { buildDocx, buildSidiDocx, normalizzaSoggetto, parseDisciplineEstese, modelloDiscipline, extractSection };

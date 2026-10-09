@@ -4,7 +4,7 @@ import fetch from "node-fetch";
 import Anthropic from "@anthropic-ai/sdk";
 import { Packer } from "docx";
 import { buildPromptPart1, buildPromptPart2, buildPromptPart3, buildPromptPart4 } from "./pei-prompt.js";
-import { buildDocx } from "./pei-docx-builder.js";
+import { buildDocx, buildSidiDocx } from "./pei-docx-builder.js";
 import { ISTITUTI_SEC2 } from "./pei-gradi.js";
 import { parseMappaIcf, derivaProfiloApprendimento, formattaProfiloPerPrompt } from "./pei-profilo.js";
 
@@ -497,7 +497,8 @@ function parsePeiText(text, grado, istituto, eta, sesso, jsonData) {
       const raw = extract('Sezione 5', S6_END) || extract('Obiettivo 1', S6_END, true);
       // Rimuovi blocchi FASE 1/2 che l'AI include nonostante "non mostrare":
       // cerca il primo "Obiettivo N" e tieni solo da lì in poi.
-      const objIdx = raw.search(/(?:OBIETTIVI EDUCATIVI[^\n]*\n+)?Obiettivo\s+\d/i);
+      // Il titolo «### Obiettivo 1» va tenuto con i suoi «#»: senza, il primo obiettivo non viene riconosciuto e sparisce dal PEI.
+      const objIdx = raw.search(/(?:OBIETTIVI EDUCATIVI[^\n]*\n+)?(?:#{1,4}[ \t]*)?Obiettivo\s+\d/i);
       if (objIdx > 0) return raw.slice(objIdx).trim();
       // Fallback: rimuovi singole righe che iniziano con "FASE"
       return raw.split('\n').filter(l => !/^FASE\s+\d/i.test(l.trim())).join('\n').trim();
@@ -529,7 +530,9 @@ app.post("/genera-pei", async (req, res) => {
     return res.status(500).json({ error: "ANTHROPIC_API_KEY non configurata sul server." });
   }
   try {
-    const { eta, sesso, grado, istituto, icf, dettaglio82: dettaglio82Req } = req.body;
+    const { eta, sesso, grado, istituto, icf, dettaglio82: dettaglio82Req, anonimo: anonimoReq, sidi: sidiReq } = req.body;
+    const sidi = sidiReq === true || sidiReq === 'true';   // aggiunge l'esportazione per SIDI (testi da copiare nei campi del portale)
+    const anonimo = anonimoReq === true || anonimoReq === 'true';   // versione senza dati identificativi, per il caricamento in SIDI
 
     if (!eta || !sesso || !grado) {
       return res.status(400).json({ error: "Campi obbligatori mancanti: eta, sesso, grado." });
@@ -563,7 +566,7 @@ app.post("/genera-pei", async (req, res) => {
     console.log(`[PEI] dettaglio82=${dettaglio82}${dettaglio82 ? ` profiloPresente=${profiloPresente}` : ''}`);
 
     console.log(`[PEI] JSON sizes — full:${jsonFull.length} d:${jsonD.length} e:${jsonE.length} demo:${jsonDemo.length} chars`);
-    console.log(`[PEI] Generazione: grado=${grado} eta=${eta} istituto=${istituto || '-'}`);
+    console.log(`[PEI] Generazione: grado=${grado} eta=${eta} istituto=${istituto || '-'} anonimo=${anonimo}`);
 
     const systemMsg = `Sei un docente esperto nella redazione del PEI ministeriale italiano, orientato al progetto di vita.
 Rispondi sempre in italiano. Scrivi ogni sezione integralmente, senza placeholder "[...]".
@@ -586,10 +589,20 @@ Restituisci SOLO il testo richiesto, senza preamboli o commenti aggiuntivi.`;
     console.log('[PEI] sez7Raw (300):', JSON.stringify((peiData.sez7Raw || '').slice(0, 300)));
     console.log('[PEI] sez8Raw (500):', JSON.stringify((peiData.sez8Raw || '').slice(0, 500)));
 
-    const doc    = buildDocx(peiData, grado);
+    const doc    = buildDocx(peiData, grado, { anonimo });
     const buffer = await Packer.toBuffer(doc);
 
-    const nomeFile = `PEI_${peiData.nomeStudente || 'soggetto'}_${grado}_${new Date().getFullYear()}.docx`;
+    const nomeFile = anonimo
+      ? `PEI_anonimo_${grado}_${new Date().getFullYear()}.docx`
+      : `PEI_${peiData.nomeStudente || 'soggetto'}_${grado}_${new Date().getFullYear()}.docx`;
+
+    if (sidi) {
+      // due file in una sola risposta: il PEI e l'esportazione per SIDI
+      const bufferSidi = await Packer.toBuffer(buildSidiDocx(peiData, grado));
+      const nomeSidi = `PEI_per_SIDI_${grado}_${new Date().getFullYear()}.docx`;
+      console.log(`[PEI] ✅ Generati: ${nomeFile} (${buffer.length} bytes) + ${nomeSidi} (${bufferSidi.length} bytes)`);
+      return res.json({ files: [{ nome: nomeFile, base64: buffer.toString('base64') }, { nome: nomeSidi, base64: bufferSidi.toString('base64') }] });
+    }
 
     res.set({
       'Content-Type':        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',

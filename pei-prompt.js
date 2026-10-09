@@ -454,15 +454,16 @@ DISC: [nome disciplina] | [A, B o C] | [personalizzazioni se B o C; vuoto se A]
 
 Opzione A: Scienze Motorie e Sportive e Religione (di default). Opzione B: obiettivi differenziati. Opzione C: percorso differenziato (deliberato dal CdC).
 Per l'opzione B specifica sempre, dentro le personalizzazioni, se le verifiche sono identiche o equipollenti rispetto a quelle della classe (obbligatorio).
-Per ogni disciplina in opzione C le prove sono NON equipollenti e le personalizzazioni devono contenere, nello stesso campo e con queste etichette esatte, quattro parti:
+Per ogni disciplina in opzione C le prove sono NON equipollenti e le personalizzazioni devono contenere, nello stesso campo e con queste etichette esatte, cinque parti:
   Obiettivi: obiettivi differenziati, concreti e osservabili, calibrati sul profilo e sulla Sezione 5 (non sui programmi della classe)
+  Strategie e metodologie: strategie e metodologie didattiche adottate (es. tutoring tra pari, task analysis, modeling, apprendimento cooperativo, uso di immagini e simboli), strumenti e figure coinvolte
   Modalità di verifica: tipo di prova (osservazione sistematica, prova pratica, prova orale guidata, domande chiuse o a scelta multipla, uso di immagini/simboli), supporti, tempi, contesto (aula, laboratorio) e frequenza
   Criteri di valutazione: riferiti agli obiettivi del PEI e non ai programmi della classe (livello di autonomia e di aiuto richiesto, progressi rispetto alla situazione di partenza)
   Attività alternativa: l'attività svolta in quelle ore se la disciplina non viene svolta; se è svolta con obiettivi differenziati scrivi "nessuna, la disciplina è svolta con obiettivi differenziati"
 Esempio corretto:
 DISC: Italiano | B | Testi semplificati, verifiche scritte equipollenti con supporto visivo, meno temi
 DISC: Matematica | B | Esercizi guidati passo-passo, calcolatrice, verifiche identiche con tempi estesi
-DISC: Storia | C | Obiettivi: riconoscere eventi e personaggi della storia recente tramite immagini; Modalità di verifica: osservazione sistematica e prova orale guidata con immagini, in aula, con tempi doppi, una prova al quadrimestre; Criteri di valutazione: livello di autonomia raggiunto rispetto agli obiettivi del PEI; Attività alternativa: nessuna, la disciplina è svolta con obiettivi differenziati
+DISC: Storia | C | Obiettivi: riconoscere eventi e personaggi della storia recente tramite immagini; Strategie e metodologie: linee del tempo illustrate, tutoring tra pari e modeling dell'insegnante di sostegno; Modalità di verifica: osservazione sistematica e prova orale guidata con immagini, in aula, con tempi doppi, una prova al quadrimestre; Criteri di valutazione: livello di autonomia raggiunto rispetto agli obiettivi del PEI; Attività alternativa: nessuna, la disciplina è svolta con obiettivi differenziati
 DISC: Scienze Motorie e Sportive | A |
 
 Discipline: ${discStr}`,
