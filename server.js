@@ -7,12 +7,15 @@ import { buildPromptPart1, buildPromptPart2, buildPromptPart3, buildPromptPart4 
 import { buildDocx, buildSidiDocx } from "./pei-docx-builder.js";
 import { ISTITUTI_SEC2 } from "./pei-gradi.js";
 import { parseMappaIcf, derivaProfiloApprendimento, formattaProfiloPerPrompt } from "./pei-profilo.js";
+import { validaRichiesta, creaCache, chiaveCache, creaLimitatore, sintetizza, elencaVoci } from "./tts.js";
 
 const app = express();
+app.set("trust proxy", 1);   // dietro Railway: l'indirizzo del visitatore serve al limitatore della voce
 const PORT = process.env.PORT || 3000;
 const ZAI_API_KEY = process.env.ZAI_API_KEY;
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+const GOOGLE_TTS_API_KEY = process.env.GOOGLE_TTS_API_KEY;   // facoltativa: senza, l'app usa le voci del browser
 const anthropicClient = ANTHROPIC_API_KEY ? new Anthropic({ apiKey: ANTHROPIC_API_KEY }) : null;
 // Generazione PEI: claude-sonnet-5 — più economico ($2/$10 per 1M token input/output) E più
 // recente del claude-sonnet-4-6 usato nel progetto "Generatore PEI" originale ($3/$15), nessun
@@ -615,6 +618,40 @@ Restituisci SOLO il testo richiesto, senza preamboli o commenti aggiuntivi.`;
     console.error('[PEI] ❌ Errore:', err.message);
     res.status(500).json({ error: 'Errore interno nella generazione del PEI.', detail: err.message });
   }
+});
+
+// ── VOCE NEURALE (Google Cloud Text-to-Speech, WaveNet) ─────────────────────
+// Riceve le frasi già preparate dal browser, restituisce l'audio MP3 in base64. Non conserva né registra i testi.
+const cacheVoce = creaCache(200);
+const limitatoreVoce = creaLimitatore({ finestraMs: 10 * 60 * 1000, maxRichieste: 80, maxCaratteri: 60000 });
+let vociTts = null, vociTtsAl = 0;
+async function getVociTts() {
+  if (!GOOGLE_TTS_API_KEY) return [];
+  if (!vociTts || Date.now() - vociTtsAl > 6 * 3600 * 1000) { vociTts = await elencaVoci({ apiKey: GOOGLE_TTS_API_KEY, fetchImpl: fetch }); vociTtsAl = Date.now(); }
+  return vociTts;
+}
+app.get("/tts-config", async (req, res) => {
+  res.json({ attivo: !!GOOGLE_TTS_API_KEY, voci: await getVociTts() });
+});
+app.post("/tts", async (req, res) => {
+  if (!GOOGLE_TTS_API_KEY) return res.status(503).json({ error: "tts_non_configurato" });
+  const voci = (await getVociTts()).map(v => v.id);
+  const v = validaRichiesta(req.body, voci);
+  if (!v.ok) return res.status(400).json({ error: v.errore });
+  const chiave = chiaveCache(v.voce, v.velocita, v.ssml);
+  let audio = cacheVoce.get(chiave);
+  if (!audio) {
+    if (!limitatoreVoce.consenti(req.ip, v.caratteri)) return res.status(429).json({ error: "troppe_richieste" });
+    try {
+      audio = await sintetizza({ apiKey: GOOGLE_TTS_API_KEY, ssml: v.ssml, voce: v.voce, velocita: v.velocita, fetchImpl: fetch });
+    } catch (err) {
+      console.error("[TTS] errore:", err.message);
+      return res.status(502).json({ error: "tts_errore" });
+    }
+    cacheVoce.set(chiave, audio);
+    console.log(`[TTS] ok ${v.caratteri} caratteri`);
+  }
+  res.json({ audio });
 });
 
 app.listen(PORT, () => console.log(`ICF proxy in ascolto su porta ${PORT}`));
