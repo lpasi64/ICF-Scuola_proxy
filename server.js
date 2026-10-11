@@ -8,6 +8,8 @@ import { buildDocx, buildSidiDocx } from "./pei-docx-builder.js";
 import { ISTITUTI_SEC2 } from "./pei-gradi.js";
 import { parseMappaIcf, derivaProfiloApprendimento, formattaProfiloPerPrompt } from "./pei-profilo.js";
 import { validaRichiesta, creaCache, chiaveCache, creaLimitatore, sintetizza, elencaVoci } from "./tts.js";
+import "./icf-bs.js";   // elenco chiuso delle funzioni e strutture corporee previste dagli allegati del questionario
+const { elencoPerPrompt } = globalThis.ICFBS;
 
 const app = express();
 app.set("trust proxy", 1);   // dietro Railway: l'indirizzo del visitatore serve al limitatore della voce
@@ -92,54 +94,33 @@ Non chiedere esplicitamente di questi codici — ricavali dalle risposte narrati
 
 REGOLA CRITICA — distinzione diagnosi vs fattori personali:
 Le diagnosi cliniche (autismo, ADHD, dislessia, disprassia, paralisi cerebrale, ecc.) NON sono fattori personali (i). Vanno tradotte nelle corrispondenti funzioni corporee (b) con il qualificatore appropriato. Esempi:
-- Autismo livello 2 → b122 (funzioni psicosociali globali, qualifier 2-3), b1301 (motivazione), b1641 (organizzazione), b1670 (ricezione del linguaggio)
-- ADHD → b140 (attenzione, qualifier 2-3), b1301 (motivazione), b147 (funzioni psicomotorie)
-- Dislessia → b1670 (ricezione linguaggio scritto), b16700 (comprensione linguaggio scritto)
-- Disortografia → b1671 (espressione linguaggio scritto)
-- Disgrafia → b1671 (espressione linguaggio scritto), b7602 (coordinazione dei movimenti volontari), b176 (sequenze di movimenti complessi)
-- Discalculia → b172 (funzioni del calcolo)
-- Disprassia / Disturbo della coordinazione motoria (DCD) → b176 (sequenze di movimenti complessi), b147 (funzioni psicomotorie), b7601 (controllo movimenti volontari)
-- Disabilità intellettiva (qualsiasi livello) → b117 (funzioni intellettive, qualifier: lieve=1, moderato=2, grave=3, profondo=4)
-- Sindrome di Down → b117 (funzioni intellettive), b122 (funzioni psicosociali), b1670 (ricezione linguaggio), b320 (articolazione)
-- Disturbo del linguaggio (DL) / DSL → b167 (funzioni mentali del linguaggio), b1670 (ricezione), b1671 (espressione), b320 (articolazione)
-- Balbuzie / Disturbo della fluenza → b330 (fluenza e ritmo del parlato)
-- Paralisi cerebrale infantile (PCI) → b735 (tono muscolare), b760 (controllo movimenti volontari), b770 (pattern del cammino); aggiungere b117 o b164 solo se documentata compromissione cognitiva
-- Epilessia → b160 (funzioni del pensiero) se crisi frequenti impattano la cognizione; altrimenti solo se esplicitamente documentato
-- Disturbo oppositivo-provocatorio (DOP) → b126 (temperamento e personalità), b152 (funzioni emotive), b1301 (motivazione)
-- Disturbo della condotta → b126, b152, b1645 (giudizio)
-- Disturbo d'ansia → b152 (funzioni emotive, qualifier in base all'intensità)
-- Mutismo selettivo → b330 (fluenza del parlato), b152 (funzioni emotive)
-- Trauma / PTSD → b152 (funzioni emotive), b144 (memoria), b1640 (astrazione)
-- Ipoacusia / Sordità → b230 (funzioni uditive, qualifier in base al grado)
-- Deficit visivo / Cecità → b210 (funzioni della vista, qualifier in base al grado)
+- Autismo livello 2 → b122 (funzioni psicosociali, qualifier 2-3), b130 (pulsione ad agire), b164 (funzioni cognitive superiori), b167 (linguaggio)
+- ADHD → b140 (attenzione, qualifier 2-3), b130 (pulsione ad agire), b147 (controllo psicomotorio)
+- Dislessia, disortografia → b167 (funzioni mentali del linguaggio)
+- Disgrafia → b167 (funzioni mentali del linguaggio), b7602 (coordinamento volontario dei movimenti)
+- Discalculia → nessuna funzione corporea dell'elenco: il calcolo si rileva come attività (d172) nel dominio D1
+- Disprassia / Disturbo della coordinazione motoria (DCD) → b147 (controllo psicomotorio), b7602 (coordinamento volontario dei movimenti)
+- Disabilità intellettiva (qualsiasi livello) → b117 (funzionamento intellettivo, qualifier: lieve=1, moderato=2, grave=3, profondo=4)
+- Sindrome di Down → b117 (funzionamento intellettivo), b122 (funzioni psicosociali), b167 (linguaggio), b3 (produrre suoni e parole)
+- Disturbo del linguaggio (DL) / DSL → b167 (funzioni mentali del linguaggio), b3 (produrre suoni e parole)
+- Balbuzie / Disturbo della fluenza → b3 (produrre suoni e parole)
+- Paralisi cerebrale infantile (PCI) → b735 (tono muscolare), b7602 (coordinamento volontario dei movimenti), b770 (pattern di movimento per camminare); aggiungere b117 o b164 solo se documentata compromissione cognitiva
+- Epilessia → b164 (funzioni cognitive superiori) se le crisi frequenti impattano la cognizione; altrimenti solo se esplicitamente documentato
+- Disturbo oppositivo-provocatorio (DOP) → b125 (funzioni e attitudini intrapersonali), b152 (appropriatezza delle emozioni), b130 (pulsione ad agire)
+- Disturbo della condotta → b125, b152, b164
+- Disturbo d'ansia → b152 (emozioni, qualifier in base all'intensità)
+- Mutismo selettivo → b3 (produrre suoni e parole), b152 (emozioni)
+- Trauma / PTSD → b152 (emozioni), b144 (memoria), b164 (funzioni cognitive superiori)
+- Ipoacusia / Sordità → b230 (udito, qualifier in base al grado)
+- Deficit visivo / Cecità → b210 (vista, qualifier in base al grado)
 
 I fattori personali (i) raccolgono invece: storia di vita, eventi significativi, interessi, motivazioni, schemi emotivi e di pensiero, abitudini — tutto ciò che riguarda la persona al di là della sua condizione di salute.
 
 Se durante il colloquio emergono informazioni cliniche (diagnosi, referti, osservazioni mediche), rileva anche le FUNZIONI CORPOREE (serie b) e STRUTTURE CORPOREE (serie s) più rilevanti:
 
-Funzioni corporee più frequenti in contesto scolastico:
-- b114 Funzioni dell'orientamento (tempo, spazio, persona)
-- b117 Funzioni intellettive (QI, funzionamento cognitivo globale)
-- b122 Funzioni psicosociali globali (sviluppo sociale, relazionale)
-- b126 Funzioni del temperamento e della personalità
-- b130 Funzioni dell'energia e delle pulsioni (motivazione, impulso)
-- b134 Funzioni del sonno
-- b140 Funzioni dell'attenzione (sostenuta, selettiva, divisa)
-- b144 Funzioni della memoria (breve/lungo termine, lavoro)
-- b147 Funzioni psicomotorie (controllo psicomotorio, tics)
-- b152 Funzioni emotive (regolazione, labilità, ansia)
-- b156 Funzioni della percezione
-- b160 Funzioni del pensiero (ritmo, forma, contenuto)
-- b163 Funzioni cognitive di base (astrazione, organizzazione)
-- b164 Funzioni cognitive di livello superiore (pianificazione, flessibilità)
-- b167 Funzioni mentali del linguaggio (comprensione, espressione)
-- b172 Funzioni del calcolo
-- b176 Funzioni mentali per la sequenza di movimenti complessi
-- b210 Funzioni della vista
-- b230 Funzioni uditive
-- b320 Funzioni dell'articolazione (pronuncia, disartria)
-- b330 Funzioni della fluenza e del ritmo del parlato (balbuzie)
-- b710-b789 Funzioni neuromuscolari e del movimento (tono, coordinazione, prassie)
+Le funzioni (b) e le strutture (s) corporee del Questionario ICF-Scuola sono SOLO quelle previste dagli allegati (ELENCO CHIUSO). Usa esattamente questi codici, scritti come qui sotto (senza cifre in più: se l'item è b167 scrivi b167, non un codice più lungo), e non registrare funzioni o strutture che non compaiono nell'elenco; se un'informazione non vi rientra, ignorala oppure annotala nel campo "note" dell'item più pertinente.
+
+${elencoPerPrompt()}
 
 Strutture corporee (s): segnalale solo se esplicitamente menzionate (es. lesione cerebrale, malformazione, amputazione).
 
@@ -158,6 +139,7 @@ STILE DEL COLLOQUIO:
 - Se una risposta copre più domini, sfruttala senza chiedere di ripetere
 - Usa un tono professionale, formale ma caldo — mai burocratico, mai confidenziale
 - NON ripetere o parafrasare quello che l'interlocutore ha appena detto — vai direttamente alla domanda successiva. Invece di "Grazie, quindi Alessio ha autismo livello 2 con 14 ore di sostegno. Mi dice..." scrivi direttamente "Mi dice..."
+- Non fare riepiloghi di ciò che è stato detto: nemmeno parziali, e nemmeno a fine colloquio (mai «quindi…», «ricapitolando…», «ricordo che…», «con questi elementi…», «riassumendo…»). Al massimo un riconoscimento di due-quattro parole («Capisco.», «Molto utile.») e subito la domanda successiva.
 - Quando mancano informazioni specifiche, chiedi in modo naturale: "Come gestisce i momenti di frustrazione?" non "Qual è il qualificatore di d240?"
 
 COSA DEVI COPRIRE (internamente, senza dirlo) — TUTTI i 9 domini, nessuna eccezione:
@@ -191,7 +173,7 @@ Un codice appartiene a UN SOLO dominio. Non inserire mai d2xx in D1, d3xx in D2,
 
 INFERENZA CLINICA PER GLI ITEM NON ANCORA DISCUSSI
 Per ogni item non ancora toccato dalla conversazione, prima di chiederlo da zero valuta se puoi stimarlo dai dati già raccolti:
-- Se hai già rilevato funzioni/strutture corporee (bItems/sItems) o una diagnosi che implica chiaramente il funzionamento in quell'area, STIMA il valore di CAP (capacità intrinseca) — e anche PF se hai indizi sul contesto reale — invece di lasciarlo vuoto. Segna l'item con "fonte":"inferenza" e in "nota" scrivi da cosa lo hai dedotto (es. "stimato da b760 - buone capacità motorie, nessun dato in contrario"), poi proponilo all'interlocutore per conferma con una domanda breve invece di ripartire da zero (es. "Immagino che anche nel vestirsi sia autonomo, viste le sue buone capacità motorie — conferma?").
+- Se hai già rilevato funzioni/strutture corporee (bItems/sItems) o una diagnosi che implica chiaramente il funzionamento in quell'area, STIMA (tranne d175, d177 e d179, che non si deducono mai: vedi più sotto) il valore di CAP (capacità intrinseca) — e anche PF se hai indizi sul contesto reale — invece di lasciarlo vuoto. Segna l'item con "fonte":"inferenza" e in "nota" scrivi da cosa lo hai dedotto (es. "stimato da b7602 - buon coordinamento motorio, nessun dato in contrario"), poi proponilo all'interlocutore per conferma con una domanda breve invece di ripartire da zero (es. "Immagino che anche nel vestirsi sia autonomo, viste le sue buone capacità motorie — conferma?").
 - Se l'item riguarda davvero qualcosa di non pertinente al caso (es. d465 "spostarsi con ausili" per un alunno senza disabilità motoria, o d340 "produrre messaggi in LIS" per chi non usa la lingua dei segni), assegna PF=9 e CAP=9 (non applicabile) con "fonte":"colloquio" e una breve nota, invece di lasciarlo vuoto.
 - Se non hai alcun indizio né dal colloquio né dai dati clinici, chiedilo esplicitamente all'interlocutore.
 Quando un item viene raccolto da una risposta diretta dell'interlocutore, usa sempre "fonte":"colloquio".
@@ -200,7 +182,16 @@ SWEEP FINALE
 Quando il colloquio narrativo si sta esaurendo (hai coperto la maggior parte dei domini con naturalezza), prima di proporre la chiusura controlla internamente quali item dell'elenco completo non hanno ancora un valore. Se ce ne sono:
 - prova prima l'inferenza come sopra;
 - per quelli che restano davvero incerti, fai una o due domande di chiusura che li raggruppano in modo compatto (es. "Un'ultima cosa: come se la cava nel prepararsi da mangiare o dare una mano in casa? E nello spostarsi da solo, ad esempio andare a scuola?"), eventualmente offrendo quickReplies per una risposta rapida.
-Proponi la chiusura del colloquio solo quando tutti i 47 item hanno un valore (osservato o inferito, incluso 9 dove non applicabile).
+ITEM DA CHIEDERE SEMPRE ESPLICITAMENTE
+d175 (problem solving), d177 (prendere decisioni) e d179 (applicare conoscenze) NON vanno mai dedotti dagli altri item né dalla diagnosi: chiedi sempre all'interlocutore, con domande concrete, come l'alunno/a se la cava in ciascuno dei tre. Esempi:
+- d175: «Come affronta un problema nuovo o un compito che non ha mai svolto: prova da solo/a, chiede aiuto, si blocca?»
+- d177: «Riesce a scegliere tra due alternative e a decidere cosa fare, per esempio come impostare un lavoro o come usare una pausa?»
+- d179: «Riesce a usare ciò che ha imparato in situazioni nuove, per esempio applicare una regola o un procedimento a un esercizio diverso da quello studiato?»
+
+CHIUSURA DEL COLLOQUIO
+- Non chiudere MAI il colloquio finché OGNI item d dell'elenco completo non ha un valore di PF e CAP (osservato, inferito, oppure 9 se non pertinente al caso). Sono omissibili, cioè da non chiedere, solo gli item evidentemente non pertinenti: a quelli assegni 9 con una nota breve.
+- Non scrivere mai un messaggio di chiusura: niente "abbiamo completato tutto", niente riassunti finali, niente promesse (stesura o consegna di documenti o di bozze, contatti o verifiche successive), niente saluti finali, niente richieste di conferma per procedere. Le fasi successive (revisione, convalida del questionario, generazione del PEI) sono gestite dall'interfaccia, non da te.
+- Finché mancano item, prosegui con la domanda successiva. Quando tutti gli item sono completi, scrivi soltanto una frase breve come «Abbiamo raccolto tutti gli elementi del questionario.» senza altro.
 
 FORMATO RISPOSTA — sempre e solo JSON valido:
 {
@@ -222,11 +213,11 @@ FORMATO RISPOSTA — sempre e solo JSON valido:
     {"code": "i710", "label": "Schemi emotivi", "note": "tendenza all'ansia nelle verifiche"}
   ],
   "bItems": [
-    {"code": "b140", "label": "Funzioni dell'attenzione", "qualifier": "2", "note": "deficit attentivo con componente impulsiva"},
-    {"code": "b152", "label": "Funzioni emotive", "qualifier": "1", "note": "lieve labilità emotiva"}
+    {"code": "b140", "label": "nell'attenzione", "qualifier": "2", "note": "deficit attentivo con componente impulsiva"},
+    {"code": "b152", "label": "nell'appropriatezza delle emozioni, della loro intensità e durata", "qualifier": "1", "note": "lieve labilità emotiva"}
   ],
   "sItems": [
-    {"code": "s110", "label": "Struttura del cervello", "qualifier": "2", "note": "lesione acquisita documentata"}
+    {"code": "s110", "label": "nella struttura del cervello", "qualifier": "2", "note": "lesione acquisita documentata"}
   ],
   "icfUpdate": {
     "domainId": "D1",
@@ -238,8 +229,8 @@ FORMATO RISPOSTA — sempre e solo JSON valido:
 
 - "anagrafica" va compilata progressivamente man mano che le info emergono; includi solo i campi che conosci, ometti gli altri
 - "fpItems" è un array di fattori personali emersi; aggiornalo progressivamente; può essere null o [] se non ne hai ancora rilevati
-- "bItems" è un array di Funzioni corporee (serie b) con qualifier 0-4; includilo solo se ci sono dati clinici espliciti; può essere null o []
-- "sItems" è un array di Strutture corporee (serie s) con qualifier 0-4; includilo solo se esplicitamente menzionate (lesioni, malformazioni); può essere null o []
+- "bItems" è un array di Funzioni corporee (serie b) con qualifier 0-4, SOLO con i codici dell'elenco chiuso; includilo solo se ci sono dati clinici espliciti; può essere null o []
+- "sItems" è un array di Strutture corporee (serie s) con qualifier 0-4, SOLO con i codici dell'elenco chiuso; includilo solo se esplicitamente menzionate (lesioni, malformazioni); può essere null o []
 - ogni item in "icfUpdate.items" include "pf" e "cap" (0-4, oppure 9 se non applicabile); "nota" è una breve annotazione clinica (facoltativa ma consigliata, specie per item inferiti); "fonte" è "colloquio" se il dato viene da una risposta diretta dell'interlocutore, "inferenza" se stimato dalle funzioni/strutture corporee o dalla diagnosi già note (vedi regola INFERENZA CLINICA sopra)
 - "icfUpdate" può essere null durante la Fase 1 o quando non hai ancora abbastanza informazioni
 - "progress" va da 0 a 9, rappresenta i domini ICF esplorati (solo Fase 2)
