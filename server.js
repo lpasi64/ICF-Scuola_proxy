@@ -8,6 +8,7 @@ import { buildDocx, buildSidiDocx } from "./pei-docx-builder.js";
 import { ISTITUTI_SEC2 } from "./pei-gradi.js";
 import { parseMappaIcf, derivaProfiloApprendimento, formattaProfiloPerPrompt } from "./pei-profilo.js";
 import { validaRichiesta, creaCache, chiaveCache, creaLimitatore, sintetizza, elencaVoci } from "./tts.js";
+import { rigaUso, usoChat, usoClaude } from "./uso.js";
 import "./icf-bs.js";   // elenco chiuso delle funzioni e strutture corporee previste dagli allegati del questionario
 const { elencoPerPrompt } = globalThis.ICFBS;
 
@@ -263,6 +264,9 @@ async function callProvider({ url, apiKey, model, messages, temperature = 0.7, m
     throw new Error(`HTTP ${response.status}: ${errText}`);
   }
   const data = await response.json();
+  // consumi per il calcolo dei costi: solo numeri, mai testi
+  const u = usoChat(data);
+  console.log(rigaUso('chat', { modello: model, turni: messages.length, in: u.in, out: u.out, cache: u.cache }));
   return data.choices?.[0]?.message?.content ?? "";
 }
 
@@ -575,6 +579,9 @@ Restituisci SOLO il testo richiesto, senza preamboli o commenti aggiuntivi.`;
       anthropicClient.messages.create({ ...callOpts, messages: [{ role: 'user', content: buildPromptPart4({ eta, sesso, grado, istituto, jsonData: jsonDemo, dettaglio82, profilo82 }) }] }),
     ]);
 
+    const uPei = usoClaude([msg1, msg2, msg3, msg4]);
+    console.log(rigaUso('pei', { modello: PEI_MODEL, chiamate: uPei.chiamate, in: uPei.in, out: uPei.out }));
+
     const getText = m => m.content.filter(b => b.type === 'text').map(b => b.text).join('\n');
     const peiText = getText(msg1) + '\n\n' + getText(msg2) + '\n\n' + getText(msg3) + '\n\n' + getText(msg4);
 
@@ -631,6 +638,7 @@ app.post("/tts", async (req, res) => {
   if (!v.ok) return res.status(400).json({ error: v.errore });
   const chiave = chiaveCache(v.voce, v.velocita, v.ssml);
   let audio = cacheVoce.get(chiave);
+  const cacheHit = !!audio;
   if (!audio) {
     if (!limitatoreVoce.consenti(req.ip, v.caratteri)) return res.status(429).json({ error: "troppe_richieste" });
     try {
@@ -642,6 +650,7 @@ app.post("/tts", async (req, res) => {
     cacheVoce.set(chiave, audio);
     console.log(`[TTS] ok ${v.caratteri} caratteri`);
   }
+  console.log(rigaUso('tts', { caratteri: v.caratteri, cache: cacheHit ? 'si' : 'no' }));
   res.json({ audio });
 });
 
