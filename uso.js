@@ -7,6 +7,7 @@ export const PREZZI = {
   "deepseek-flash": { in: 0.15, out: 0.60 },
   "glm-5.3-flash": { in: 0.15, out: 0.50 },
   "claude-sonnet-5": { in: 2, out: 10 },
+  "mistral-small-2603": { in: 0.15, out: 0.60 },
   tts: 16,
 };
 

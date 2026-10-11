@@ -9,6 +9,7 @@ import { ISTITUTI_SEC2 } from "./pei-gradi.js";
 import { parseMappaIcf, derivaProfiloApprendimento, formattaProfiloPerPrompt } from "./pei-profilo.js";
 import { validaRichiesta, creaCache, chiaveCache, creaLimitatore, sintetizza, elencaVoci } from "./tts.js";
 import { rigaUso, usoChat, usoClaude } from "./uso.js";
+import { scegliProvider, creaGeneratore } from "./pei-provider.js";
 import "./icf-bs.js";   // elenco chiuso delle funzioni e strutture corporee previste dagli allegati del questionario
 const { elencoPerPrompt } = globalThis.ICFBS;
 
@@ -26,6 +27,16 @@ const anthropicClient = ANTHROPIC_API_KEY ? new Anthropic({ apiKey: ANTHROPIC_AP
 // pei-docx-builder.js (marker DISC:/SPEC81:/CRIT84:, blocchi ### Obiettivo N) — un formato
 // diverso produce sezioni vuote nel .docx, rischio non accettabile per un documento ministeriale.
 const PEI_MODEL = "claude-sonnet-5";
+// Prova di Mistral Small 4 ($0,15/$0,60 per 1M token) al posto di Claude: si attiva solo con PEI_PROVIDER=mistral e MISTRAL_API_KEY;
+// senza, o con qualunque altro valore, resta Claude. REASONING: PEI_MISTRAL_REASONING (predefinito "none"; vuoto = non inviato).
+const MISTRAL_MODEL = process.env.PEI_MISTRAL_MODEL || "mistral-small-2603";
+const PEI_PROVIDER = scegliProvider(process.env);
+const generatorePei = creaGeneratore({
+  provider: PEI_PROVIDER, anthropicClient, claudeModel: PEI_MODEL,
+  mistralApiKey: process.env.MISTRAL_API_KEY, mistralModel: MISTRAL_MODEL,
+  reasoning: process.env.PEI_MISTRAL_REASONING === undefined ? "none" : process.env.PEI_MISTRAL_REASONING,
+  fetchImpl: fetch,
+});
 
 // Provider primario: GLM-5.3-Flash (Z.ai), modello multimodale (usato qui solo in modalità
 // testo) con contesto 1M token. Fallback automatico su DeepSeek se GLM non è configurato o
@@ -524,7 +535,7 @@ app.get("/pei-config", (req, res) => {
 });
 
 app.post("/genera-pei", async (req, res) => {
-  if (!anthropicClient) {
+  if (PEI_PROVIDER === "claude" && !anthropicClient) {
     return res.status(500).json({ error: "ANTHROPIC_API_KEY non configurata sul server." });
   }
   try {
@@ -570,20 +581,20 @@ app.post("/genera-pei", async (req, res) => {
 Rispondi sempre in italiano. Scrivi ogni sezione integralmente, senza placeholder "[...]".
 Restituisci SOLO il testo richiesto, senza preamboli o commenti aggiuntivi.`;
 
-    const callOpts = { model: PEI_MODEL, max_tokens: 8000, system: systemMsg };
 
-    const [msg1, msg2, msg3, msg4] = await Promise.all([
-      anthropicClient.messages.create({ ...callOpts, messages: [{ role: 'user', content: buildPromptPart1({ eta, sesso, grado, istituto, jsonData: jsonFull }) }] }),
-      anthropicClient.messages.create({ ...callOpts, messages: [{ role: 'user', content: buildPromptPart2({ eta, sesso, grado, istituto, jsonData: jsonD   }) }] }),
-      anthropicClient.messages.create({ ...callOpts, messages: [{ role: 'user', content: buildPromptPart3({ eta, sesso, grado, istituto, jsonData: jsonE   }) }] }),
-      anthropicClient.messages.create({ ...callOpts, messages: [{ role: 'user', content: buildPromptPart4({ eta, sesso, grado, istituto, jsonData: jsonDemo, dettaglio82, profilo82 }) }] }),
+    const parti = await Promise.all([
+      generatorePei.genera({ system: systemMsg, prompt: buildPromptPart1({ eta, sesso, grado, istituto, jsonData: jsonFull }), maxTokens: 8000 }),
+      generatorePei.genera({ system: systemMsg, prompt: buildPromptPart2({ eta, sesso, grado, istituto, jsonData: jsonD   }), maxTokens: 8000 }),
+      generatorePei.genera({ system: systemMsg, prompt: buildPromptPart3({ eta, sesso, grado, istituto, jsonData: jsonE   }), maxTokens: 8000 }),
+      generatorePei.genera({ system: systemMsg, prompt: buildPromptPart4({ eta, sesso, grado, istituto, jsonData: jsonDemo, dettaglio82, profilo82 }), maxTokens: 8000 }),
     ]);
 
-    const uPei = usoClaude([msg1, msg2, msg3, msg4]);
-    console.log(rigaUso('pei', { modello: PEI_MODEL, chiamate: uPei.chiamate, in: uPei.in, out: uPei.out }));
+    const uPei = usoClaude(parti);
+    const troncate = parti.filter(p => p.troncato).length;
+    console.log(rigaUso('pei', { modello: generatorePei.modello, chiamate: uPei.chiamate, in: uPei.in, out: uPei.out, troncate }));
+    if (troncate) console.warn(`[PEI] ⚠ ${troncate} parti troncate dal limite di token: il PEI potrebbe essere incompleto`);
 
-    const getText = m => m.content.filter(b => b.type === 'text').map(b => b.text).join('\n');
-    const peiText = getText(msg1) + '\n\n' + getText(msg2) + '\n\n' + getText(msg3) + '\n\n' + getText(msg4);
+    const peiText = parti.map(p => p.text).join('\n\n');
 
     const peiData = parsePeiText(peiText, grado, istituto, eta, sesso, jsonData);
 
