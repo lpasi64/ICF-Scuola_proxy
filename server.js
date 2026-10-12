@@ -9,6 +9,7 @@ import { ISTITUTI_SEC2 } from "./pei-gradi.js";
 import { parseMappaIcf, derivaProfiloApprendimento, formattaProfiloPerPrompt } from "./pei-profilo.js";
 import { validaRichiesta, creaCache, chiaveCache, creaLimitatore, sintetizza, elencaVoci } from "./tts.js";
 import { rigaUso, usoChat, usoClaude } from "./uso.js";
+import { calcolaEsitiDimensioni } from "./pei-dimensioni.js";
 import { scegliProvider, creaGeneratore } from "./pei-provider.js";
 import "./icf-bs.js";   // elenco chiuso delle funzioni e strutture corporee previste dagli allegati del questionario
 const { elencoPerPrompt } = globalThis.ICFBS;
@@ -198,12 +199,12 @@ COSA DEVI COPRIRE (internamente, senza dirlo) — TUTTI i 9 domini, nessuna ecce
 QUANDO HAI ABBASTANZA INFORMAZIONI su un'area, assegnale i qualificatori internamente e passa avanti naturalmente.
 
 FATTORI AMBIENTALI (e) — scala della piattaforma ICF Applicazioni. In "icfUpdate.faItems" registra i fattori ambientali emersi (famiglia, insegnanti, compagni, educatori, ausili, servizi). Il campo "effect" può essere SOLO uno di questi cinque qualificatori, mai un numero:
-- F++ = facilitatore importante
+- F++ = fattore presente ed efficace (facilitatore)
 - F- = facilitatore presente ma non sufficiente a compensare i limiti delle capacità
-- B- = barriera media
-- B+ = barriera elevata
-- B++ = facilitatore necessario ma assente
-Non esistono altri qualificatori né scale numeriche. Se non sei sicuro, chiedi all'interlocutore se quel supporto c'è, se basta a compensare le difficoltà o se manca. In "label" scrivi il fattore e, dopo un trattino, la nota concreta emersa (es. "Persone in posizione di autorità — insegnanti di classe"). Usa i qualificatori solo col loro significato: B- e B+ sono barriere; F- non è una barriera (è un facilitatore insufficiente); B++ solo quando un facilitatore necessario manca del tutto.
+- B- = barriera: fattore presente ma non necessario, che impedisce di fare in autonomia ciò che l'alunno sa fare
+- B+ = barriera attiva (fattore presente e non efficace)
+- B++ = facilitatore necessario ma non presente
+Non esistono altri qualificatori né scale numeriche. Se non sei sicuro, chiedi all'interlocutore se quel supporto c'è, se basta a compensare le difficoltà o se manca. In "label" scrivi il fattore e, dopo un trattino, la nota concreta emersa (es. "Persone in posizione di autorità — insegnanti di classe"). Usa i qualificatori solo col loro significato: B- e B+ sono barriere (B-: un supporto che c'è ma non serve e frena l'autonomia, per esempio un adulto che fa al posto dell'alunno ciò che saprebbe fare; B+: il fattore c'è ma non funziona); F- non è una barriera (è un facilitatore insufficiente); B++ solo quando un facilitatore necessario manca del tutto.
 I fattori ambientali si valutano dominio per dominio, come nel questionario: registrali nel dominio (icfUpdate.domainId) in cui emergono. Lo stesso fattore può avere effetti diversi in domini diversi (es. i genitori facilitatori nella cura di sé D5, barriera nella vita domestica D6): registralo di nuovo in ciascun dominio, con il suo qualificatore e la sua nota.
 CODICI DEI FATTORI AMBIENTALI — il codice deve corrispondere al fattore; usa SOLO questi codici (la "label" riprende il nome del codice, poi la nota):
 ${ELENCO_FATTORI_E}
@@ -675,6 +676,8 @@ app.post("/genera-pei", async (req, res) => {
     const profilo82 = dettaglio82
       ? formattaProfiloPerPrompt(derivaProfiloApprendimento(mappaD), { presente: profiloPresente })
       : '';
+    // esito delle dimensioni (VA DEFINITA / OMISSIBILE): lo calcola il programma sui dati, non il modello
+    const esitiDim = calcolaEsitiDimensioni(mappaD);
     console.log(`[PEI] dettaglio82=${dettaglio82}${dettaglio82 ? ` profiloPresente=${profiloPresente}` : ''}`);
 
     console.log(`[PEI] JSON sizes — full:${jsonFull.length} d:${jsonD.length} e:${jsonE.length} demo:${jsonDemo.length} chars`);
@@ -686,8 +689,8 @@ Restituisci SOLO il testo richiesto, senza preamboli o commenti aggiuntivi.`;
 
 
     const parti = await Promise.all([
-      generatorePei.genera({ system: systemMsg, prompt: buildPromptPart1({ eta, sesso, grado, istituto, jsonData: jsonFull }), maxTokens: 8000 }),
-      generatorePei.genera({ system: systemMsg, prompt: buildPromptPart2({ eta, sesso, grado, istituto, jsonData: jsonDE  }), maxTokens: 8000 }),
+      generatorePei.genera({ system: systemMsg, prompt: buildPromptPart1({ eta, sesso, grado, istituto, jsonData: jsonFull, esitiDim }), maxTokens: 8000 }),
+      generatorePei.genera({ system: systemMsg, prompt: buildPromptPart2({ eta, sesso, grado, istituto, jsonData: jsonDE, esitiDim }), maxTokens: 8000 }),
       generatorePei.genera({ system: systemMsg, prompt: buildPromptPart3({ eta, sesso, grado, istituto, jsonData: jsonE   }), maxTokens: 8000 }),
       generatorePei.genera({ system: systemMsg, prompt: buildPromptPart4({ eta, sesso, grado, istituto, jsonData: jsonDemo, dettaglio82, profilo82 }), maxTokens: 8000 }),
     ]);
@@ -700,6 +703,7 @@ Restituisci SOLO il testo richiesto, senza preamboli o commenti aggiuntivi.`;
     const peiText = parti.map(p => p.text).join('\n\n');
 
     const peiData = parsePeiText(peiText, grado, istituto, eta, sesso, jsonData);
+    peiData.esitiCalcolati = esitiDim;   // la Sezione 2 riporta questi esiti, qualunque cosa abbia scritto il modello
 
     // nei log non finisce mai testo del PEI né il nome dell'alunno: solo dimensioni e parametri tecnici
     const doc    = buildDocx(peiData, grado, { anonimo });
