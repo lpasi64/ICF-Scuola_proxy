@@ -10,6 +10,7 @@
 //   C – Autonomia e orientamento: d2*, d4*, d5*, d6*     D – Cognitiva, neuropsicologica e apprendimento: d1*, d8*
 
 export const SOGLIA_VA_DEFINITA = 1.5;
+export const NON_DETERMINABILE = 'NON DETERMINABILE';   // dimensione senza alcun item valido mentre le altre sono calcolate
 
 export const DIMENSIONI = [
   { dim: 'A', etichetta: 'A – Relazione, interazione e socializzazione', codici: [/^d7/, /^d9/] },
@@ -43,9 +44,9 @@ const haEsiti = (esiti) => !!esiti && DIMENSIONI.some(({ dim }) => esiti[dim] &&
 // Tabella della Sezione 2 per il prompt della Parte 1: esiti già calcolati, da riportare così come sono (ripiego: scelta al modello)
 export function tabellaSez2PerPrompt(esiti) {
   const calcolati = haEsiti(esiti);
-  const righe = DIMENSIONI.map(({ dim, etichetta }) => `| ${etichetta} | ${(calcolati && esiti[dim] && esiti[dim].esito) || 'VA DEFINITA oppure OMISSIBILE'} |`).join('\n');
+  const righe = DIMENSIONI.map(({ dim, etichetta }) => `| ${etichetta} | ${calcolati ? ((esiti[dim] && esiti[dim].esito) || NON_DETERMINABILE) : 'VA DEFINITA oppure OMISSIBILE'} |`).join('\n');
   const nota = calcolati
-    ? 'Gli esiti qui sopra sono già calcolati dal programma sui dati: riportali ESATTAMENTE così, senza ricalcolarli, senza modificarli e senza aggiungere medie, conteggi, motivazioni o commenti. Una riga per ciascuna delle 4 dimensioni.'
+    ? 'Gli esiti qui sopra sono già calcolati dal programma sui dati: riportali ESATTAMENTE così (anche NON DETERMINABILE, che indica una dimensione senza dati), senza ricalcolarli, senza modificarli e senza aggiungere medie, conteggi, motivazioni o commenti. Una riga per ciascuna delle 4 dimensioni.'
     : 'Nella colonna Esito scrivi SOLO "VA DEFINITA" oppure "OMISSIBILE", calcolato dal JSON con le regole dell\'analisi interna: nessuna media, nessun conteggio, nessuna motivazione, nessun commento. Una riga per ciascuna delle 4 dimensioni.';
   return `| Dimensione | Esito |\n|---|---|\n${righe}\n\n${nota}`;
 }
@@ -55,7 +56,7 @@ export function esitiPerPrompt(esiti) {
   if (!haEsiti(esiti)) return '';
   const righe = DIMENSIONI.map(({ dim, etichetta }) => {
     const e = esiti[dim];
-    if (!e || !e.esito) return `- ${etichetta}: esito non calcolabile (dati mancanti): determinalo tu con le regole dell'analisi interna`;
+    if (!e || !e.esito) return `- ${etichetta}: NON DETERMINABILE (dati mancanti) → nessun obiettivo per questa dimensione`;
     if (e.esito === 'VA DEFINITA') return `- ${etichetta}: VA DEFINITA → scrivi 2 obiettivi`;
     return e.monitoraggio
       ? `- ${etichetta}: OMISSIBILE, con almeno un P≥3 (area di monitoraggio prioritario per il Progetto di Vita) → scrivi 2 obiettivi orientati al Progetto di Vita`

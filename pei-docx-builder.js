@@ -281,6 +281,9 @@ const _DIM_SEZ2 = [
   ['C', 'C – Autonomia e orientamento', /autonom|orientam/i],
   ['D', 'D – Cognitiva, neuropsicologica e dell\'apprendimento', /cognitiv|apprendim/i],
 ];
+function _haEsitiCalcolati(calcolati) {
+  return !!calcolati && _DIM_SEZ2.some(([dim]) => calcolati[dim] && calcolati[dim].esito);
+}
 function esitiDimensioni(rawText, calcolati) {
   const trovati = {};
   for (const line of String(rawText || '').split('\n')) {
@@ -292,8 +295,10 @@ function esitiDimensioni(rawText, calcolati) {
     const m = cells[1].match(/omissibile|defin/i);
     trovati[dim] = m ? (/omissibile/i.test(m[0]) ? 'OMISSIBILE' : 'VA DEFINITA') : 'Da definire';
   }
-  // l'esito calcolato dal programma sui dati prevale su quello scritto dal modello; dove manca si usa quello del modello
-  return _DIM_SEZ2.map(([dim, etichetta]) => ({ dim, etichetta, esito: (calcolati && calcolati[dim] && calcolati[dim].esito) || trovati[dim] || 'Da definire' }));
+  // l'esito calcolato dal programma sui dati prevale su quello scritto dal modello; una dimensione senza dati, mentre le altre sono calcolate,
+  // è «NON DETERMINABILE» (non si inventa un esito); se non è calcolato nessun esito, vale quello del modello
+  const calcolato = _haEsitiCalcolati(calcolati);
+  return _DIM_SEZ2.map(([dim, etichetta]) => ({ dim, etichetta, esito: (calcolati && calcolati[dim] && calcolati[dim].esito) || (calcolato ? 'NON DETERMINABILE' : trovati[dim] || 'Da definire') }));
 }
 
 function _dimTable(rawText, calcolati) {
@@ -307,7 +312,7 @@ function _dimTable(rawText, calcolati) {
       new TableRow({ tableHeader: true, children: headers.map((h, i) => hCell(h, cols[i])) }),
       ...dataRows.map((row, ri) => new TableRow({
         children: row.map((val, ci) => cell(
-          [p(String(val), { size: 20, bold: ci === 1 && /DEFINITA|OMISSIBILE/.test(String(val)) })],
+          [p(String(val), { size: 20, bold: ci === 1 && /DEFINITA|OMISSIBILE|DETERMINABILE/.test(String(val)) })],
           cols[ci], { fill: ri % 2 === 0 ? C.WHITE : C.GREY, borders: allGrey }
         )),
       })),
@@ -478,8 +483,9 @@ function obiettiviOrdinati(rawText, calcolati) {
 // Una dimensione OMISSIBILE senza alcun P≥3 non ha obiettivi (Sezione 2): se il modello ne ha scritti, si scartano, così la Sezione 5
 // non contraddice la Sezione 2. Senza esito calcolato per quella dimensione non si scarta nulla.
 function _dimensioneSenzaObiettivi(calcolati, dim) {
-  const e = calcolati && calcolati[dim];
-  return !!e && e.esito === 'OMISSIBILE' && !e.monitoraggio;
+  if (!_haEsitiCalcolati(calcolati) || !calcolati[dim]) return false;
+  const e = calcolati[dim];
+  return !e.esito || (e.esito === 'OMISSIBILE' && !e.monitoraggio);
 }
 
 // Render sezione 5: PRIMA la Dimensione, POI gli obiettivi raggruppati sotto
