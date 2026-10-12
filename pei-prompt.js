@@ -288,8 +288,9 @@ ${ctx}
 ## Sezione 6 – Osservazioni sul contesto: barriere e facilitatori
 
 Analizza i fattori ambientali e* del JSON, poi descrivi per ogni ambito barriere e facilitatori con intensità.
-ZERO codici ICF nel testo: non scrivere e310, e330, e410 né altri codici alfanumerici, nemmeno tra parentesi; nomina il fattore con parole comuni (es. «la famiglia», «gli insegnanti», «gli atteggiamenti dei genitori»). Le sigle dei qualificatori (F++, F-, B-, B+, B++) invece si scrivono, come da legenda.
-Legenda: F++ facilitatore presente ed efficace · F- facilitatore presente ma non sufficiente a compensare i limiti delle capacità · B- barriera: fattore presente ma non necessario, che impedisce di fare in autonomia ciò che l'alunno sa fare · B+ barriera attiva (fattore presente e non efficace) · B++ facilitatore necessario ma non presente
+ZERO codici ICF nel testo: non scrivere e310, e330, e410 né altri codici alfanumerici, nemmeno tra parentesi; nomina il fattore con parole comuni (es. «la famiglia», «gli insegnanti», «gli atteggiamenti dei genitori»).
+ZERO sigle dei qualificatori nel testo: non scrivere F++, F-, B-, B+, B++, nemmeno tra parentesi. Le sigle servono solo a te per leggere il JSON; nel documento esprimi l'intensità a parole (es. «facilitatore efficace», «facilitatore presente ma non sufficiente», «barriera attiva», «supporto che frena l'autonomia», «facilitatore necessario ma assente»).
+Come leggere i qualificatori nel JSON (solo per te): F++ facilitatore presente ed efficace · F- facilitatore presente ma non sufficiente a compensare i limiti delle capacità · B- barriera: fattore presente ma non necessario, che impedisce di fare in autonomia ciò che l'alunno sa fare · B+ barriera attiva (fattore presente e non efficace) · B++ facilitatore necessario ma non presente
 
 RIGORE SUI QUALIFICATORI — ogni sigla va usata solo con il proprio significato, mai come sinonimo di un'altra:
 - F++ e F- sono SOLO facilitatori. F- è un facilitatore presente ma non sufficiente a compensare i limiti delle capacità (parzialmente efficace): non è una barriera né un "fattore limitante".
@@ -299,13 +300,13 @@ RIGORE SUI QUALIFICATORI — ogni sigla va usata solo con il proprio significato
 - Le aree di vita in cui un fattore è una barriera o è assente (B-, B+, B++) sono quelle su cui puntare nella Sezione 7: indica nelle azioni l'area interessata (es. «nella vita domestica»).
 
 **Ambito 1 – Ambiente fisico, prodotti e tecnologie (e1, e2)**
-[Narrativa con qualificatori di intensità basata sui codici e1*, e2* del JSON. Indica almeno 3 elementi concreti.]
+[Narrativa basata sui fattori e1*, e2* del JSON, con l'intensità espressa a parole. Indica almeno 3 elementi concreti.]
 
 **Ambito 2 – Relazioni e supporti sociali (e3)**
-[Narrativa: famiglia, insegnanti, compagni, assistenti. Qualificatori di intensità basati su e3*. Almeno 3 elementi.]
+[Narrativa: famiglia, insegnanti, compagni, assistenti. Intensità espressa a parole, in base ai fattori e3*. Almeno 3 elementi.]
 
 **Ambito 3 – Atteggiamenti (e4)**
-[Narrativa: atteggiamenti di docenti, compagni, comunità, famiglia. Qualificatori basati su e4*. Almeno 2 elementi.]
+[Narrativa: atteggiamenti di docenti, compagni, comunità, famiglia. Intensità espressa a parole, in base ai fattori e4*. Almeno 2 elementi.]
 
 ---
 

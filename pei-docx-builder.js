@@ -172,6 +172,14 @@ function parseInline(line, size) {
   return runs.length ? runs : [txt('', { size })];
 }
 
+// Le sigle dei qualificatori dei fattori ambientali (F++, F-, B-, B+, B++) non compaiono nella Sezione 6: il prompt chiede l'intensità a parole;
+// se il modello ne scrive comunque tra parentesi, qui si tolgono (anche in gruppi come «(B+, F-)») senza lasciare spazi doppi o parentesi vuote.
+const _SIGLA_Q = '(?:F\\+\\+|F-|B\\+\\+|B-|B\\+)';
+const _RX_SIGLE_TRA_PARENTESI = new RegExp('\\s*\\(\\s*' + _SIGLA_Q + '(?:\\s*(?:,|;|/|\\be\\b)\\s*' + _SIGLA_Q + ')*\\s*\\)', 'g');
+function senzaSigleQualificatori(text) {
+  return String(text || '').replace(_RX_SIGLE_TRA_PARENTESI, '').replace(/ {2,}/g, ' ').replace(/ +([,.;:!?])/g, '$1');
+}
+
 function lines(str, size = 21) {
   const result = [];
   for (const line of String(str || '').split('\n')) {
@@ -1030,11 +1038,10 @@ function buildDocx(d, grado, { anonimo = false } = {}) {
   // ── SEZ. 6 ───────────────────────────────────────────────────────────────
   children.push(
     h1('Sezione 6 – Osservazioni sul contesto: barriere e facilitatori'),
-    p('F++ facilitatore presente ed efficace · F- facilitatore presente ma non sufficiente a compensare i limiti delle capacità · B- barriera: fattore presente ma non necessario, che impedisce di fare in autonomia ciò che l\'alunno sa fare · B+ barriera attiva (fattore presente e non efficace) · B++ facilitatore necessario ma non presente', { size: 18, italic: true, color: C.DARKGREY }),
     ...empty(1),
-    h2('Ambito 1 – Ambiente fisico, prodotti e tecnologie (e1, e2)', C.BLUE), ...lines(d.sez6a1), ...empty(1),
-    h2('Ambito 2 – Relazioni e supporti sociali (e3)', C.BLUE),               ...lines(d.sez6a2), ...empty(1),
-    h2('Ambito 3 – Atteggiamenti (e4)', C.BLUE),                              ...lines(d.sez6a3), ...empty(1),
+    h2('Ambito 1 – Ambiente fisico, prodotti e tecnologie (e1, e2)', C.BLUE), ...lines(senzaSigleQualificatori(d.sez6a1)), ...empty(1),
+    h2('Ambito 2 – Relazioni e supporti sociali (e3)', C.BLUE),               ...lines(senzaSigleQualificatori(d.sez6a2)), ...empty(1),
+    h2('Ambito 3 – Atteggiamenti (e4)', C.BLUE),                              ...lines(senzaSigleQualificatori(d.sez6a3)), ...empty(1),
   );
 
   // ── SEZ. 7 ───────────────────────────────────────────────────────────────
@@ -1447,9 +1454,9 @@ function buildSidiDocx(d, grado) {
   // ── F4 · Contesto ────────────────────────────────────────────────────────
   children.push(h1('F4 – Contesto: barriere e facilitatori (sezioni 6, 7)'));
   campo('Sezione 6 – Osservazioni sul contesto: barriere e facilitatori', [
-    'Ambiente fisico, prodotti e tecnologie:', ...testoSemplice(d.sez6a1),
-    'Relazioni e supporti sociali:', ...testoSemplice(d.sez6a2),
-    'Atteggiamenti:', ...testoSemplice(d.sez6a3),
+    'Ambiente fisico, prodotti e tecnologie:', ...testoSemplice(senzaSigleQualificatori(d.sez6a1)),
+    'Relazioni e supporti sociali:', ...testoSemplice(senzaSigleQualificatori(d.sez6a2)),
+    'Atteggiamenti:', ...testoSemplice(senzaSigleQualificatori(d.sez6a3)),
   ].filter((r, i, a) => !(r.endsWith(':') && (i === a.length - 1 || a[i + 1].endsWith(':')))));
   const cat7 = [['Categoria 1 – Rimozione delle barriere', d.sez7cat1], ['Categoria 2 – Facilitatori universali', d.sez7cat2], ['Categoria 3 – Facilitatori personalizzati', d.sez7cat3]];
   const righe7 = [];
