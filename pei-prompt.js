@@ -100,7 +100,7 @@ FASE 2 — Calcolo per dimensione:
   D – Cognitiva e Apprendimento:   d1*
   Media = ∑P / N (solo codici validi)
   ≥ 1.50 → VA DEFINITA
-  < 1.50 con almeno un P≥3 → OMISSIBILE + nota "Area di monitoraggio prioritario per il Progetto di Vita"
+  < 1.50 con almeno un P≥3 → OMISSIBILE (area di monitoraggio prioritario per il Progetto di Vita: serve per la Sezione 5, non va scritto nella Sezione 2)
   < 1.50 → OMISSIBILE
   Legenda qualificatori ICF (intensità O frequenza del problema):
     0 = nessuna difficoltà / partecipazione piena e regolare
@@ -160,9 +160,14 @@ Scrivi una narrativa biografica calda e sintetica (max 120 parole) sul contesto 
 
 ## Sezione 2 – Dimensioni da definire nel PEI
 
-| Dimensione | Esito (∑P; N; Media) | Motivazione |
-|---|---|---|
-[4 righe con valori calcolati esattamente dal JSON — non stimare, calcola]
+| Dimensione | Esito |
+|---|---|
+| A – Relazione, interazione e socializzazione | VA DEFINITA oppure OMISSIBILE |
+| B – Comunicazione e linguaggio | VA DEFINITA oppure OMISSIBILE |
+| C – Autonomia e orientamento | VA DEFINITA oppure OMISSIBILE |
+| D – Cognitiva, neuropsicologica e dell'apprendimento | VA DEFINITA oppure OMISSIBILE |
+
+Nella colonna Esito scrivi SOLO "VA DEFINITA" oppure "OMISSIBILE", calcolato dal JSON con le regole dell'analisi interna: nessuna media, nessun conteggio, nessuna motivazione, nessun commento. Una riga per ciascuna delle 4 dimensioni.
 
 ---
 
@@ -245,6 +250,8 @@ Tutti i campi di ogni obiettivo sono OBBLIGATORI — non omettere strategie né 
 ⚠️ NUMERAZIONE TASSATIVA: il primo obiettivo dell'intero documento DEVE chiamarsi "### Obiettivo 1". Numera in modo CONSECUTIVO: 1, 2, 3, 4, 5, 6, 7, 8. Non saltare mai il numero 1. Non ripartire da 1 per ogni dimensione.
 
 ⚠️ FORMATO TESTO: usa SOLO **grassetto** per le etichette dei campi (es. **Punto di forza di partenza:**). NON usare *corsivo con asterisco singolo* nel testo. Se devi enfatizzare, usa **grassetto**. Scrivi tutto il resto in testo normale.
+
+⚠️ ORDINE TASSATIVO: presenta le dimensioni nell'ordine A, B, C, D (solo quelle con obiettivi), anche se una dimensione successiva è più compromessa, e numera gli obiettivi di conseguenza: Obiettivo 1 e 2 appartengono alla prima dimensione presente nell'ordine A→D, i successivi alla dimensione seguente.
 
 ⚠️ NO DESCRIZIONI INTERMEDIE: non aggiungere paragrafi descrittivi tra il titolo di una dimensione e il primo obiettivo di quella dimensione. Vai direttamente a ### Obiettivo N.
 

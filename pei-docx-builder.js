@@ -272,35 +272,41 @@ function _twoCol(rows, wL = 3000, wR = null) {
   });
 }
 
-function _dimTable(rawText) {
-  // Parsa la tabella markdown dalla risposta AI
-  const cols = [3400, 2400, 3560];
-  const headers = ['Dimensione', 'Esito Analisi (∑P; N; Media)', 'Motivazione'];
-  const dataRows = [];
-
-  const lines2 = (rawText || '').split('\n');
-  for (const line of lines2) {
+// Esito delle quattro dimensioni della Sezione 2: solo «VA DEFINITA» oppure «OMISSIBILE», sempre nell'ordine A-D. L'esito si legge dalla
+// colonna Esito della tabella scritta dal modello (la prima parola tra «omissibile» e «definita»); medie, conteggi e commenti non si
+// riportano mai. Se per una dimensione non c'è un esito leggibile si scrive «Da definire», senza inventarlo.
+const _DIM_SEZ2 = [
+  ['A', 'A – Relazione, interazione e socializzazione', /relazion|socializz/i],
+  ['B', 'B – Comunicazione e linguaggio', /comunicaz|linguagg/i],
+  ['C', 'C – Autonomia e orientamento', /autonom|orientam/i],
+  ['D', 'D – Cognitiva, neuropsicologica e dell\'apprendimento', /cognitiv|apprendim/i],
+];
+function esitiDimensioni(rawText) {
+  const trovati = {};
+  for (const line of String(rawText || '').split('\n')) {
     if (!line.trim().startsWith('|')) continue;
-    const cells = line.split('|').map(c => c.trim()).filter(Boolean);
-    if (cells.length >= 2 && !cells[0].match(/^-+$/) && !cells[0].toLowerCase().includes('dimensione')) {
-      dataRows.push(cells);
-    }
+    const cells = line.split('|').map(c => c.replace(/\*\*/g, '').trim()).filter((c, i, a) => !(c === '' && (i === 0 || i === a.length - 1)));
+    if (cells.length < 2 || /^[-: ]+$/.test(cells[0]) || /^dimensione$/i.test(cells[0])) continue;
+    const dim = (cells[0].match(/^([A-D])\b/) || [])[1] || (_DIM_SEZ2.find(([, , re]) => re.test(cells[0])) || [])[0];
+    if (!dim || trovati[dim]) continue;
+    const m = cells[1].match(/omissibile|defin/i);
+    trovati[dim] = m ? (/omissibile/i.test(m[0]) ? 'OMISSIBILE' : 'VA DEFINITA') : 'Da definire';
   }
+  return _DIM_SEZ2.map(([dim, etichetta]) => ({ dim, etichetta, esito: trovati[dim] || 'Da definire' }));
+}
 
-  // Fallback se parsing fallisce
-  if (dataRows.length === 0) {
-    const dims = ['A – Relazione e Socializzazione','B – Comunicazione e Linguaggio','C – Autonomia e Orientamento','D – Cognitiva e Apprendimento'];
-    dims.forEach(d => dataRows.push([d, 'Da calcolare', '']));
-  }
-
+function _dimTable(rawText) {
+  const cols = [6200, 3160];
+  const headers = ['Dimensione', 'Esito'];
+  const dataRows = esitiDimensioni(rawText).map(e => [e.etichetta, e.esito]);
   return new Table({
     width: { size: FULL, type: WidthType.DXA },
     columnWidths: cols,
     rows: [
       new TableRow({ tableHeader: true, children: headers.map((h, i) => hCell(h, cols[i])) }),
       ...dataRows.map((row, ri) => new TableRow({
-        children: row.slice(0, 3).map((val, ci) => cell(
-          [p(String(val), { size: 20, bold: ci === 1 && String(val).includes('DEFINITA') })],
+        children: row.map((val, ci) => cell(
+          [p(String(val), { size: 20, bold: ci === 1 && /DEFINITA|OMISSIBILE/.test(String(val)) })],
           cols[ci], { fill: ri % 2 === 0 ? C.WHITE : C.GREY, borders: allGrey }
         )),
       })),
@@ -456,13 +462,24 @@ function parseObiettivi(rawText) {
   return objectives;
 }
 
+// Obiettivi della Sezione 5 sempre nell'ordine delle dimensioni A, B, C, D (quelli senza dimensione in coda), rinumerati di seguito:
+// il modello a volte parte dalla dimensione più compromessa, e la numerazione non coinciderebbe con l'ordine in cui il PEI e
+// l'esportazione per il SIDI presentano le dimensioni. Dentro la stessa dimensione resta l'ordine scritto dal modello.
+function obiettiviOrdinati(rawText) {
+  const rango = { A: 0, B: 1, C: 2, D: 3, _: 4 };
+  return parseObiettivi(rawText)
+    .map((o, i) => ({ o, i }))
+    .sort((x, y) => (rango[x.o.dim] ?? 4) - (rango[y.o.dim] ?? 4) || x.i - y.i)
+    .map(({ o }, k) => ({ ...o, num: String(k + 1) }));
+}
+
 // Render sezione 5: PRIMA la Dimensione, POI gli obiettivi raggruppati sotto
 function objectivesBlock(rawText) {
   const result = [];
   if (!rawText) return result;
 
   // ── 1. Parse obiettivi ────────────────────────────────────────────────────
-  const objectives = parseObiettivi(rawText);
+  const objectives = obiettiviOrdinati(rawText);
   if (objectives.length === 0) return lines(rawText);
 
   // ── 2. Raggruppa per dimensione (ordine di prima comparsa) ───────────────
@@ -1310,7 +1327,7 @@ const _DIM_SIDI = {
 // I tre campi del SIDI per ciascuna dimensione della Sezione 5, ricavati dagli obiettivi (due per dimensione)
 function _campiSez5Sidi(rawText) {
   const per = {};
-  for (const o of parseObiettivi(rawText)) {
+  for (const o of obiettiviOrdinati(rawText)) {
     const c = per[o.dim] || (per[o.dim] = { ob: [], str: [], ver: [] });
     c.ob.push(`Obiettivo ${o.num} – ${o.title}`);
     for (const l of testoSemplice(o.lines.join('\n'))) {
@@ -1376,6 +1393,7 @@ function buildSidiDocx(d, grado) {
     p(`PEI – ${term.intestazione}`, { size: 22, bold: true }),
     p('Prima di copiare i testi nel SIDI, legga con attenzione il PEI in formato Word: verifichi che ogni sezione corrisponda all\'alunno e al contesto reali e modifichi, corregga o integri ciò che serve. La bozza è un supporto alla redazione: il ruolo e la responsabilità del PEI restano degli insegnanti e del GLO, che lo rivedono, lo approvano e lo sottoscrivono.', { size: 21, bold: true }),
     p('Come usarla: nel portale SIDI apra Gestione Alunni con Disabilità → Gestione Fascicolo → Certificazioni → Registrazione PEI, scelga la classe e l\'alunno, poi copi ogni blocco qui sotto nel campo con lo stesso nome. I testi sono privi di formattazione, perché i campi del SIDI sono aree di testo libero.', { size: 20 }),
+    p('Sezione 5: in SIDI obiettivi, interventi e verifica si compilano in tre campi distinti per ciascuna dimensione; qui gli obiettivi sono numerati come nel PEI in Word e le verifiche sono indicate per numero di obiettivo.', { size: 21, bold: true }),
     p('Le etichette seguono la guida rapida SIDI (v. 4.0, ottobre 2023). La numerazione dei campi del SIDI può differire da quella dei modelli ministeriali stampati: per esempio, nel SIDI le modalità di verifica generali (secondarie) sono il campo 8.2 e i percorsi per le competenze trasversali e l\'orientamento il campo 8.4.', { size: 18, italic: true, color: C.DARKGREY }),
     p('Da compilare direttamente nel SIDI (non generati qui): composizione del GLO, livello del debito di funzionamento per dimensione (Allegato C1), sezione 9 (organizzazione e risorse), certificazione delle competenze, verifiche intermedie e finale, PEI provvisorio. I testi generati vanno riletti e approvati dal GLO.', { size: 18, italic: true, color: C.DARKGREY }),
   );
@@ -1386,8 +1404,8 @@ function buildSidiDocx(d, grado) {
     [...testoSemplice(d.sez1a), ...testoSemplice(d.sez1b)],
     grado === 'sec2' ? 'Il secondo campo («Elementi desunti dalla descrizione di sé dello Studente o della Studentessa») si compila con i colloqui con l\'alunno.' : '');
   campo('Sezione 2 – Elementi generali desunti dal Profilo di Funzionamento · dimensioni',
-    testoSemplice(d.sez2Raw).filter(r => !/^dimensione\b/i.test(r)).map(r => r.replace(/\s+—\s+/g, ' — ')),
-    'Nel SIDI, per ogni dimensione, si selezionano da elenco se va definita o omessa e il livello del debito di funzionamento (Allegato C1): le righe seguenti sono la motivazione di partenza.');
+    esitiDimensioni(d.sez2Raw).map(e => `${e.etichetta}: ${e.esito}`),
+    'Nel SIDI, per ogni dimensione, si seleziona da elenco se va definita o omessa e il livello del debito di funzionamento (Allegato C1): qui è indicato l\'esito proposto per ciascuna dimensione.');
   campo('Sezione 3 – Raccordo con il Progetto Individuale (art. 14 L. 328/2000)', testoSemplice(d.sez3));
 
   // ── F3 · Valutazione dimensioni ──────────────────────────────────────────
