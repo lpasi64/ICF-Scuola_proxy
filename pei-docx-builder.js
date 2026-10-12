@@ -466,22 +466,35 @@ function parseObiettivi(rawText) {
 // Obiettivi della Sezione 5 sempre nell'ordine delle dimensioni A, B, C, D (quelli senza dimensione in coda), rinumerati di seguito:
 // il modello a volte parte dalla dimensione più compromessa, e la numerazione non coinciderebbe con l'ordine in cui il PEI e
 // l'esportazione per il SIDI presentano le dimensioni. Dentro la stessa dimensione resta l'ordine scritto dal modello.
-function obiettiviOrdinati(rawText) {
+function obiettiviOrdinati(rawText, calcolati) {
   const rango = { A: 0, B: 1, C: 2, D: 3, _: 4 };
   return parseObiettivi(rawText)
+    .filter(o => !_dimensioneSenzaObiettivi(calcolati, o.dim))
     .map((o, i) => ({ o, i }))
     .sort((x, y) => (rango[x.o.dim] ?? 4) - (rango[y.o.dim] ?? 4) || x.i - y.i)
     .map(({ o }, k) => ({ ...o, num: String(k + 1) }));
 }
 
+// Una dimensione OMISSIBILE senza alcun P≥3 non ha obiettivi (Sezione 2): se il modello ne ha scritti, si scartano, così la Sezione 5
+// non contraddice la Sezione 2. Senza esito calcolato per quella dimensione non si scarta nulla.
+function _dimensioneSenzaObiettivi(calcolati, dim) {
+  const e = calcolati && calcolati[dim];
+  return !!e && e.esito === 'OMISSIBILE' && !e.monitoraggio;
+}
+
 // Render sezione 5: PRIMA la Dimensione, POI gli obiettivi raggruppati sotto
-function objectivesBlock(rawText) {
+function objectivesBlock(rawText, calcolati) {
   const result = [];
   if (!rawText) return result;
 
   // ── 1. Parse obiettivi ────────────────────────────────────────────────────
-  const objectives = obiettiviOrdinati(rawText);
-  if (objectives.length === 0) return lines(rawText);
+  const objectives = obiettiviOrdinati(rawText, calcolati);
+  if (objectives.length === 0) {
+    // tutti gli obiettivi scritti dal modello riguardavano dimensioni omissibili: una sola frase, senza riportarli
+    return parseObiettivi(rawText).length
+      ? lines('Nessuna dimensione richiede obiettivi specifici nel PEI: tutte le dimensioni risultano omissibili (Sezione 2). Si consiglia di monitorare nel tempo il profilo di funzionamento.')
+      : lines(rawText);
+  }
 
   // ── 2. Raggruppa per dimensione (ordine di prima comparsa) ───────────────
   const dimOrder = [];
@@ -1005,7 +1018,7 @@ function buildDocx(d, grado, { anonimo = false } = {}) {
   // ── SEZ. 5 ───────────────────────────────────────────────────────────────
   children.push(
     h1('Sezione 5 – Obiettivi educativi e didattici'),
-    ...objectivesBlock(d.sez5Raw), ...empty(1),
+    ...objectivesBlock(d.sez5Raw, d.esitiCalcolati), ...empty(1),
   );
 
   // ── SEZ. 6 ───────────────────────────────────────────────────────────────
@@ -1326,9 +1339,9 @@ const _DIM_SIDI = {
 };
 
 // I tre campi del SIDI per ciascuna dimensione della Sezione 5, ricavati dagli obiettivi (due per dimensione)
-function _campiSez5Sidi(rawText) {
+function _campiSez5Sidi(rawText, calcolati) {
   const per = {};
-  for (const o of obiettiviOrdinati(rawText)) {
+  for (const o of obiettiviOrdinati(rawText, calcolati)) {
     const c = per[o.dim] || (per[o.dim] = { ob: [], str: [], ver: [] });
     c.ob.push(`Obiettivo ${o.num} – ${o.title}`);
     for (const l of testoSemplice(o.lines.join('\n'))) {
@@ -1416,7 +1429,7 @@ function buildSidiDocx(d, grado) {
    ['c', 'Dimensione dell\'autonomia e dell\'orientamento', 'sez4c'],
    ['d', 'Dimensione cognitiva, neuropsicologica e dell\'apprendimento', 'sez4d']]
     .forEach(([l, nome, key]) => campo(`Sezione 4 – ${l}. ${nome}`, testoSemplice(d[key])));
-  const per5 = _campiSez5Sidi(d.sez5Raw);
+  const per5 = _campiSez5Sidi(d.sez5Raw, d.esitiCalcolati);
   const dimOrdine = ['A', 'B', 'C', 'D', '_'].filter(k => per5[k]);
   if (!dimOrdine.length) campo('Sezione 5 – Interventi per lo/a studente/essa', testoSemplice(d.sez5Raw));
   for (const k of dimOrdine) {

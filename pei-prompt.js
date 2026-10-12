@@ -184,7 +184,7 @@ Suggerisci di avviarlo al più presto e proponi almeno 3 degli ambiti seguenti, 
 
 ## Sezione 4 – Osservazioni sul/sulla ${term.soggetto} per progettare gli interventi
 
-⚠️ STILE SINTETICO OBBLIGATORIO: massimo 3-4 frasi per dimensione. NON elencare ogni singolo codice ICF con i suoi qualificatori: raggruppa i codici in aree di funzionamento e offri un quadro d'insieme. Cita tra parentesi i codici chiave [d7xx.P.C] solo dove aggiungono informazione rilevante — non come elenco sistematico.
+⚠️ STILE SINTETICO OBBLIGATORIO: massimo 3-4 frasi per dimensione. NON elencare ogni singolo codice ICF con i suoi qualificatori: raggruppa i codici in aree di funzionamento e offri un quadro d'insieme. ZERO codici ICF nel testo: non scrivere d6308, d710 né altri codici alfanumerici, nemmeno tra parentesi; nomina l'attività o l'area di funzionamento con parole comuni (es. «le attività domestiche», «le relazioni con i compagni»). I codici servono solo a te per l'analisi.
 
 Struttura per ogni dimensione:
 1. Punti di forza (P=0 o P=1): 1-2 frasi con linguaggio positivo (mai "lieve"; P=1 → "buona efficacia", "partecipa con regolarità"). Se P<C segnala brevemente i facilitatori attivi.
@@ -288,6 +288,7 @@ ${ctx}
 ## Sezione 6 – Osservazioni sul contesto: barriere e facilitatori
 
 Analizza i fattori ambientali e* del JSON, poi descrivi per ogni ambito barriere e facilitatori con intensità.
+ZERO codici ICF nel testo: non scrivere e310, e330, e410 né altri codici alfanumerici, nemmeno tra parentesi; nomina il fattore con parole comuni (es. «la famiglia», «gli insegnanti», «gli atteggiamenti dei genitori»). Le sigle dei qualificatori (F++, F-, B-, B+, B++) invece si scrivono, come da legenda.
 Legenda: F++ facilitatore presente ed efficace · F- facilitatore presente ma non sufficiente a compensare i limiti delle capacità · B- barriera: fattore presente ma non necessario, che impedisce di fare in autonomia ciò che l'alunno sa fare · B+ barriera attiva (fattore presente e non efficace) · B++ facilitatore necessario ma non presente
 
 RIGORE SUI QUALIFICATORI — ogni sigla va usata solo con il proprio significato, mai come sinonimo di un'altra:
