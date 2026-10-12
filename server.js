@@ -59,6 +59,34 @@ app.use(cors());
 app.use(express.json({ limit: "2mb" }));
 
 // ── SYSTEM PROMPT ─────────────────────────────────────────────────────────────
+// Fattori ambientali del questionario: codice → [nome ICF, esempi della piattaforma]. I nomi coincidono con quelli di icf-import.js
+// (lo verifica test-fattori-pei.mjs): il cellulare, per esempio, è e125 e non e165.
+const FATTORI_E = {
+  e1100: ["Cibo", ""],
+  e1101: ["Farmaci", ""],
+  e115: ["Prodotti e tecnologie per l'uso personale", "occhiali, ausili, agende visive"],
+  e120: ["Prodotti e tecnologie per la mobilità e il trasporto", "automobile, ausili, ascensore, girello"],
+  e125: ["Prodotti e tecnologie per la comunicazione", "comunicatore, cellulare, internet, computer"],
+  e130: ["Prodotti e materiali per l'istruzione", "computer, internet, libri, calcolatrice"],
+  e150: ["Edifici pubblici (progettazione e costruzione)", ""],
+  e165: ["Risorse e beni", "giocattoli, risorse economiche, indennità di accompagnamento"],
+  e310: ["Famiglia ristretta", "genitori, eventuale partner"],
+  e315: ["Famiglia allargata", ""],
+  e320: ["Amici", "i compagni di scuola vanno in e325"],
+  e325: ["Conoscenti, compagni, colleghi, vicini e membri della comunità", "compagni di scuola, vicini di casa"],
+  e330: ["Persone in posizione di autorità", "insegnanti, amministratori locali, datore di lavoro, tutore"],
+  e340: ["Persone che forniscono aiuto o assistenza", "educatori, terapisti, operatori di assistenza, personale ATA, volontari"],
+  e350: ["Animali domestici", ""],
+  e355: ["Operatori sanitari", "medici, psicologi, logopedisti, fisioterapisti"],
+  e410: ["Atteggiamenti dei membri della famiglia ristretta", ""],
+  e540: ["Servizi di trasporto", ""],
+  e555: ["Associazioni e organizzazioni del territorio", ""],
+  e575: ["Servizi sociali e assistenziali", ""],
+  e580: ["Servizi sanitari", ""],
+  e585: ["Servizi dell'istruzione e della formazione", ""],
+};
+const ELENCO_FATTORI_E = Object.entries(FATTORI_E).map(([c, [nome, esempi]]) => `- ${c} — ${nome}${esempi ? " (" + esempi + ")" : ""}`).join("\n");
+
 const SYSTEM_PROMPT = `Sei un professionista esperto di ICF (International Classification of Functioning) che conduce un colloquio clinico informale per raccogliere informazioni sul funzionamento di un alunno/a.
 
 Il tuo obiettivo finale è duplice: compilare il Questionario ICF-Scuola rev.2026 (Versione Breve) e raccogliere tutti gli elementi di osservazione su base ICF che emergeranno dal colloquio — funzioni, strutture, attività, fattori ambientali e personali — per predefinire al termine il Piano Educativo Individualizzato (PEI) ai sensi del D.Lgs. 66/2017 e D.Lgs. 62/2024.
@@ -175,7 +203,10 @@ FATTORI AMBIENTALI (e) — scala della piattaforma ICF Applicazioni. In "icfUpda
 - B- = barriera media
 - B+ = barriera elevata
 - B++ = facilitatore necessario ma assente
-Non esistono altri qualificatori né scale numeriche. Se non sei sicuro, chiedi all'interlocutore se quel supporto c'è, se basta a compensare le difficoltà o se manca. In "label" scrivi il fattore e, dopo un trattino, la nota concreta emersa (es. "Persone in posizione di autorità — insegnanti di classe").
+Non esistono altri qualificatori né scale numeriche. Se non sei sicuro, chiedi all'interlocutore se quel supporto c'è, se basta a compensare le difficoltà o se manca. In "label" scrivi il fattore e, dopo un trattino, la nota concreta emersa (es. "Persone in posizione di autorità — insegnanti di classe"). Usa i qualificatori solo col loro significato: B- e B+ sono barriere; F- non è una barriera (è un facilitatore insufficiente); B++ solo quando un facilitatore necessario manca del tutto.
+CODICI DEI FATTORI AMBIENTALI — il codice deve corrispondere al fattore; usa SOLO questi codici (la "label" riprende il nome del codice, poi la nota):
+${ELENCO_FATTORI_E}
+Se un fattore non rientra in nessuno di questi codici, non registrarlo come fattore ambientale: annotalo nelle note dell'item d a cui si riferisce.
 
 REGOLA DI COMPLETEZZA — l'obiettivo è che OGNI item dell'elenco completo (sotto) riceva un valore di PF e CAP prima di chiudere il colloquio. Non è ammesso lasciare un item senza risposta per il solo fatto che non è emerso spontaneamente nella narrazione: se il colloquio narrativo si sta esaurendo e alcuni item non sono stati toccati, fai uno SWEEP FINALE (vedi sezione dedicata più sotto) prima di proporre la chiusura. Nessun dominio è "opzionale" — anche D4 e D6, spesso marginali, devono ricevere un valore per ciascun item, anche solo "nessun problema".
 

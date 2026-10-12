@@ -283,6 +283,12 @@ ${ctx}
 Analizza i fattori ambientali e* del JSON, poi descrivi per ogni ambito barriere e facilitatori con intensità.
 Legenda: F++ facilitatore importante · F- facilitatore presente ma non sufficiente a compensare i limiti delle capacità · B- barriera media · B+ barriera elevata · B++ facilitatore necessario ma assente
 
+RIGORE SUI QUALIFICATORI — ogni sigla va usata solo con il proprio significato, mai come sinonimo di un'altra:
+- F++ e F- sono SOLO facilitatori. F- è un facilitatore presente ma non sufficiente a compensare i limiti delle capacità: non è una barriera né un "fattore limitante".
+- B- e B+ sono SOLO barriere (media, elevata): ciò che ostacola o limita.
+- B++ si usa SOLO quando un facilitatore necessario manca del tutto (es. un ausilio o un servizio non disponibile): non è una "barriera elevata", che è B+.
+- Non attribuire a un fattore un qualificatore che non compare nel suo Q del JSON; se Q ne ha più di uno uniti da "/", descrivi come il fattore varia da un'area all'altra senza inventarne altri. Un'organizzazione o un atteggiamento che limita l'autonomia è una barriera: scrivilo solo se il suo Q contiene B- o B+.
+
 **Ambito 1 – Ambiente fisico, prodotti e tecnologie (e1, e2)**
 [Narrativa con qualificatori di intensità basata sui codici e1*, e2* del JSON. Indica almeno 3 elementi concreti.]
 
