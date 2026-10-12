@@ -3,6 +3,7 @@
 // Nessuna modifica di logica — solo require/module.exports -> import/export.
 
 import { getConfig, getOrdinamentoSec2, TERMINE_VALUTAZIONE } from './pei-gradi.js';
+import { tabellaSez2PerPrompt, esitiPerPrompt } from './pei-dimensioni.js';
 import { getProgrammiPerDiscipline, getNucleiPerDiscipline, formattaNucleiPerPrompt, LICEI_2010_MIGRATI, riferimentoLiceo } from './pei-programmi.js';
 
 // ── Calcola classe frequentata dall'età ──────────────────────────────────────
@@ -82,7 +83,7 @@ REGOLE FONDAMENTALI:
 // ── Come leggere il JSON ICF (legenda comune alle Parti 1, 2 e 3) ────────────────────────────────────────
 const NOTE_NEL_JSON = `COME LEGGERE IL JSON (chiavi per ogni codice ICF):
 - P = performance, C = capacità (0-4; 9 = non applicabile).
-- Q = qualificatore: per le funzioni e strutture corporee (b, s) la gravità 0-4; per un fattore ambientale (e) o personale (i) senza area di vita i simboli F++ facilitatore importante, F- facilitatore presente ma non sufficiente a compensare i limiti delle capacità, B- barriera media, B+ barriera elevata, B++ facilitatore necessario ma assente (se ne ha più di uno uniti da "/" il fattore varia da un'area all'altra).
+- Q = qualificatore: per le funzioni e strutture corporee (b, s) la gravità 0-4; per un fattore ambientale (e) o personale (i) senza area di vita i simboli F++ facilitatore presente ed efficace, F- facilitatore presente ma non sufficiente a compensare i limiti delle capacità, B- barriera: fattore presente ma non necessario, che impedisce di fare in autonomia ciò che l'alunno sa fare, B+ barriera attiva (fattore presente e non efficace), B++ facilitatore necessario ma non presente (se ne ha più di uno uniti da "/" il fattore varia da un'area all'altra).
 - A = qualificatori per area di vita dei fattori ambientali (e) e personali (i), con gli stessi simboli di Q: {area: simbolo}. Aree: D1 apprendimento e applicazione delle conoscenze, D2 compiti e richieste generali, D3 comunicazione, D4 mobilità, D5 cura della propria persona, D6 vita domestica, D7 interazioni e relazioni interpersonali, D8 aree di vita principali (scuola, formazione), D9 vita sociale, civile e di comunità. Lo stesso fattore può avere qualificatori diversi in aree diverse (es. i genitori facilitatori nella cura della persona e barriera nella vita domestica): è un'informazione importante, non una contraddizione. Rispetta la differenza per area, senza riassumerla in un giudizio unico. Le note N dei fattori hanno il prefisso dell'area (es. "D5: ...").
 - L = descrizione della funzione o struttura corporea.
 - N = osservazioni scritte dall'insegnante che conosce l'alunno (testo libero; per i fattori ambientali una per area di vita): sono la fonte più concreta e vanno usate per rendere il testo specifico per l'alunno, senza contraddirle. Non aggiungere dettagli, episodi, luoghi o persone che non compaiono né nei codici né nelle note: se un dato manca scrivi in modo generale o "da definire".
@@ -96,8 +97,8 @@ FASE 1 — Censimento: tutti i codici "d" con P e C. Escludi P=9 o vuoto.
 FASE 2 — Calcolo per dimensione:
   A – Relazione e Socializzazione: d7*, d9*
   B – Comunicazione e Linguaggio:  d3*
-  C – Autonomia e Orientamento:    d2*, d4*, d5*, d6*, d8*
-  D – Cognitiva e Apprendimento:   d1*
+  C – Autonomia e Orientamento:    d2*, d4*, d5*, d6*
+  D – Cognitiva e Apprendimento:   d1*, d8*
   Media = ∑P / N (solo codici validi)
   ≥ 1.50 → VA DEFINITA
   < 1.50 con almeno un P≥3 → OMISSIBILE (area di monitoraggio prioritario per il Progetto di Vita: serve per la Sezione 5, non va scritto nella Sezione 2)
@@ -128,7 +129,7 @@ INTERPRETAZIONE P vs C (obbligatoria nella narrativa della Sezione 4):
   • P = C con P = 0 o 1: funzionamento ottimale, nessuna influenza ambientale rilevante.`;
 
 // ── PARTE 1: Sezioni 1–4 ─────────────────────────────────────────────────────
-function buildPromptPart1({ eta, sesso, grado, istituto, jsonData }) {
+function buildPromptPart1({ eta, sesso, grado, istituto, jsonData, esitiDim }) {
   const { term, discipline } = getConfig(grado, istituto, eta);
   const discStr    = discipline.join('; ');
   const campoLabel = grado === 'infanzia' ? 'campi di esperienza' : 'discipline';
@@ -160,14 +161,7 @@ Scrivi una narrativa biografica calda e sintetica (max 120 parole) sul contesto 
 
 ## Sezione 2 – Dimensioni da definire nel PEI
 
-| Dimensione | Esito |
-|---|---|
-| A – Relazione, interazione e socializzazione | VA DEFINITA oppure OMISSIBILE |
-| B – Comunicazione e linguaggio | VA DEFINITA oppure OMISSIBILE |
-| C – Autonomia e orientamento | VA DEFINITA oppure OMISSIBILE |
-| D – Cognitiva, neuropsicologica e dell'apprendimento | VA DEFINITA oppure OMISSIBILE |
-
-Nella colonna Esito scrivi SOLO "VA DEFINITA" oppure "OMISSIBILE", calcolato dal JSON con le regole dell'analisi interna: nessuna media, nessun conteggio, nessuna motivazione, nessun commento. Una riga per ciascuna delle 4 dimensioni.
+${tabellaSez2PerPrompt(esitiDim)}
 
 ---
 
@@ -203,10 +197,10 @@ Struttura per ogni dimensione:
 [Codici d3*. Sintesi in 3-4 frasi totali.]
 
 **c) Dimensione dell'Autonomia e dell'Orientamento**
-[Codici d2*, d4*, d5*, d6*, d8*. Sintesi in 3-4 frasi totali. Se OMISSIBILE: 1-2 frasi su elementi rilevanti per il Progetto di Vita.]
+[Codici d2*, d4*, d5*, d6*. Sintesi in 3-4 frasi totali. Se OMISSIBILE: 1-2 frasi su elementi rilevanti per il Progetto di Vita.]
 
 **d) Dimensione Cognitiva, Neuropsicologica e dell'Apprendimento**
-[Codici d1*. Sintesi in 3-4 frasi totali.]
+[Codici d1*, d8*. Sintesi in 3-4 frasi totali.]
 
 ---
 
@@ -217,10 +211,10 @@ ${jsonData}`;
 }
 
 // Parte 2: il JSON comprende anche i fattori ambientali per area di vita, che orientano le strategie degli obiettivi
-const FATTORI_NEGLI_OBIETTIVI = `FATTORI AMBIENTALI E OBIETTIVI: il JSON comprende anche i fattori ambientali per area di vita (A). Quando scegli le strategie e i supporti di un obiettivo, considera i fattori dell'area a cui l'obiettivo appartiene (D1 apprendimento, D2 compiti, D3 comunicazione, D4 mobilità, D5 cura della persona, D6 vita domestica, D7 relazioni, D8 scuola e formazione, D9 vita sociale): valorizza i facilitatori importanti (F++), potenzia quelli presenti ma non sufficienti (F-), intervieni sulle barriere (B-, B+) e su ciò che manca (B++). Non scrivere sigle né codici nel testo.`;
+const FATTORI_NEGLI_OBIETTIVI = `FATTORI AMBIENTALI E OBIETTIVI: il JSON comprende anche i fattori ambientali per area di vita (A). Quando scegli le strategie e i supporti di un obiettivo, considera i fattori dell'area a cui l'obiettivo appartiene (D1 apprendimento, D2 compiti, D3 comunicazione, D4 mobilità, D5 cura della persona, D6 vita domestica, D7 relazioni, D8 scuola e formazione, D9 vita sociale): valorizza i facilitatori efficaci (F++), potenzia quelli presenti ma non sufficienti (F-), intervieni sulle barriere (B+ non efficaci; B-: riduci gradualmente il supporto non necessario per lasciare spazio all'autonomia) e su ciò che manca ma serve (B++). Non scrivere sigle né codici nel testo.`;
 
 // ── PARTE 2: Sezione 5 (obiettivi) ───────────────────────────────────────────
-function buildPromptPart2({ eta, sesso, grado, istituto, jsonData }) {
+function buildPromptPart2({ eta, sesso, grado, istituto, jsonData, esitiDim }) {
   const { term, discipline } = getConfig(grado, istituto, eta);
   const discStr    = discipline.join('; ');
   const campoLabel = grado === 'infanzia' ? 'campi di esperienza' : 'discipline';
@@ -243,7 +237,7 @@ ${ANALISI_ICF}
 
 ## Sezione 5 – Obiettivi educativi e didattici
 
-REGOLA TASSATIVA: scrivi ESATTAMENTE 2 obiettivi per ogni dimensione VA DEFINITA.
+${esitiPerPrompt(esitiDim) ? esitiPerPrompt(esitiDim) + '\n\n' : ''}REGOLA TASSATIVA: scrivi ESATTAMENTE 2 obiettivi per ogni dimensione VA DEFINITA.
 Per ogni dimensione OMISSIBILE con almeno un P≥3: scrivi 2 obiettivi orientati al Progetto di Vita.
 Tutti i campi di ogni obiettivo sono OBBLIGATORI — non omettere strategie né verifica.
 
@@ -294,12 +288,12 @@ ${ctx}
 ## Sezione 6 – Osservazioni sul contesto: barriere e facilitatori
 
 Analizza i fattori ambientali e* del JSON, poi descrivi per ogni ambito barriere e facilitatori con intensità.
-Legenda: F++ facilitatore importante · F- facilitatore presente ma non sufficiente a compensare i limiti delle capacità · B- barriera media · B+ barriera elevata · B++ facilitatore necessario ma assente
+Legenda: F++ facilitatore presente ed efficace · F- facilitatore presente ma non sufficiente a compensare i limiti delle capacità · B- barriera: fattore presente ma non necessario, che impedisce di fare in autonomia ciò che l'alunno sa fare · B+ barriera attiva (fattore presente e non efficace) · B++ facilitatore necessario ma non presente
 
 RIGORE SUI QUALIFICATORI — ogni sigla va usata solo con il proprio significato, mai come sinonimo di un'altra:
-- F++ e F- sono SOLO facilitatori. F- è un facilitatore presente ma non sufficiente a compensare i limiti delle capacità: non è una barriera né un "fattore limitante".
-- B- e B+ sono SOLO barriere (media, elevata): ciò che ostacola o limita.
-- B++ si usa SOLO quando un facilitatore necessario manca del tutto (es. un ausilio o un servizio non disponibile): non è una "barriera elevata", che è B+.
+- F++ e F- sono SOLO facilitatori. F- è un facilitatore presente ma non sufficiente a compensare i limiti delle capacità (parzialmente efficace): non è una barriera né un "fattore limitante".
+- B- e B+ sono SOLO barriere. B- è un fattore presente ma non necessario che impedisce di fare in autonomia ciò che l'alunno sarebbe in grado di fare (per esempio un aiuto che sostituisce l'alunno): l'intervento è ridurre gradualmente quel supporto. B+ è una barriera attiva: il fattore c'è ma non funziona o ostacola.
+- B++ si usa SOLO quando un facilitatore necessario manca del tutto (es. un ausilio o un servizio non disponibile): non è una barriera attiva, è un'assenza da colmare.
 - Non attribuire a un fattore un qualificatore che non compare nel suo Q o A del JSON; se un fattore ha qualificatori diversi in aree diverse (A), descrivi la differenza area per area (es. «i genitori sono un facilitatore importante nella cura della persona ma una barriera nella vita domestica») senza inventarne altri. Un'organizzazione o un atteggiamento che limita l'autonomia è una barriera: scrivilo solo se il suo Q o A contiene B- o B+.
 - Le aree di vita in cui un fattore è una barriera o è assente (B-, B+, B++) sono quelle su cui puntare nella Sezione 7: indica nelle azioni l'area interessata (es. «nella vita domestica»).
 
@@ -323,7 +317,7 @@ Formato per ogni azione (una riga, separatori pipe):
 
 ### Categoria 1 – Rimozione delle barriere
 (Elimina ostacoli fisici, tecnologici, comunicativi, attitudinali emersi in Sezione 6.
-Almeno 2 azioni concrete basate sulle barriere B+ / B++ identificate.)
+Almeno 2 azioni concrete basate sulle barriere B- / B+ e sulle assenze B++ identificate; per B- l'azione è ridurre gradualmente il supporto non necessario.)
 **Azione:** [rimozione barriera concreta 1] | **Destinatari:** [chi] | **Tempi:** [quando]
 **Azione:** [rimozione barriera concreta 2] | **Destinatari:** [chi] | **Tempi:** [quando]
 

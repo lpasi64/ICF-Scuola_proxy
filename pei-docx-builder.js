@@ -281,7 +281,7 @@ const _DIM_SEZ2 = [
   ['C', 'C – Autonomia e orientamento', /autonom|orientam/i],
   ['D', 'D – Cognitiva, neuropsicologica e dell\'apprendimento', /cognitiv|apprendim/i],
 ];
-function esitiDimensioni(rawText) {
+function esitiDimensioni(rawText, calcolati) {
   const trovati = {};
   for (const line of String(rawText || '').split('\n')) {
     if (!line.trim().startsWith('|')) continue;
@@ -292,13 +292,14 @@ function esitiDimensioni(rawText) {
     const m = cells[1].match(/omissibile|defin/i);
     trovati[dim] = m ? (/omissibile/i.test(m[0]) ? 'OMISSIBILE' : 'VA DEFINITA') : 'Da definire';
   }
-  return _DIM_SEZ2.map(([dim, etichetta]) => ({ dim, etichetta, esito: trovati[dim] || 'Da definire' }));
+  // l'esito calcolato dal programma sui dati prevale su quello scritto dal modello; dove manca si usa quello del modello
+  return _DIM_SEZ2.map(([dim, etichetta]) => ({ dim, etichetta, esito: (calcolati && calcolati[dim] && calcolati[dim].esito) || trovati[dim] || 'Da definire' }));
 }
 
-function _dimTable(rawText) {
+function _dimTable(rawText, calcolati) {
   const cols = [6200, 3160];
   const headers = ['Dimensione', 'Esito'];
-  const dataRows = esitiDimensioni(rawText).map(e => [e.etichetta, e.esito]);
+  const dataRows = esitiDimensioni(rawText, calcolati).map(e => [e.etichetta, e.esito]);
   return new Table({
     width: { size: FULL, type: WidthType.DXA },
     columnWidths: cols,
@@ -979,7 +980,7 @@ function buildDocx(d, grado, { anonimo = false } = {}) {
     h1('Sezione 2 – Dimensioni da definire nel PEI'),
     p('In base alle indicazioni del Profilo di Funzionamento, le dimensioni rispetto alle quali è necessario definire nel PEI specifici interventi:', { size: 19, italic: true, color: C.DARKGREY }),
     ...emptyK(1),
-    dimTable(d.sez2Raw),
+    dimTable(d.sez2Raw, d.esitiCalcolati),
     ...empty(1),
   );
 
@@ -1010,7 +1011,7 @@ function buildDocx(d, grado, { anonimo = false } = {}) {
   // ── SEZ. 6 ───────────────────────────────────────────────────────────────
   children.push(
     h1('Sezione 6 – Osservazioni sul contesto: barriere e facilitatori'),
-    p('F++ facilitatore importante · F- facilitatore presente ma non sufficiente a compensare i limiti delle capacità · B- barriera media · B+ barriera elevata · B++ facilitatore necessario ma assente', { size: 18, italic: true, color: C.DARKGREY }),
+    p('F++ facilitatore presente ed efficace · F- facilitatore presente ma non sufficiente a compensare i limiti delle capacità · B- barriera: fattore presente ma non necessario, che impedisce di fare in autonomia ciò che l\'alunno sa fare · B+ barriera attiva (fattore presente e non efficace) · B++ facilitatore necessario ma non presente', { size: 18, italic: true, color: C.DARKGREY }),
     ...empty(1),
     h2('Ambito 1 – Ambiente fisico, prodotti e tecnologie (e1, e2)', C.BLUE), ...lines(d.sez6a1), ...empty(1),
     h2('Ambito 2 – Relazioni e supporti sociali (e3)', C.BLUE),               ...lines(d.sez6a2), ...empty(1),
@@ -1404,7 +1405,7 @@ function buildSidiDocx(d, grado) {
     [...testoSemplice(d.sez1a), ...testoSemplice(d.sez1b)],
     grado === 'sec2' ? 'Il secondo campo («Elementi desunti dalla descrizione di sé dello Studente o della Studentessa») si compila con i colloqui con l\'alunno.' : '');
   campo('Sezione 2 – Elementi generali desunti dal Profilo di Funzionamento · dimensioni',
-    esitiDimensioni(d.sez2Raw).map(e => `${e.etichetta}: ${e.esito}`),
+    esitiDimensioni(d.sez2Raw, d.esitiCalcolati).map(e => `${e.etichetta}: ${e.esito}`),
     'Nel SIDI, per ogni dimensione, si seleziona da elenco se va definita o omessa e il livello del debito di funzionamento (Allegato C1): qui è indicato l\'esito proposto per ciascuna dimensione.');
   campo('Sezione 3 – Raccordo con il Progetto Individuale (art. 14 L. 328/2000)', testoSemplice(d.sez3));
 
