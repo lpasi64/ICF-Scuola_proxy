@@ -993,7 +993,7 @@ function buildDocx(d, grado, { anonimo = false } = {}) {
   // ── SEZ. 6 ───────────────────────────────────────────────────────────────
   children.push(
     h1('Sezione 6 – Osservazioni sul contesto: barriere e facilitatori'),
-    p('F++ facilitatore importante · F+ non sufficiente · B- barriera media · B+ elevata · B++ necessario ma assente', { size: 18, italic: true, color: C.DARKGREY }),
+    p('F++ facilitatore importante · F- facilitatore presente ma non sufficiente a compensare i limiti delle capacità · B- barriera media · B+ barriera elevata · B++ facilitatore necessario ma assente', { size: 18, italic: true, color: C.DARKGREY }),
     ...empty(1),
     h2('Ambito 1 – Ambiente fisico, prodotti e tecnologie (e1, e2)', C.BLUE), ...lines(d.sez6a1), ...empty(1),
     h2('Ambito 2 – Relazioni e supporti sociali (e3)', C.BLUE),               ...lines(d.sez6a2), ...empty(1),

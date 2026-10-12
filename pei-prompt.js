@@ -79,6 +79,14 @@ REGOLE FONDAMENTALI:
    Gli unici nomi propri ammessi sono quelli presenti nel JSON (il/la ${term.soggetto}).`;
 }
 
+// ── Come leggere il JSON ICF (legenda comune alle Parti 1, 2 e 3) ────────────────────────────────────────
+const NOTE_NEL_JSON = `COME LEGGERE IL JSON (chiavi per ogni codice ICF):
+- P = performance, C = capacità (0-4; 9 = non applicabile).
+- Q = qualificatore: per i fattori ambientali (e) F++ facilitatore importante, F- facilitatore presente ma non sufficiente a compensare i limiti delle capacità, B- barriera media, B+ barriera elevata, B++ facilitatore necessario ma assente; se lo stesso fattore ha più qualificatori uniti da "/" (es. "F++/F-") significa che varia da un'area di vita all'altra. Per le funzioni e strutture corporee (b, s) Q è la gravità 0-4.
+- L = descrizione della funzione o struttura corporea.
+- N = osservazioni scritte dall'insegnante che conosce l'alunno (testo libero; per i fattori ambientali una per area di vita): sono la fonte più concreta e vanno usate per rendere il testo specifico per l'alunno, senza contraddirle. Non aggiungere dettagli, episodi, luoghi o persone che non compaiono né nei codici né nelle note: se un dato manca scrivi in modo generale o "da definire".
+- Le diagnosi o i riferimenti clinici citati nelle note non vanno riportati nella Sezione 1 (regola 1).`;
+
 // ── Analisi ICF (blocco comune a Parte 1 e Parte 2) ──────────────────────────
 const ANALISI_ICF = `ANALISI ICF — CALCOLO INTERNO (⚠️ NON RIPORTARE NEL DOCUMENTO):
 TASSATIVO: NON scrivere "FASE 1", "FASE 2", né i conteggi numerici nel corpo del PEI.
@@ -139,7 +147,7 @@ ${ANALISI_ICF}
 **a) Situazione familiare e contesto**
 ⚠️ REGOLE ASSOLUTE PER QUESTA SEZIONE — NESSUNA ECCEZIONE:
 - ZERO codici ICF: non scrivere e310, e320, e330, e340, e355, e410, e125 né qualsiasi altro codice alfanumerico ICF.
-- ZERO qualificatori: non scrivere F++, F+, B+, B-, B++ né nessuna altra sigla di qualificatore.
+- ZERO qualificatori: non scrivere F++, F-, B+, B-, B++ né nessuna altra sigla di qualificatore.
 - ZERO analisi di barriere e facilitatori — quella appartiene alla Sezione 6, non qui.
 - Per le figure familiari usa SOLO linguaggio naturale: se il JSON contiene nomi specifici (es. "mamma", "papà", "nonno Mario") usali; altrimenti scrivi "i genitori", "la famiglia", "i nonni", "il fratello/la sorella" ecc. MAI "famiglia immediata (e310: F++)".
 Scrivi una narrativa biografica calda e sintetica (max 120 parole) sul contesto familiare, la rete di supporto affettivo, l'ambiente di vita.
@@ -196,6 +204,8 @@ Struttura per ogni dimensione:
 
 ---
 
+${NOTE_NEL_JSON}
+
 JSON ICF DA ANALIZZARE:
 ${jsonData}`;
 }
@@ -248,6 +258,8 @@ Formato per ogni obiettivo (ripetilo IDENTICO per tutti):
 
 ---
 
+${NOTE_NEL_JSON}
+
 JSON ICF DA ANALIZZARE:
 ${jsonData}`;
 }
@@ -269,7 +281,7 @@ ${ctx}
 ## Sezione 6 – Osservazioni sul contesto: barriere e facilitatori
 
 Analizza i fattori ambientali e* del JSON, poi descrivi per ogni ambito barriere e facilitatori con intensità.
-Legenda: F++ facilitatore importante · F+ presente ma non sufficiente · B- barriera media · B+ elevata · B++ necessaria ma assente
+Legenda: F++ facilitatore importante · F- facilitatore presente ma non sufficiente a compensare i limiti delle capacità · B- barriera media · B+ barriera elevata · B++ facilitatore necessario ma assente
 
 **Ambito 1 – Ambiente fisico, prodotti e tecnologie (e1, e2)**
 [Narrativa con qualificatori di intensità basata sui codici e1*, e2* del JSON. Indica almeno 3 elementi concreti.]
@@ -303,11 +315,13 @@ Almeno 2 azioni di design universale per l'apprendimento.)
 
 ### Categoria 3 – Facilitatori personalizzati
 (Supporti e adattamenti specifici per lo studente: ausili, accomodamenti individuali,
-figure di supporto. Almeno 2 azioni basate su facilitatori F++ / F+ della Sezione 6.)
+figure di supporto. Almeno 2 azioni basate su facilitatori F++ / F- della Sezione 6 (i facilitatori F- sono presenti ma da potenziare).)
 **Azione:** [facilitatore personalizzato 1] | **Destinatari:** studente | **Tempi:** [quando]
 **Azione:** [facilitatore personalizzato 2] | **Destinatari:** studente | **Tempi:** [quando]
 
 ---
+
+${NOTE_NEL_JSON}
 
 JSON ICF DA ANALIZZARE:
 ${jsonData}`;

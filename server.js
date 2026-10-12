@@ -169,6 +169,14 @@ COSA DEVI COPRIRE (internamente, senza dirlo) — TUTTI i 9 domini, nessuna ecce
 
 QUANDO HAI ABBASTANZA INFORMAZIONI su un'area, assegnale i qualificatori internamente e passa avanti naturalmente.
 
+FATTORI AMBIENTALI (e) — scala della piattaforma ICF Applicazioni. In "icfUpdate.faItems" registra i fattori ambientali emersi (famiglia, insegnanti, compagni, educatori, ausili, servizi). Il campo "effect" può essere SOLO uno di questi cinque qualificatori, mai un numero:
+- F++ = facilitatore importante
+- F- = facilitatore presente ma non sufficiente a compensare i limiti delle capacità
+- B- = barriera media
+- B+ = barriera elevata
+- B++ = facilitatore necessario ma assente
+Non esistono altri qualificatori né scale numeriche. Se non sei sicuro, chiedi all'interlocutore se quel supporto c'è, se basta a compensare le difficoltà o se manca. In "label" scrivi il fattore e, dopo un trattino, la nota concreta emersa (es. "Persone in posizione di autorità — insegnanti di classe").
+
 REGOLA DI COMPLETEZZA — l'obiettivo è che OGNI item dell'elenco completo (sotto) riceva un valore di PF e CAP prima di chiudere il colloquio. Non è ammesso lasciare un item senza risposta per il solo fatto che non è emerso spontaneamente nella narrazione: se il colloquio narrativo si sta esaurendo e alcuni item non sono stati toccati, fai uno SWEEP FINALE (vedi sezione dedicata più sotto) prima di proporre la chiusura. Nessun dominio è "opzionale" — anche D4 e D6, spesso marginali, devono ricevere un valore per ciascun item, anche solo "nessun problema".
 
 ELENCO COMPLETO DEGLI ITEM DEL QUESTIONARIO ICF-Scuola Versione Breve (47 item — devono ricevere tutti un valore):
@@ -235,7 +243,7 @@ FORMATO RISPOSTA — sempre e solo JSON valido:
   "icfUpdate": {
     "domainId": "D1",
     "items": [{"code": "d160", "label": "Attenzione", "pf": "2", "cap": "3", "nota": "con l'insegnante di sostegno migliora, da solo si perde", "fonte": "colloquio"}],
-    "faItems": [{"code": "e330", "label": "Insegnanti", "effect": "+2"}]
+    "faItems": [{"code": "e330", "label": "Persone in posizione di autorità — insegnanti di classe", "effect": "F-"}]
   },
   "progress": 0
 }
@@ -344,6 +352,26 @@ function compactIcf(obj, codeRegex = null) {
   // IMPORTANTE: si ricorre SEMPRE nei figli — anche quando cod matcha il regex ma è
   // un dominio padre (es. "d1") privo di qualificatori, i suoi figli codici_icf
   // e fattori_ambientali devono comunque essere visitati.
+  // Note libere dell'insegnante (N) e descrizioni (L): arrivano ai prompt, accorciate e in quantità limitata
+  // (il generatore ha un limite di token al minuto). Per i codici e* la descrizione dell'area è nell'etichetta del fattore.
+  const NOTA_MAX = 240, NOTE_PER_CODICE = 4, NOTE_TOTALI_MAX = 7000;
+  const pulisciNota = (t) => {
+    const s = String(t == null ? '' : t).replace(/\s+/g, ' ').trim();
+    return s.length > NOTA_MAX ? s.slice(0, NOTA_MAX - 1) + '…' : s;
+  };
+  // Registra un codice. Lo stesso fattore può comparire in più domini con qualificatori e note diversi (es. famiglia F++ in
+  // un'area, F+ in un'altra): qualificatori e note si uniscono, senza far vincere l'ultimo.
+  function registra(cod, e) {
+    const prec = out[cod];
+    if (prec) {
+      if (prec.Q && e.Q) e.Q = prec.Q.split('/').includes(e.Q) ? prec.Q : prec.Q + '/' + e.Q;
+      else if (prec.Q) e.Q = prec.Q;
+      const note = [...[].concat(prec.N || []), ...[].concat(e.N || [])].filter((n, i, a) => a.indexOf(n) === i).slice(0, NOTE_PER_CODICE);
+      if (note.length) e.N = note; else delete e.N;
+      for (const k of ['P', 'C', 'L']) if (e[k] === undefined && prec[k] !== undefined) e[k] = prec[k];
+    }
+    out[cod] = e;
+  }
   function walk(node, depth) {
     if (!node || typeof node !== 'object' || depth > 10) return;
     if (Array.isArray(node)) {
@@ -351,21 +379,33 @@ function compactIcf(obj, codeRegex = null) {
         if (!item || typeof item !== 'object') continue;
         // Formato reale ICF Scuola: campo "icf" contiene il codice foglia
         const cod = String(item.icf || item.codice || item.code || item.cod || '').trim();
-        if (/^[bdes]\d/i.test(cod) && (!codeRegex || codeRegex.test(cod))) {
+        if (/^[bdesi]\d/i.test(cod) && (!codeRegex || codeRegex.test(cod))) {
           // P = performance (stringa "1"-"4" o testo "F++" per fattori ambientali)
           // C = capacita (stringa "1"-"4")
           const rawP = item.performance ?? item.P ?? item.p ?? item.qualificatore_P ?? item.qualP ?? null;
           const rawC = item.capacita    ?? item.capacity ?? item.C ?? item.c ?? item.qualificatore_C ?? item.qualC ?? null;
           const pNum = rawP != null && rawP !== '' && !isNaN(+rawP) ? +rawP : null;
           const cNum = rawC != null && rawC !== '' && !isNaN(+rawC) ? +rawC : null;
-          // Per fattori ambientali e*: qualificatore testuale "F++", "B-", ecc.
-          const pTxt = /^e/i.test(cod) && rawP != null && rawP !== '' && isNaN(+rawP) ? String(rawP) : null;
-          if (pNum != null || cNum != null || pTxt != null) {
+          const eOrI = /^[ei]/i.test(cod);
+          // Per fattori ambientali e* (e personali i*): qualificatore testuale "F++", "B-", ecc.
+          const qTxt = eOrI ? (rawP != null && rawP !== '' && isNaN(+rawP) ? String(rawP) : (item.qualificatore ? String(item.qualificatore) : null)) : null;
+          // Per funzioni e strutture corporee (b, s): qualificatore di gravità 0-4 (campo "qualifier" o "qualificatore")
+          const rawQ = /^[bs]/i.test(cod) ? (item.qualifier ?? item.qualificatore ?? null) : null;
+          const qBS = rawQ != null && rawQ !== '' && !isNaN(+rawQ) ? String(+rawQ) : null;
+          // Note: "nota"/"note" (d, b, s, i); per i fattori e* la descrizione dell'area sta nell'etichetta
+          const nota = pulisciNota(item.nota ?? item.note ?? item.N ?? (/^e/i.test(cod) && item.label && item.label !== cod ? item.label : ''));
+          const desc = /^[bs]/i.test(cod) && item.label && item.label !== cod ? pulisciNota(item.label) : '';
+          // «nessun effetto» (effetto 0 del colloquio) non è un fattore
+          const nessunEffetto = eOrI && String(item.effetto ?? '').trim() === '0';
+          if (!nessunEffetto && (pNum != null || cNum != null || qTxt != null || qBS != null || nota)) {
             const e = {};
             if (pNum != null) e.P = pNum;
             if (cNum != null) e.C = cNum;
-            if (pTxt != null) e.Q = pTxt;   // qualifier testuale (es. "F++")
-            out[cod] = e;
+            if (qTxt != null) e.Q = qTxt;   // qualifier testuale (es. "F++")
+            if (qBS != null) e.Q = qBS;
+            if (desc && (qBS != null || nota)) e.L = desc;
+            if (nota) e.N = [nota];
+            registra(cod, e);
           }
         }
         // Ricorre SEMPRE nei figli (anche se cod era un dominio padre senza qualificatori)
@@ -381,11 +421,13 @@ function compactIcf(obj, codeRegex = null) {
           const rawC = v.C ?? v.c ?? v.capacity   ?? v.capacita ?? v.qualificatore_C ?? v.qualC ?? null;
           const pNum = rawP != null && rawP !== '' && !isNaN(+rawP) ? +rawP : null;
           const cNum = rawC != null && rawC !== '' && !isNaN(+rawC) ? +rawC : null;
+          const nota = pulisciNota(v.nota ?? v.note ?? v.N ?? '');
           if (pNum != null || cNum != null) {
             const e = {};
             if (pNum != null) e.P = pNum;
             if (cNum != null) e.C = cNum;
-            out[k] = e;
+            if (nota) e.N = [nota];
+            registra(k, e);
           }
         }
         walk(v, depth + 1); // ricorre sempre per gestire sotto-codici annidati
@@ -393,6 +435,15 @@ function compactIcf(obj, codeRegex = null) {
     }
   }
   walk(obj, 0);
+
+  // Una sola nota: stringa; più note: elenco. Oltre il limite complessivo le note si tagliano (i codici restano tutti).
+  let noteTotali = 0;
+  for (const e of Object.values(out)) {
+    if (!e || typeof e !== 'object' || e.N === undefined) continue;
+    const kept = [];
+    for (const n of [].concat(e.N)) { if (noteTotali + n.length > NOTE_TOTALI_MAX) break; kept.push(n); noteTotali += n.length; }
+    if (kept.length) e.N = kept.length === 1 ? kept[0] : kept; else delete e.N;
+  }
 
   const codesFound = Object.keys(out).filter(k => /^[bdes]\d/i.test(k)).length;
   if (codesFound >= 3) {
