@@ -82,7 +82,8 @@ REGOLE FONDAMENTALI:
 // ── Come leggere il JSON ICF (legenda comune alle Parti 1, 2 e 3) ────────────────────────────────────────
 const NOTE_NEL_JSON = `COME LEGGERE IL JSON (chiavi per ogni codice ICF):
 - P = performance, C = capacità (0-4; 9 = non applicabile).
-- Q = qualificatore: per i fattori ambientali (e) F++ facilitatore importante, F- facilitatore presente ma non sufficiente a compensare i limiti delle capacità, B- barriera media, B+ barriera elevata, B++ facilitatore necessario ma assente; se lo stesso fattore ha più qualificatori uniti da "/" (es. "F++/F-") significa che varia da un'area di vita all'altra. Per le funzioni e strutture corporee (b, s) Q è la gravità 0-4.
+- Q = qualificatore: per le funzioni e strutture corporee (b, s) la gravità 0-4; per un fattore ambientale (e) o personale (i) senza area di vita i simboli F++ facilitatore importante, F- facilitatore presente ma non sufficiente a compensare i limiti delle capacità, B- barriera media, B+ barriera elevata, B++ facilitatore necessario ma assente (se ne ha più di uno uniti da "/" il fattore varia da un'area all'altra).
+- A = qualificatori per area di vita dei fattori ambientali (e) e personali (i), con gli stessi simboli di Q: {area: simbolo}. Aree: D1 apprendimento e applicazione delle conoscenze, D2 compiti e richieste generali, D3 comunicazione, D4 mobilità, D5 cura della propria persona, D6 vita domestica, D7 interazioni e relazioni interpersonali, D8 aree di vita principali (scuola, formazione), D9 vita sociale, civile e di comunità. Lo stesso fattore può avere qualificatori diversi in aree diverse (es. i genitori facilitatori nella cura della persona e barriera nella vita domestica): è un'informazione importante, non una contraddizione. Rispetta la differenza per area, senza riassumerla in un giudizio unico. Le note N dei fattori hanno il prefisso dell'area (es. "D5: ...").
 - L = descrizione della funzione o struttura corporea.
 - N = osservazioni scritte dall'insegnante che conosce l'alunno (testo libero; per i fattori ambientali una per area di vita): sono la fonte più concreta e vanno usate per rendere il testo specifico per l'alunno, senza contraddirle. Non aggiungere dettagli, episodi, luoghi o persone che non compaiono né nei codici né nelle note: se un dato manca scrivi in modo generale o "da definire".
 - Le diagnosi o i riferimenti clinici citati nelle note non vanno riportati nella Sezione 1 (regola 1).`;
@@ -210,6 +211,9 @@ JSON ICF DA ANALIZZARE:
 ${jsonData}`;
 }
 
+// Parte 2: il JSON comprende anche i fattori ambientali per area di vita, che orientano le strategie degli obiettivi
+const FATTORI_NEGLI_OBIETTIVI = `FATTORI AMBIENTALI E OBIETTIVI: il JSON comprende anche i fattori ambientali per area di vita (A). Quando scegli le strategie e i supporti di un obiettivo, considera i fattori dell'area a cui l'obiettivo appartiene (D1 apprendimento, D2 compiti, D3 comunicazione, D4 mobilità, D5 cura della persona, D6 vita domestica, D7 relazioni, D8 scuola e formazione, D9 vita sociale): valorizza i facilitatori importanti (F++), potenzia quelli presenti ma non sufficienti (F-), intervieni sulle barriere (B-, B+) e su ciò che manca (B++). Non scrivere sigle né codici nel testo.`;
+
 // ── PARTE 2: Sezione 5 (obiettivi) ───────────────────────────────────────────
 function buildPromptPart2({ eta, sesso, grado, istituto, jsonData }) {
   const { term, discipline } = getConfig(grado, istituto, eta);
@@ -258,6 +262,8 @@ Formato per ogni obiettivo (ripetilo IDENTICO per tutti):
 
 ---
 
+${FATTORI_NEGLI_OBIETTIVI}
+
 ${NOTE_NEL_JSON}
 
 JSON ICF DA ANALIZZARE:
@@ -287,7 +293,8 @@ RIGORE SUI QUALIFICATORI — ogni sigla va usata solo con il proprio significato
 - F++ e F- sono SOLO facilitatori. F- è un facilitatore presente ma non sufficiente a compensare i limiti delle capacità: non è una barriera né un "fattore limitante".
 - B- e B+ sono SOLO barriere (media, elevata): ciò che ostacola o limita.
 - B++ si usa SOLO quando un facilitatore necessario manca del tutto (es. un ausilio o un servizio non disponibile): non è una "barriera elevata", che è B+.
-- Non attribuire a un fattore un qualificatore che non compare nel suo Q del JSON; se Q ne ha più di uno uniti da "/", descrivi come il fattore varia da un'area all'altra senza inventarne altri. Un'organizzazione o un atteggiamento che limita l'autonomia è una barriera: scrivilo solo se il suo Q contiene B- o B+.
+- Non attribuire a un fattore un qualificatore che non compare nel suo Q o A del JSON; se un fattore ha qualificatori diversi in aree diverse (A), descrivi la differenza area per area (es. «i genitori sono un facilitatore importante nella cura della persona ma una barriera nella vita domestica») senza inventarne altri. Un'organizzazione o un atteggiamento che limita l'autonomia è una barriera: scrivilo solo se il suo Q o A contiene B- o B+.
+- Le aree di vita in cui un fattore è una barriera o è assente (B-, B+, B++) sono quelle su cui puntare nella Sezione 7: indica nelle azioni l'area interessata (es. «nella vita domestica»).
 
 **Ambito 1 – Ambiente fisico, prodotti e tecnologie (e1, e2)**
 [Narrativa con qualificatori di intensità basata sui codici e1*, e2* del JSON. Indica almeno 3 elementi concreti.]

@@ -204,6 +204,7 @@ FATTORI AMBIENTALI (e) — scala della piattaforma ICF Applicazioni. In "icfUpda
 - B+ = barriera elevata
 - B++ = facilitatore necessario ma assente
 Non esistono altri qualificatori né scale numeriche. Se non sei sicuro, chiedi all'interlocutore se quel supporto c'è, se basta a compensare le difficoltà o se manca. In "label" scrivi il fattore e, dopo un trattino, la nota concreta emersa (es. "Persone in posizione di autorità — insegnanti di classe"). Usa i qualificatori solo col loro significato: B- e B+ sono barriere; F- non è una barriera (è un facilitatore insufficiente); B++ solo quando un facilitatore necessario manca del tutto.
+I fattori ambientali si valutano dominio per dominio, come nel questionario: registrali nel dominio (icfUpdate.domainId) in cui emergono. Lo stesso fattore può avere effetti diversi in domini diversi (es. i genitori facilitatori nella cura di sé D5, barriera nella vita domestica D6): registralo di nuovo in ciascun dominio, con il suo qualificatore e la sua nota.
 CODICI DEI FATTORI AMBIENTALI — il codice deve corrispondere al fattore; usa SOLO questi codici (la "label" riprende il nome del codice, poi la nota):
 ${ELENCO_FATTORI_E}
 Se un fattore non rientra in nessuno di questi codici, non registrarlo come fattore ambientale: annotalo nelle note dell'item d a cui si riferisce.
@@ -385,25 +386,40 @@ function compactIcf(obj, codeRegex = null) {
   // e fattori_ambientali devono comunque essere visitati.
   // Note libere dell'insegnante (N) e descrizioni (L): arrivano ai prompt, accorciate e in quantità limitata
   // (il generatore ha un limite di token al minuto). Per i codici e* la descrizione dell'area è nell'etichetta del fattore.
-  const NOTA_MAX = 240, NOTE_PER_CODICE = 4, NOTE_TOTALI_MAX = 7000;
+  const NOTA_MAX = 240, NOTE_PER_CODICE = 9, NOTE_TOTALI_MAX = 7000;
   const pulisciNota = (t) => {
     const s = String(t == null ? '' : t).replace(/\s+/g, ' ').trim();
     return s.length > NOTA_MAX ? s.slice(0, NOTA_MAX - 1) + '…' : s;
   };
-  // Registra un codice. Lo stesso fattore può comparire in più domini con qualificatori e note diversi (es. famiglia F++ in
-  // un'area, F+ in un'altra): qualificatori e note si uniscono, senza far vincere l'ultimo.
+  // Nota di un fattore ambientale: l'etichetta è «nome del codice — nota» (o un'etichetta libera): si toglie il nome standard,
+  // che il generatore già conosce dal codice, e resta la nota dell'insegnante (vuota se l'etichetta è solo il nome).
+  const notaFattore = (cod, label) => {
+    let t = String(label || '').trim();
+    const nome = typeof FATTORI_E !== 'undefined' && FATTORI_E[cod.toLowerCase()] ? FATTORI_E[cod.toLowerCase()][0] : '';
+    if (nome && t.toLowerCase().startsWith(nome.toLowerCase())) t = t.slice(nome.length).replace(/^[\s—–-]+/, '');
+    else if (t.includes(' — ')) t = t.split(' — ').slice(1).join(' — ');
+    return t.trim();
+  };
+  // Registra un codice. Lo stesso fattore può comparire in più aree di vita (domini d1-d9) con qualificatori e note diversi
+  // (es. i genitori: facilitatore nella cura di sé, barriera nella vita domestica): per i fattori e* e i* l'area si conserva
+  // (A = {area: qualificatore}, note con il prefisso dell'area) e non si uniscono qualificatori di aree diverse.
   function registra(cod, e) {
     const prec = out[cod];
     if (prec) {
       if (prec.Q && e.Q) e.Q = prec.Q.split('/').includes(e.Q) ? prec.Q : prec.Q + '/' + e.Q;
       else if (prec.Q) e.Q = prec.Q;
+      if (prec.A || e.A) {
+        const A = { ...(prec.A || {}) };
+        for (const [d, q] of Object.entries(e.A || {})) A[d] = A[d] ? (A[d].split('/').includes(q) ? A[d] : A[d] + '/' + q) : q;
+        e.A = A;
+      }
       const note = [...[].concat(prec.N || []), ...[].concat(e.N || [])].filter((n, i, a) => a.indexOf(n) === i).slice(0, NOTE_PER_CODICE);
       if (note.length) e.N = note; else delete e.N;
       for (const k of ['P', 'C', 'L']) if (e[k] === undefined && prec[k] !== undefined) e[k] = prec[k];
     }
     out[cod] = e;
   }
-  function walk(node, depth) {
+  function walk(node, depth, ctx) {
     if (!node || typeof node !== 'object' || depth > 10) return;
     if (Array.isArray(node)) {
       for (const item of node) {
@@ -418,13 +434,16 @@ function compactIcf(obj, codeRegex = null) {
           const pNum = rawP != null && rawP !== '' && !isNaN(+rawP) ? +rawP : null;
           const cNum = rawC != null && rawC !== '' && !isNaN(+rawC) ? +rawC : null;
           const eOrI = /^[ei]/i.test(cod);
+          // area di vita del fattore: dal campo "dominio" (fattori personali dell'app) o dal dominio che lo contiene
+          const dom = eOrI ? (item.dominio && /^d[1-9]$/i.test(String(item.dominio)) ? String(item.dominio).toUpperCase() : ctx) : undefined;
           // Per fattori ambientali e* (e personali i*): qualificatore testuale "F++", "B-", ecc.
           const qTxt = eOrI ? (rawP != null && rawP !== '' && isNaN(+rawP) ? String(rawP) : (item.qualificatore ? String(item.qualificatore) : null)) : null;
           // Per funzioni e strutture corporee (b, s): qualificatore di gravità 0-4 (campo "qualifier" o "qualificatore")
           const rawQ = /^[bs]/i.test(cod) ? (item.qualifier ?? item.qualificatore ?? null) : null;
           const qBS = rawQ != null && rawQ !== '' && !isNaN(+rawQ) ? String(+rawQ) : null;
           // Note: "nota"/"note" (d, b, s, i); per i fattori e* la descrizione dell'area sta nell'etichetta
-          const nota = pulisciNota(item.nota ?? item.note ?? item.N ?? (/^e/i.test(cod) && item.label && item.label !== cod ? item.label : ''));
+          const nota0 = pulisciNota(item.nota ?? item.note ?? item.N ?? (/^e/i.test(cod) && item.label && item.label !== cod ? notaFattore(cod, item.label) : ''));
+          const nota = nota0 && dom ? dom + ': ' + nota0 : nota0;
           const desc = /^[bs]/i.test(cod) && item.label && item.label !== cod ? pulisciNota(item.label) : '';
           // «nessun effetto» (effetto 0 del colloquio) non è un fattore
           const nessunEffetto = eOrI && String(item.effetto ?? '').trim() === '0';
@@ -432,7 +451,7 @@ function compactIcf(obj, codeRegex = null) {
             const e = {};
             if (pNum != null) e.P = pNum;
             if (cNum != null) e.C = cNum;
-            if (qTxt != null) e.Q = qTxt;   // qualifier testuale (es. "F++")
+            if (qTxt != null) { if (dom) e.A = { [dom]: qTxt }; else e.Q = qTxt; }   // qualifier testuale (es. "F++"), per area di vita se nota
             if (qBS != null) e.Q = qBS;
             if (desc && (qBS != null || nota)) e.L = desc;
             if (nota) e.N = [nota];
@@ -440,7 +459,7 @@ function compactIcf(obj, codeRegex = null) {
           }
         }
         // Ricorre SEMPRE nei figli (anche se cod era un dominio padre senza qualificatori)
-        walk(item, depth + 1);
+        walk(item, depth + 1, /^d[1-9]$/i.test(cod) ? cod.toUpperCase() : ctx);
       }
       return;
     }
@@ -461,8 +480,8 @@ function compactIcf(obj, codeRegex = null) {
             registra(k, e);
           }
         }
-        walk(v, depth + 1); // ricorre sempre per gestire sotto-codici annidati
-      } else { walk(v, depth + 1); }
+        walk(v, depth + 1, /^d[1-9]$/i.test(k) ? k.toUpperCase() : ctx); // ricorre sempre per gestire sotto-codici annidati
+      } else { walk(v, depth + 1, ctx); }
     }
   }
   walk(obj, 0);
@@ -636,7 +655,8 @@ app.post("/genera-pei", async (req, res) => {
     const jsonData = icf;
 
     const jsonFull = compactIcf(jsonData);            // tutti i codici d*+e* (Part1)
-    const jsonD    = compactIcf(jsonData, /^d/i);     // solo d* attività (Part2)
+    const jsonD    = compactIcf(jsonData, /^d/i);     // solo d* attività (profilo 8.2)
+    const jsonDE   = compactIcf(jsonData, /^[de]/i);  // d* + e* per area di vita (Part2: i fattori orientano le strategie degli obiettivi)
     const jsonE    = compactIcf(jsonData, /^e/i);     // solo e* ambientali (Part3)
     // Part4 (Sez.8+Nota) non richiede codici ICF: solo dati anagrafici
     const jsonDemo = JSON.stringify((() => {
@@ -667,7 +687,7 @@ Restituisci SOLO il testo richiesto, senza preamboli o commenti aggiuntivi.`;
 
     const parti = await Promise.all([
       generatorePei.genera({ system: systemMsg, prompt: buildPromptPart1({ eta, sesso, grado, istituto, jsonData: jsonFull }), maxTokens: 8000 }),
-      generatorePei.genera({ system: systemMsg, prompt: buildPromptPart2({ eta, sesso, grado, istituto, jsonData: jsonD   }), maxTokens: 8000 }),
+      generatorePei.genera({ system: systemMsg, prompt: buildPromptPart2({ eta, sesso, grado, istituto, jsonData: jsonDE  }), maxTokens: 8000 }),
       generatorePei.genera({ system: systemMsg, prompt: buildPromptPart3({ eta, sesso, grado, istituto, jsonData: jsonE   }), maxTokens: 8000 }),
       generatorePei.genera({ system: systemMsg, prompt: buildPromptPart4({ eta, sesso, grado, istituto, jsonData: jsonDemo, dettaglio82, profilo82 }), maxTokens: 8000 }),
     ]);
