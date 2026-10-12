@@ -17,7 +17,7 @@ function testoMistral(content) {
   return content.filter(b => b && b.type === "text" && typeof b.text === "string").map(b => b.text).join("");
 }
 
-export function creaGeneratore({ provider, anthropicClient, claudeModel, mistralApiKey, mistralModel, reasoning, fetchImpl }) {
+export function creaGeneratore({ provider, anthropicClient, claudeModel, thinking, mistralApiKey, mistralModel, reasoning, fetchImpl }) {
   if (provider === "mistral") {
     return {
       provider,
@@ -36,7 +36,7 @@ export function creaGeneratore({ provider, anthropicClient, claudeModel, mistral
         const u = data.usage || {};
         return {
           text: testoMistral(scelta.message && scelta.message.content),
-          usage: { input_tokens: Number(u.prompt_tokens) || 0, output_tokens: Number(u.completion_tokens) || 0 },
+          usage: { input_tokens: Number(u.prompt_tokens) || 0, output_tokens: Number(u.completion_tokens) || 0, thinking_tokens: 0 },
           troncato: scelta.finish_reason === "length",
         };
       },
@@ -46,10 +46,18 @@ export function creaGeneratore({ provider, anthropicClient, claudeModel, mistral
     provider: "claude",
     modello: claudeModel,
     async genera({ system, prompt, maxTokens }) {
-      const m = await anthropicClient.messages.create({ model: claudeModel, max_tokens: maxTokens, system, messages: [{ role: "user", content: prompt }] });
+      // Sonnet 5 ragiona di propria iniziativa se il campo thinking manca, e i token di ragionamento si pagano come output:
+      // con thinking = "disabled" si spegne; qualunque altro valore lascia il comportamento predefinito
+      const richiesta = { model: claudeModel, max_tokens: maxTokens, system, messages: [{ role: "user", content: prompt }] };
+      if (thinking === "disabled") richiesta.thinking = { type: "disabled" };
+      const m = await anthropicClient.messages.create(richiesta);
       return {
         text: m.content.filter(b => b.type === "text").map(b => b.text).join("\n"),
-        usage: { input_tokens: Number(m.usage && m.usage.input_tokens) || 0, output_tokens: Number(m.usage && m.usage.output_tokens) || 0 },
+        usage: {
+          input_tokens: Number(m.usage && m.usage.input_tokens) || 0,
+          output_tokens: Number(m.usage && m.usage.output_tokens) || 0,
+          thinking_tokens: Number(m.usage && m.usage.output_tokens_details && m.usage.output_tokens_details.thinking_tokens) || 0,
+        },
         troncato: m.stop_reason === "max_tokens",
       };
     },

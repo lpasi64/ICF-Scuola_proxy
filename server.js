@@ -33,6 +33,7 @@ const MISTRAL_MODEL = process.env.PEI_MISTRAL_MODEL || "mistral-small-2603";
 const PEI_PROVIDER = scegliProvider(process.env);
 const generatorePei = creaGeneratore({
   provider: PEI_PROVIDER, anthropicClient, claudeModel: PEI_MODEL,
+  thinking: (process.env.PEI_CLAUDE_THINKING || "").trim().toLowerCase(),   // "disabled" spegne il ragionamento di Sonnet 5 (si paga come output)
   mistralApiKey: process.env.MISTRAL_API_KEY, mistralModel: MISTRAL_MODEL,
   reasoning: process.env.PEI_MISTRAL_REASONING === undefined ? "none" : process.env.PEI_MISTRAL_REASONING,
   fetchImpl: fetch,
@@ -591,7 +592,7 @@ Restituisci SOLO il testo richiesto, senza preamboli o commenti aggiuntivi.`;
 
     const uPei = usoClaude(parti);
     const troncate = parti.filter(p => p.troncato).length;
-    console.log(rigaUso('pei', { modello: generatorePei.modello, chiamate: uPei.chiamate, in: uPei.in, out: uPei.out, troncate }));
+    console.log(rigaUso('pei', { modello: generatorePei.modello, chiamate: uPei.chiamate, in: uPei.in, out: uPei.out, ragion: uPei.ragion, troncate }));
     if (troncate) console.warn(`[PEI] ⚠ ${troncate} parti troncate dal limite di token: il PEI potrebbe essere incompleto`);
 
     const peiText = parti.map(p => p.text).join('\n\n');

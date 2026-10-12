@@ -41,8 +41,8 @@ export function usoClaude(messaggi) {
   const lista = Array.isArray(messaggi) ? messaggi : [];
   return lista.reduce((t, m) => {
     const u = (m && m.usage) || {};
-    return { chiamate: t.chiamate + 1, in: t.in + n(u.input_tokens), out: t.out + n(u.output_tokens) };
-  }, { chiamate: 0, in: 0, out: 0 });
+    return { chiamate: t.chiamate + 1, in: t.in + n(u.input_tokens), out: t.out + n(u.output_tokens), ragion: t.ragion + n(u.thinking_tokens) };
+  }, { chiamate: 0, in: 0, out: 0, ragion: 0 });
 }
 
 export function stimaCostoUsd(e) {
