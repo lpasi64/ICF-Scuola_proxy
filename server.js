@@ -142,6 +142,21 @@ Le diagnosi cliniche (autismo, ADHD, dislessia, disprassia, paralisi cerebrale, 
 - Ipoacusia / Sordità → b230 (udito, qualifier in base al grado)
 - Deficit visivo / Cecità → b210 (vista, qualifier in base al grado)
 
+STRUTTURE CORPOREE (s) DA DIAGNOSI DICHIARATA — se l'interlocutore dichiara una di queste condizioni, registra in "sItems" anche le strutture corrispondenti, SOLO con i codici dell'elenco chiuso, con "note":"da diagnosi dichiarata" e qualificatore secondo la gravità riferita (lieve=1, moderata=2, grave=3, completa=4; se la gravità non è riferita usa 2 e scrivilo nella nota):
+- Paralisi cerebrale infantile, lesione cerebrale acquisita (trauma cranico, esiti di ictus o tumore), idrocefalo, malformazioni cerebrali → s110 (cervello); se è dichiarata la sede della paresi aggiungi s730 (arto superiore), s750 (arto inferiore) o s760 (tronco)
+- Sindromi genetiche con disabilità intellettiva (es. sindrome di Down) → s110
+- Epilessia → s110 solo se è dichiarata una lesione o malformazione cerebrale come causa
+- Spina bifida, mielomeningocele, lesione midollare → s120 (midollo spinale); aggiungi s6 solo se è dichiarato il coinvolgimento della vescica
+- Ipoacusia, sordità, cecità, ipovisione → s2 (occhio, orecchio)
+- Schisi labiopalatina, malformazioni di bocca o laringe → s3
+- Distrofie muscolari, atrofia muscolare spinale, artrogriposi, altre malattie neuromuscolari → s770
+- Agenesia o amputazione di un arto → s730 o s750
+- Scoliosi o deformità del tronco → s760
+- Cardiopatie congenite, asma grave, fibrosi cistica, immunodeficienze → s4
+- Diabete di tipo 1, celiachia, malattie metaboliche o endocrine → s5
+- Dermatiti gravi, epidermolisi bollosa → s8
+- Autismo, ADHD, dislessia, disgrafia, discalculia, disturbi del linguaggio, ansia, DOP e altri disturbi funzionali: nessuna struttura (si registrano solo le funzioni b); s110 solo se l'interlocutore dichiara un'alterazione cerebrale documentata
+
 I fattori personali (i) raccolgono invece: storia di vita, eventi significativi, interessi, motivazioni, schemi emotivi e di pensiero, abitudini — tutto ciò che riguarda la persona al di là della sua condizione di salute.
 
 Se durante il colloquio emergono informazioni cliniche (diagnosi, referti, osservazioni mediche), rileva anche le FUNZIONI CORPOREE (serie b) e STRUTTURE CORPOREE (serie s) più rilevanti:
@@ -278,7 +293,7 @@ FORMATO RISPOSTA — sempre e solo JSON valido:
 - "anagrafica" va compilata progressivamente man mano che le info emergono; includi solo i campi che conosci, ometti gli altri
 - "fpItems" è un array di fattori personali emersi; aggiornalo progressivamente; può essere null o [] se non ne hai ancora rilevati
 - "bItems" è un array di Funzioni corporee (serie b) con qualifier 0-4, SOLO con i codici dell'elenco chiuso; includilo solo se ci sono dati clinici espliciti; può essere null o []
-- "sItems" è un array di Strutture corporee (serie s) con qualifier 0-4, SOLO con i codici dell'elenco chiuso; includilo solo se esplicitamente menzionate (lesioni, malformazioni); può essere null o []
+- "sItems" è un array di Strutture corporee (serie s) con qualifier 0-4, SOLO con i codici dell'elenco chiuso; includilo se le strutture sono esplicitamente menzionate (lesioni, malformazioni) oppure discendono da una diagnosi dichiarata (tabella STRUTTURE CORPOREE DA DIAGNOSI DICHIARATA); può essere null o []
 - ogni item in "icfUpdate.items" include "pf" e "cap" (0-4, oppure 9 se non applicabile); "nota" è una breve annotazione clinica (facoltativa ma consigliata, specie per item inferiti); "fonte" è "colloquio" se il dato viene da una risposta diretta dell'interlocutore, "inferenza" se stimato dalle funzioni/strutture corporee o dalla diagnosi già note (vedi regola INFERENZA CLINICA sopra)
 - "icfUpdate" può essere null durante la Fase 1 o quando non hai ancora abbastanza informazioni
 - "progress" va da 0 a 9, rappresenta i domini ICF esplorati (solo Fase 2)
