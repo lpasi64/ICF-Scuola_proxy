@@ -9,7 +9,7 @@ import { ISTITUTI_SEC2 } from "./pei-gradi.js";
 import { parseMappaIcf, derivaProfiloApprendimento, formattaProfiloPerPrompt } from "./pei-profilo.js";
 import { validaRichiesta, creaCache, chiaveCache, creaLimitatore, sintetizza, elencaVoci } from "./tts.js";
 import { rigaUso, usoChat, usoClaude } from "./uso.js";
-import { catenaChat, testoRisposta, descriviCatena, corpoRichiesta, eseguiCatena } from "./chat-provider.js";
+import { catenaChat, testoRisposta, descriviCatena, corpoRichiesta, eseguiCatena, rispostaValida } from "./chat-provider.js";
 import { calcolaEsitiDimensioni } from "./pei-dimensioni.js";
 import { scegliProvider, creaGeneratore } from "./pei-provider.js";
 import "./icf-bs.js";   // elenco chiuso delle funzioni e strutture corporee previste dagli allegati del questionario
@@ -317,7 +317,11 @@ app.post("/chat", async (req, res) => {
 
   const esito = await eseguiCatena(
     catena,
-    (c) => callProvider({ url: c.url, apiKey: c.apiKey, model: c.model, messages, temperature: c.temperature, maxTokens: c.maxTokens, extra: c.extra }),
+    async (c) => {
+      const text = await callProvider({ url: c.url, apiKey: c.apiKey, model: c.model, messages, temperature: c.temperature, maxTokens: c.maxTokens, extra: c.extra });
+      if (!rispostaValida(text)) throw new Error("risposta non nel formato JSON atteso");   // passa al fornitore successivo
+      return text;
+    },
     (c, err) => console.error(`Colloquio: ${c.model} non disponibile:`, err.message)
   );
   if (!esito) return res.status(500).json({ error: "Errore interno del proxy: nessun provider disponibile." });

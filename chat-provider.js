@@ -33,13 +33,14 @@ export function catenaChat(env) {
     if (!e.MISTRAL_API_KEY) return catena;
     // Small 4 ragiona se non glielo si vieta: nel colloquio i token di ragionamento sono solo costo e attesa
     const ragionamento = e.CHAT_MISTRAL_REASONING === undefined ? "none" : String(e.CHAT_MISTRAL_REASONING).trim();
-    const small = { nome: "mistral-small", url: MISTRAL_URL, apiKey: e.MISTRAL_API_KEY, model: e.CHAT_MISTRAL_MODEL || MISTRAL_SMALL, temperature, maxTokens: 2048, extra: {} };
+    // Mistral risponde in testo libero se non gli si impone il JSON, che il client si aspetta (message, quickReplies, icfUpdate…)
+    const small = { nome: "mistral-small", url: MISTRAL_URL, apiKey: e.MISTRAL_API_KEY, model: e.CHAT_MISTRAL_MODEL || MISTRAL_SMALL, temperature, maxTokens: 2048, extra: { response_format: { type: "json_object" } } };
     if (ragionamento) small.extra.reasoning_effort = ragionamento;
     catena.push(small);
     const riserva = e.CHAT_MISTRAL_FALLBACK === undefined ? MISTRAL_LARGE : String(e.CHAT_MISTRAL_FALLBACK).trim();
     if (riserva && riserva.toLowerCase() !== "none") {
       // niente reasoning_effort: Large non è detto che lo accetti
-      catena.push({ nome: "mistral-riserva", url: MISTRAL_URL, apiKey: e.MISTRAL_API_KEY, model: riserva, temperature, maxTokens: 2048, extra: {} });
+      catena.push({ nome: "mistral-riserva", url: MISTRAL_URL, apiKey: e.MISTRAL_API_KEY, model: riserva, temperature, maxTokens: 2048, extra: { response_format: { type: "json_object" } } });
     }
     return catena;
   }
@@ -76,4 +77,12 @@ export async function eseguiCatena(catena, chiama, segnalaErrore) {
     }
   }
   return null;
+}
+
+// La risposta del colloquio deve essere un oggetto JSON con il campo message (anche dentro un blocco ```json): altrimenti il client non può usarla
+export function rispostaValida(text) {
+  try {
+    const j = JSON.parse(String(text || "").replace(/```json|```/g, "").trim());
+    return !!j && typeof j === "object" && !Array.isArray(j) && typeof j.message === "string" && j.message.trim() !== "";
+  } catch { return false; }
 }
