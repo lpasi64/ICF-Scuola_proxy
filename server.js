@@ -9,6 +9,7 @@ import { ISTITUTI_SEC2 } from "./pei-gradi.js";
 import { parseMappaIcf, derivaProfiloApprendimento, formattaProfiloPerPrompt } from "./pei-profilo.js";
 import { validaRichiesta, creaCache, chiaveCache, creaLimitatore, sintetizza, elencaVoci } from "./tts.js";
 import { rigaUso, usoChat, usoClaude } from "./uso.js";
+import { catenaChat, testoRisposta, descriviCatena, corpoRichiesta, eseguiCatena } from "./chat-provider.js";
 import { calcolaEsitiDimensioni } from "./pei-dimensioni.js";
 import { scegliProvider, creaGeneratore } from "./pei-provider.js";
 import "./icf-bs.js";   // elenco chiuso delle funzioni e strutture corporee previste dagli allegati del questionario
@@ -17,8 +18,6 @@ const { elencoPerPrompt } = globalThis.ICFBS;
 const app = express();
 app.set("trust proxy", 1);   // dietro Railway: l'indirizzo del visitatore serve al limitatore della voce
 const PORT = process.env.PORT || 3000;
-const ZAI_API_KEY = process.env.ZAI_API_KEY;
-const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const GOOGLE_TTS_API_KEY = process.env.GOOGLE_TTS_API_KEY;   // facoltativa: senza, l'app usa le voci del browser
 const anthropicClient = ANTHROPIC_API_KEY ? new Anthropic({ apiKey: ANTHROPIC_API_KEY }) : null;
@@ -40,21 +39,8 @@ const generatorePei = creaGeneratore({
   fetchImpl: fetch,
 });
 
-// Provider primario: GLM-5.3-Flash (Z.ai), modello multimodale (usato qui solo in modalità
-// testo) con contesto 1M token. Fallback automatico su DeepSeek se GLM non è configurato o
-// la chiamata fallisce. ID modello e parametri confermati dalla documentazione ufficiale
-// (docs.z.ai/guides/vlm/glm-5.3-flash): temperature 1 e top_p 0.95 sono i valori consigliati
-// da Z.ai per questo modello. Non impostiamo reasoning_effort (i docs suggeriscono "max" per
-// compiti che richiedono ragionamento approfondito; per un colloquio conversazionale a bassa
-// latenza lasciamo il default — se le risposte risultano poco accurate si può provare ad
-// alzarlo, a scapito di tempi di risposta più lunghi).
-const ZAI_MODEL = "glm-5.3-flash";
-const ZAI_URL = "https://api.z.ai/api/paas/v4/chat/completions";
-// "deepseek-chat" (nome storico) è un alias che DeepSeek instrada su deepseek-flash (V4.1 Flash,
-// modalità non-thinking) dall'aprile 2026, ma ne ha annunciato la dismissione dopo il 24/07/2026.
-// Usiamo direttamente il nome ufficiale attuale per non dipendere da un alias a fine vita.
-const DEEPSEEK_MODEL = "deepseek-flash";
-const DEEPSEEK_URL = "https://api.deepseek.com/chat/completions";
+// Fornitori del colloquio (Mistral Small + Large di riserva; DeepSeek/GLM solo con CHAT_PROVIDER=legacy): vedi chat-provider.js
+console.log(`[chat] catena del colloquio: ${descriviCatena(catenaChat(process.env))}`);
 
 app.use(cors());
 app.use(express.json({ limit: "2mb" }));
@@ -295,7 +281,7 @@ app.get("/", (req, res) => {
   res.json({ status: "ok", service: "ICF-Scuola proxy" });
 });
 
-// Chiama un endpoint chat/completions in stile OpenAI (GLM e DeepSeek sono entrambi compatibili)
+// Chiama un endpoint chat/completions in stile OpenAI (Mistral, DeepSeek e GLM sono tutti compatibili)
 // e restituisce il testo della risposta. Lancia un errore se la chiamata fallisce.
 async function callProvider({ url, apiKey, model, messages, temperature = 0.7, maxTokens = 2048, extra = {} }) {
   const response = await fetch(url, {
@@ -304,29 +290,24 @@ async function callProvider({ url, apiKey, model, messages, temperature = 0.7, m
       "Content-Type": "application/json",
       "Authorization": `Bearer ${apiKey}`
     },
-    body: JSON.stringify({
-      model,
-      messages: [{ role: "system", content: SYSTEM_PROMPT }, ...messages],
-      max_tokens: maxTokens,
-      temperature,
-      ...extra
-    })
+    body: JSON.stringify(corpoRichiesta({ system: SYSTEM_PROMPT, messages, model, temperature, maxTokens, extra }))
   });
   if (!response.ok) {
-    const errText = await response.text();
+    const errText = (await response.text()).slice(0, 200);   // gli errori di validazione di alcuni fornitori citano l'input: se ne tiene solo l'inizio
     throw new Error(`HTTP ${response.status}: ${errText}`);
   }
   const data = await response.json();
   // consumi per il calcolo dei costi: solo numeri, mai testi
   const u = usoChat(data);
   console.log(rigaUso('chat', { modello: model, turni: messages.length, in: u.in, out: u.out, cache: u.cache }));
-  return data.choices?.[0]?.message?.content ?? "";
+  return testoRisposta(data.choices?.[0]?.message?.content);
 }
 
-// Proxy endpoint
+// Proxy endpoint: prova i fornitori della catena nell'ordine di chat-provider.js; il primo che risponde vince
 app.post("/chat", async (req, res) => {
-  if (!ZAI_API_KEY && !DEEPSEEK_API_KEY) {
-    return res.status(500).json({ error: "Nessuna API key configurata sul server (ZAI_API_KEY o DEEPSEEK_API_KEY)." });
+  const catena = catenaChat(process.env);
+  if (!catena.length) {
+    return res.status(500).json({ error: "Nessun fornitore del colloquio configurato sul server (MISTRAL_API_KEY; con CHAT_PROVIDER=legacy: DEEPSEEK_API_KEY o ZAI_API_KEY)." });
   }
 
   const { messages } = req.body;
@@ -334,30 +315,13 @@ app.post("/chat", async (req, res) => {
     return res.status(400).json({ error: "Campo 'messages' mancante o non valido." });
   }
 
-  // Provider primario: DeepSeek — affidabile e veloce (5-7s/turno) su molte interviste complete
-  // testate dal vivo. Fallback: GLM-5.3-Flash, se DeepSeek non è configurato o la chiamata fallisce.
-  // GLM è più lento (10-20s/turno) e ha mostrato un troncamento JSON su risposte molto dense con
-  // maxTokens basso — per questo qui usa un maxTokens più alto (6000) di DeepSeek (2048).
-  if (DEEPSEEK_API_KEY) {
-    try {
-      const text = await callProvider({ url: DEEPSEEK_URL, apiKey: DEEPSEEK_API_KEY, model: DEEPSEEK_MODEL, messages });
-      return res.json({ text, provider: DEEPSEEK_MODEL });
-    } catch (err) {
-      console.error("DeepSeek non disponibile, fallback su GLM:", err.message);
-    }
-  }
-
-  if (!ZAI_API_KEY) {
-    return res.status(500).json({ error: "DeepSeek non disponibile e GLM non configurato come fallback." });
-  }
-
-  try {
-    const text = await callProvider({ url: ZAI_URL, apiKey: ZAI_API_KEY, model: ZAI_MODEL, messages, temperature: 1, maxTokens: 6000, extra: { top_p: 0.95 } });
-    res.json({ text, provider: ZAI_MODEL });
-  } catch (err) {
-    console.error(`Errore proxy (${ZAI_MODEL}):`, err.message);
-    res.status(500).json({ error: "Errore interno del proxy: nessun provider disponibile." });
-  }
+  const esito = await eseguiCatena(
+    catena,
+    (c) => callProvider({ url: c.url, apiKey: c.apiKey, model: c.model, messages, temperature: c.temperature, maxTokens: c.maxTokens, extra: c.extra }),
+    (c, err) => console.error(`Colloquio: ${c.model} non disponibile:`, err.message)
+  );
+  if (!esito) return res.status(500).json({ error: "Errore interno del proxy: nessun provider disponibile." });
+  res.json(esito);
 });
 
 // ── GENERAZIONE PEI ─────────────────────────────────────────────────────────

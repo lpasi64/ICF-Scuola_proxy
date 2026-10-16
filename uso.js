@@ -8,6 +8,7 @@ export const PREZZI = {
   "glm-5.3-flash": { in: 0.15, out: 0.50 },
   "claude-sonnet-5": { in: 2, out: 10 },
   "mistral-small-2603": { in: 0.15, out: 0.60 },
+  "mistral-large-2512": { in: 0.50, out: 1.50 },
   tts: 16,
 };
 
