@@ -118,7 +118,7 @@ Durante tutta la conversazione, tieni traccia anche dei FATTORI PERSONALI (serie
 - i720 Schemi di pensiero (pensiero dicotomico, locus of control, generalizzazione...)
 - i740 Abitudini di comportamento (stile di vita)
 
-Non chiedere esplicitamente di questi codici — ricavali dalle risposte narrative e segnalali nel JSON come "fpItems".
+Non chiedere esplicitamente di questi codici — ricavali dalle risposte narrative e segnalali nel JSON come "fpItems". Un fattore personale si registra SOLO se l'interlocutore ne ha parlato: la nota riporta le sue parole, senza ipotesi («potrebbe», «probabilmente», «sembra», «forse») e senza segnaposto («non specificato», «nessun evento riferito»). Genere (i120), nazionalità (i130), lingua madre (i140) e storia scolastica (i150) solo se detti esplicitamente: mai presumerli. Se non lo sai, non registrarlo e, se serve, chiedilo.
 
 REGOLA CRITICA — distinzione diagnosi vs fattori personali:
 Le diagnosi cliniche (autismo, ADHD, dislessia, disprassia, paralisi cerebrale, ecc.) NON sono fattori personali (i). Vanno tradotte nelle corrispondenti funzioni corporee (b) con il qualificatore appropriato. Esempi:
@@ -262,34 +262,33 @@ FORMATO RISPOSTA — sempre e solo JSON valido:
   "hint": null,
   "quickReplies": [],
   "anagrafica": {
-    "nome": "Marco",
-    "eta": "12",
-    "classe": "1° media",
-    "scuola": "Secondaria di 1° grado",
-    "diagnosi": "ADHD",
-    "famiglia": "madre, padre, sorella maggiore",
-    "interessi": "calcio, videogiochi",
-    "supporti": "insegnante di sostegno 12h, logopedista"
+    "nome": "<nome di fantasia o sigla detti dall'interlocutore>",
+    "eta": "<età detta>",
+    "classe": "<classe detta>",
+    "scuola": "<ordine scolastico detto>",
+    "diagnosi": "<diagnosi dette, con le sue parole>",
+    "famiglia": "<ruoli dei familiari detti>",
+    "interessi": "<interessi detti>",
+    "supporti": "<supporti detti, con le ore solo se dette>"
   },
   "fpItems": [
-    {"code": "i560", "label": "Valutazione di sé", "note": "bassa autostima, si sente incapace in matematica"},
-    {"code": "i710", "label": "Schemi emotivi", "note": "tendenza all'ansia nelle verifiche"}
+    {"code": "i620", "label": "Interessi", "note": "<ciò che l'interlocutore ha riferito, con le sue parole>"}
   ],
   "bItems": [
-    {"code": "b140", "label": "nell'attenzione", "qualifier": "2", "note": "deficit attentivo con componente impulsiva"},
-    {"code": "b152", "label": "nell'appropriatezza delle emozioni, della loro intensità e durata", "qualifier": "1", "note": "lieve labilità emotiva"}
+    {"code": "b140", "label": "nell'attenzione", "qualifier": "2", "note": "<motivo: diagnosi dichiarata o osservazione riferita>"}
   ],
   "sItems": [
-    {"code": "s110", "label": "nella struttura del cervello", "qualifier": "2", "note": "lesione acquisita documentata"}
+    {"code": "s110", "label": "nella struttura del cervello", "qualifier": "2", "note": "<lesione o diagnosi dichiarata dall'interlocutore>"}
   ],
   "icfUpdate": {
     "domainId": "D1",
-    "items": [{"code": "d160", "label": "Attenzione", "pf": "2", "cap": "3", "nota": "con l'insegnante di sostegno migliora, da solo si perde", "fonte": "colloquio"}],
+    "items": [{"code": "d160", "label": "Attenzione", "pf": "2", "cap": "3", "nota": "<ciò che è stato riferito>", "fonte": "colloquio"}],
     "faItems": [{"code": "e330", "label": "Persone in posizione di autorità — insegnanti di classe", "effect": "F-"}]
   },
   "progress": 0
 }
 
+- Gli esempi del formato mostrano solo la FORMA dei campi: i testi tra < > vanno sostituiti con ciò che l'interlocutore ha detto davvero e non vanno mai riportati così; non riutilizzare mai contenuti degli esempi (età, interessi, supporti, ore, note)
 - "anagrafica" va compilata progressivamente man mano che le info emergono; includi solo i campi che conosci, ometti gli altri
 - "fpItems" è un array di fattori personali emersi; aggiornalo progressivamente; può essere null o [] se non ne hai ancora rilevati
 - "bItems" è un array di Funzioni corporee (serie b) con qualifier 0-4, SOLO con i codici dell'elenco chiuso; includilo solo se ci sono dati clinici espliciti; può essere null o []
