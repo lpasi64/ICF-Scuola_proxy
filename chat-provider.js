@@ -28,19 +28,21 @@ export function scegliCatenaChat(env) {
 export function catenaChat(env) {
   const e = env || {};
   const temperature = numero(e.CHAT_TEMPERATURE, 0.7);
+  // Mistral: le risposte normali sono di 600-1.600 token, ma con molti item da assegnare ne servono di più: 2.048 le troncava (JSON incompleto)
+  const maxTokensMistral = numero(e.CHAT_MAX_TOKENS, 4096);
   const catena = [];
   if (scegliCatenaChat(e) === "mistral") {
     if (!e.MISTRAL_API_KEY) return catena;
     // Small 4 ragiona se non glielo si vieta: nel colloquio i token di ragionamento sono solo costo e attesa
     const ragionamento = e.CHAT_MISTRAL_REASONING === undefined ? "none" : String(e.CHAT_MISTRAL_REASONING).trim();
     // Mistral risponde in testo libero se non gli si impone il JSON, che il client si aspetta (message, quickReplies, icfUpdate…)
-    const small = { nome: "mistral-small", url: MISTRAL_URL, apiKey: e.MISTRAL_API_KEY, model: e.CHAT_MISTRAL_MODEL || MISTRAL_SMALL, temperature, maxTokens: 2048, extra: { response_format: { type: "json_object" } } };
+    const small = { nome: "mistral-small", url: MISTRAL_URL, apiKey: e.MISTRAL_API_KEY, model: e.CHAT_MISTRAL_MODEL || MISTRAL_SMALL, temperature, maxTokens: maxTokensMistral, extra: { response_format: { type: "json_object" } } };
     if (ragionamento) small.extra.reasoning_effort = ragionamento;
     catena.push(small);
     const riserva = e.CHAT_MISTRAL_FALLBACK === undefined ? MISTRAL_LARGE : String(e.CHAT_MISTRAL_FALLBACK).trim();
     if (riserva && riserva.toLowerCase() !== "none") {
       // niente reasoning_effort: Large non è detto che lo accetti
-      catena.push({ nome: "mistral-riserva", url: MISTRAL_URL, apiKey: e.MISTRAL_API_KEY, model: riserva, temperature, maxTokens: 2048, extra: { response_format: { type: "json_object" } } });
+      catena.push({ nome: "mistral-riserva", url: MISTRAL_URL, apiKey: e.MISTRAL_API_KEY, model: riserva, temperature, maxTokens: maxTokensMistral, extra: { response_format: { type: "json_object" } } });
     }
     return catena;
   }
@@ -85,4 +87,16 @@ export function rispostaValida(text) {
     const j = JSON.parse(String(text || "").replace(/```json|```/g, "").trim());
     return !!j && typeof j === "object" && !Array.isArray(j) && typeof j.message === "string" && j.message.trim() !== "";
   } catch { return false; }
+}
+
+// Errori del fornitore che di solito passano da soli (limite di richieste, guasto momentaneo): si riprova una volta dopo una breve pausa
+const STATI_TEMPORANEI = new Set([429, 500, 502, 503, 504]);
+export async function chiediConRiprova(chiedi, { attesaMs = 1500, sleep = (ms) => new Promise(r => setTimeout(r, ms)) } = {}) {
+  let r = await chiedi();
+  if (STATI_TEMPORANEI.has(r.status)) {
+    const indicata = Number(r.headers && typeof r.headers.get === "function" ? r.headers.get("retry-after") : NaN);
+    await sleep(Number.isFinite(indicata) && indicata > 0 && indicata <= 5 ? indicata * 1000 : attesaMs);
+    r = await chiedi();
+  }
+  return r;
 }

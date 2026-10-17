@@ -9,7 +9,7 @@ import { ISTITUTI_SEC2 } from "./pei-gradi.js";
 import { parseMappaIcf, derivaProfiloApprendimento, formattaProfiloPerPrompt } from "./pei-profilo.js";
 import { validaRichiesta, creaCache, chiaveCache, creaLimitatore, sintetizza, elencaVoci } from "./tts.js";
 import { rigaUso, usoChat, usoClaude } from "./uso.js";
-import { catenaChat, testoRisposta, descriviCatena, corpoRichiesta, eseguiCatena, rispostaValida } from "./chat-provider.js";
+import { catenaChat, testoRisposta, descriviCatena, corpoRichiesta, eseguiCatena, rispostaValida, chiediConRiprova } from "./chat-provider.js";
 import { calcolaEsitiDimensioni } from "./pei-dimensioni.js";
 import { scegliProvider, creaGeneratore } from "./pei-provider.js";
 import "./icf-bs.js";   // elenco chiuso delle funzioni e strutture corporee previste dagli allegati del questionario
@@ -307,14 +307,15 @@ app.get("/", (req, res) => {
 // Chiama un endpoint chat/completions in stile OpenAI (Mistral, DeepSeek e GLM sono tutti compatibili)
 // e restituisce il testo della risposta. Lancia un errore se la chiamata fallisce.
 async function callProvider({ url, apiKey, model, messages, temperature = 0.7, maxTokens = 2048, extra = {} }) {
-  const response = await fetch(url, {
+  const body = JSON.stringify(corpoRichiesta({ system: SYSTEM_PROMPT, messages, model, temperature, maxTokens, extra }));
+  const response = await chiediConRiprova(() => fetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${apiKey}`
     },
-    body: JSON.stringify(corpoRichiesta({ system: SYSTEM_PROMPT, messages, model, temperature, maxTokens, extra }))
-  });
+    body
+  }));
   if (!response.ok) {
     const errText = (await response.text()).slice(0, 200);   // gli errori di validazione di alcuni fornitori citano l'input: se ne tiene solo l'inizio
     throw new Error(`HTTP ${response.status}: ${errText}`);
@@ -338,16 +339,24 @@ app.post("/chat", async (req, res) => {
     return res.status(400).json({ error: "Campo 'messages' mancante o non valido." });
   }
 
+  const parziali = [];
   const esito = await eseguiCatena(
     catena,
     async (c) => {
       const text = await callProvider({ url: c.url, apiKey: c.apiKey, model: c.model, messages, temperature: c.temperature, maxTokens: c.maxTokens, extra: c.extra });
-      if (!rispostaValida(text)) throw new Error("risposta non nel formato JSON atteso");   // passa al fornitore successivo
+      if (!rispostaValida(text)) {
+        if (text && text.trim()) parziali.push({ text, provider: c.model });
+        throw new Error("risposta non nel formato JSON atteso");   // passa al fornitore successivo
+      }
       return text;
     },
     (c, err) => console.error(`Colloquio: ${c.model} non disponibile:`, err.message)
   );
-  if (!esito) return res.status(500).json({ error: "Errore interno del proxy: nessun provider disponibile." });
+  if (!esito) {
+    // nessuna risposta valida: meglio il testo del primo tentativo (il client ne ricava almeno il messaggio) che un errore che si ripete identico
+    if (parziali.length) { console.error("Colloquio: restituita la risposta parziale del primo tentativo"); return res.json({ ...parziali[0], parziale: true }); }
+    return res.status(500).json({ error: "Errore interno del proxy: nessun provider disponibile." });
+  }
   res.json(esito);
 });
 
