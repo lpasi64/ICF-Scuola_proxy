@@ -80,7 +80,8 @@ REGOLE FONDAMENTALI:
    Gli unici nomi propri ammessi sono quelli presenti nel JSON (il/la ${term.soggetto}).
 8. Nelle sezioni DESCRITTIVE (1, 4, 6) NON affermare come fatti strumenti, ausili, software, servizi, interventi o abitudini che non compaiono nel JSON
    (niente «già introdotti», «sono disponibili», «è seguito da…» se il JSON non lo dice). Nelle sezioni 5, 7 e 8 puoi invece PROPORRE ausili e
-   interventi da attivare, presentandoli come proposte e non come situazione esistente.`;
+   interventi da attivare, presentandoli come proposte e non come situazione esistente.
+9. Se un fattore ambientale non ha qualificatore nel JSON, citalo senza commentare l'assenza di valutazione: mai «senza intensità quantificata», «non valutato», «non specificato».`;
 }
 
 // ── Come leggere il JSON ICF (legenda comune alle Parti 1, 2 e 3) ────────────────────────────────────────
