@@ -9,6 +9,7 @@ import { ISTITUTI_SEC2 } from "./pei-gradi.js";
 import { parseMappaIcf, derivaProfiloApprendimento, formattaProfiloPerPrompt } from "./pei-profilo.js";
 import { validaRichiesta, creaCache, chiaveCache, creaLimitatore, sintetizza, elencaVoci } from "./tts.js";
 import { rigaUso, usoChat, usoClaude } from "./uso.js";
+import { controllaAccesso } from "./accesso.js";
 import { catenaChat, testoRisposta, descriviCatena, corpoRichiesta, eseguiCatena, rispostaValida, chiediConRiprova } from "./chat-provider.js";
 import { calcolaEsitiDimensioni } from "./pei-dimensioni.js";
 import { scegliProvider, creaGeneratore } from "./pei-provider.js";
@@ -41,9 +42,18 @@ const generatorePei = creaGeneratore({
 
 // Fornitori del colloquio (Mistral Small + Large di riserva; DeepSeek/GLM solo con CHAT_PROVIDER=legacy): vedi chat-provider.js
 console.log(`[chat] catena del colloquio: ${descriviCatena(catenaChat(process.env))}`);
+console.log(`[accesso] ${String(process.env.ACCESSO_CHIAVE || "").trim() ? "su invito (chiave richiesta)" : "libero (nessuna chiave impostata)"}`);
 
 app.use(cors());
 app.use(express.json({ limit: "2mb" }));
+
+// Accesso su invito: con ACCESSO_CHIAVE impostata, ogni richiesta (salvo il controllo di salute «/» e le OPTIONS) deve portare la chiave in «X-Accesso»
+const fallimentiAccesso = new Map();
+app.use((req, res, next) => {
+  const r = controllaAccesso({ chiave: process.env.ACCESSO_CHIAVE, metodo: req.method, percorso: req.path, intestazione: req.get("x-accesso"), ip: req.ip, fallimenti: fallimentiAccesso });
+  if (r.ok) return next();
+  return res.status(r.status).json(r.corpo);
+});
 
 // ── SYSTEM PROMPT ─────────────────────────────────────────────────────────────
 // Fattori ambientali del questionario: codice → [nome ICF, esempi della piattaforma]. I nomi coincidono con quelli di icf-import.js
@@ -300,8 +310,10 @@ FORMATO RISPOSTA — sempre e solo JSON valido:
 
 // Health check
 app.get("/", (req, res) => {
-  res.json({ status: "ok", service: "ICF-Scuola proxy" });
+  res.json({ status: "ok", service: "ICF-Scuola proxy", accessoSuInvito: Boolean(String(process.env.ACCESSO_CHIAVE || "").trim()) });
 });
+// Il frontend la chiama all'avvio per sapere se la chiave del link è valida (il controllo è nel middleware sopra)
+app.get("/accesso", (req, res) => res.json({ ok: true }));
 
 // Chiama un endpoint chat/completions in stile OpenAI (Mistral, DeepSeek e GLM sono tutti compatibili)
 // e restituisce il testo della risposta. Lancia un errore se la chiamata fallisce.

@@ -37,7 +37,8 @@ export function catenaChat(env) {
     const ragionamento = e.CHAT_MISTRAL_REASONING === undefined ? "none" : String(e.CHAT_MISTRAL_REASONING).trim();
     // Mistral risponde in testo libero se non gli si impone il JSON, che il client si aspetta (message, quickReplies, icfUpdate…)
     const small = { nome: "mistral-small", url: MISTRAL_URL, apiKey: e.MISTRAL_API_KEY, model: e.CHAT_MISTRAL_MODEL || MISTRAL_SMALL, temperature, maxTokens: maxTokensMistral, extra: { response_format: { type: "json_object" } } };
-    if (ragionamento) small.extra.reasoning_effort = ragionamento;
+    // reasoning_effort solo per i modelli Small (Small 4 ragiona se non glielo si vieta); gli altri (es. Large) potrebbero rifiutarlo e la richiesta cadrebbe sul modello di riserva
+    if (ragionamento && /small/i.test(small.model)) small.extra.reasoning_effort = ragionamento;
     catena.push(small);
     const riserva = e.CHAT_MISTRAL_FALLBACK === undefined ? MISTRAL_LARGE : String(e.CHAT_MISTRAL_FALLBACK).trim();
     if (riserva && riserva.toLowerCase() !== "none") {
