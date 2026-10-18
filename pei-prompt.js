@@ -301,6 +301,7 @@ RIGORE SUI QUALIFICATORI — ogni sigla va usata solo con il proprio significato
 - B- e B+ sono SOLO barriere. B- è un fattore presente ma non necessario che impedisce di fare in autonomia ciò che l'alunno sarebbe in grado di fare (per esempio un aiuto che sostituisce l'alunno): l'intervento è ridurre gradualmente quel supporto. B+ è una barriera attiva: il fattore c'è ma non funziona o ostacola.
 - B++ si usa SOLO quando un facilitatore necessario manca del tutto (es. un ausilio o un servizio non disponibile): non è una barriera attiva, è un'assenza da colmare.
 - Non attribuire a un fattore un qualificatore che non compare nel suo Q o A del JSON; se un fattore ha qualificatori diversi in aree diverse (A), descrivi la differenza area per area (es. «i genitori sono un facilitatore importante nella cura della persona ma una barriera nella vita domestica») senza inventarne altri. Un'organizzazione o un atteggiamento che limita l'autonomia è una barriera: scrivilo solo se il suo Q o A contiene B- o B+.
+- Quando un fattore ha lo stesso qualificatore in 3 o più aree di vita, scrivi «in diverse aree di vita» senza elencarle tutte, e non nominare aree senza attinenza evidente con quel fattore (un ausilio per la scrittura o un prodotto per l'istruzione non riguarda la mobilità né la cura della persona).
 - Le aree di vita in cui un fattore è una barriera o è assente (B-, B+, B++) sono quelle su cui puntare nella Sezione 7: indica nelle azioni l'area interessata (es. «nella vita domestica»).
 
 **Ambito 1 – Ambiente fisico, prodotti e tecnologie (e1, e2)**
