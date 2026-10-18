@@ -77,7 +77,10 @@ REGOLE FONDAMENTALI:
 7. NON inventare MAI nomi propri di persone, aziende, enti o strutture (tutor, referenti, docenti, sedi di FSL, ecc.):
    indica solo il ruolo o la tipologia generica (es. "docente referente FSL del Consiglio di classe",
    "azienda del settore meccanico convenzionata con l'istituto"). Se un dato non è desumibile scrivi "da definire".
-   Gli unici nomi propri ammessi sono quelli presenti nel JSON (il/la ${term.soggetto}).`;
+   Gli unici nomi propri ammessi sono quelli presenti nel JSON (il/la ${term.soggetto}).
+8. Nelle sezioni DESCRITTIVE (1, 4, 6) NON affermare come fatti strumenti, ausili, software, servizi, interventi o abitudini che non compaiono nel JSON
+   (niente «già introdotti», «sono disponibili», «è seguito da…» se il JSON non lo dice). Nelle sezioni 5, 7 e 8 puoi invece PROPORRE ausili e
+   interventi da attivare, presentandoli come proposte e non come situazione esistente.`;
 }
 
 // ── Come leggere il JSON ICF (legenda comune alle Parti 1, 2 e 3) ────────────────────────────────────────
@@ -167,7 +170,7 @@ ${tabellaSez2PerPrompt(esitiDim)}
 
 ## Sezione 3 – Raccordo con il Progetto di Vita (D.Lgs. 62/2024)
 
-Segui il modello ministeriale con le due opzioni — scegli la più pertinente in base al JSON:
+Segui il modello ministeriale con le due opzioni. Il JSON NON dice se il Progetto Individuale sia già attivo: non affermare mai come fatto né che «non risulta attivato» né che «è già attivo». Usa la formula condizionale «Se il Progetto Individuale non fosse ancora attivo, si suggerisce di richiederlo al più presto» e proponi gli ambiti dell'opzione b:
 
 **a) Se il Progetto Individuale è già attivo:**
 Descrivi brevemente (3-4 frasi) i raccordi tra PEI e Progetto Individuale nei seguenti ambiti (solo extrascolastici): salute e benessere (interventi riabilitativi, raccordo con équipe ASL), indipendenza e mobilità (autonomia negli spostamenti), vita relazionale e sociale (amicizie, attività ricreative), orientamento al lavoro (competenze pre-vocazionali).
