@@ -10,6 +10,7 @@ import { parseMappaIcf, derivaProfiloApprendimento, formattaProfiloPerPrompt } f
 import { validaRichiesta, creaCache, chiaveCache, creaLimitatore, sintetizza, elencaVoci } from "./tts.js";
 import { rigaUso, usoChat, usoClaude } from "./uso.js";
 import { controllaAccesso } from "./accesso.js";
+import { preparaCronologia } from "./cronologia.js";
 import { catenaChat, testoRisposta, descriviCatena, corpoRichiesta, eseguiCatena, rispostaValida, chiediConRiprova } from "./chat-provider.js";
 import { calcolaEsitiDimensioni } from "./pei-dimensioni.js";
 import { scegliProvider, creaGeneratore } from "./pei-provider.js";
@@ -299,6 +300,7 @@ FORMATO RISPOSTA — sempre e solo JSON valido:
 }
 
 - Gli esempi del formato mostrano solo la FORMA dei campi: i testi tra < > vanno sostituiti con ciò che l'interlocutore ha detto davvero e non vanno mai riportati così; non riutilizzare mai contenuti degli esempi (età, interessi, supporti, ore, note)
+- Se in fondo a queste istruzioni trovi un blocco «STATO GIÀ REGISTRATO NEL QUESTIONARIO», è ciò che hai già registrato nelle risposte precedenti: nel JSON includi SOLO ciò che è nuovo o corretto in questo turno, mai di nuovo l'elenco completo
 - "anagrafica" va compilata progressivamente man mano che le info emergono; includi solo i campi che conosci, ometti gli altri
 - "fpItems" è un array di fattori personali emersi; aggiornalo progressivamente; può essere null o [] se non ne hai ancora rilevati
 - "bItems" è un array di Funzioni corporee (serie b) con qualifier 0-4, SOLO con i codici dell'elenco chiuso; includilo solo se ci sono dati clinici espliciti; può essere null o []
@@ -317,8 +319,8 @@ app.get("/accesso", (req, res) => res.json({ ok: true }));
 
 // Chiama un endpoint chat/completions in stile OpenAI (Mistral, DeepSeek e GLM sono tutti compatibili)
 // e restituisce il testo della risposta. Lancia un errore se la chiamata fallisce.
-async function callProvider({ url, apiKey, model, messages, temperature = 0.7, maxTokens = 2048, extra = {} }) {
-  const body = JSON.stringify(corpoRichiesta({ system: SYSTEM_PROMPT, messages, model, temperature, maxTokens, extra }));
+async function callProvider({ url, apiKey, model, messages, system, compatta, temperature = 0.7, maxTokens = 2048, extra = {} }) {
+  const body = JSON.stringify(corpoRichiesta({ system: system || SYSTEM_PROMPT, messages, model, temperature, maxTokens, extra }));
   const response = await chiediConRiprova(() => fetch(url, {
     method: "POST",
     headers: {
@@ -334,7 +336,7 @@ async function callProvider({ url, apiKey, model, messages, temperature = 0.7, m
   const data = await response.json();
   // consumi per il calcolo dei costi: solo numeri, mai testi
   const u = usoChat(data);
-  console.log(rigaUso('chat', { modello: model, turni: messages.length, in: u.in, out: u.out, cache: u.cache }));
+  console.log(rigaUso('chat', { modello: model, turni: messages.length, in: u.in, out: u.out, cache: u.cache, compatta: compatta ? 'si' : 'no' }));
   return testoRisposta(data.choices?.[0]?.message?.content);
 }
 
@@ -350,11 +352,15 @@ app.post("/chat", async (req, res) => {
     return res.status(400).json({ error: "Campo 'messages' mancante o non valido." });
   }
 
+  // cronologia compattata (interruttore: CHAT_COMPATTA=0 la disattiva): stato già registrato nel prompt, risposte vecchie ridotte al messaggio
+  const compatta = String(process.env.CHAT_COMPATTA ?? "1").trim() !== "0";
+  const preparata = preparaCronologia(messages, { attiva: compatta });
+  const system = preparata.stato ? SYSTEM_PROMPT + "\n\n" + preparata.stato : SYSTEM_PROMPT;
   const parziali = [];
   const esito = await eseguiCatena(
     catena,
     async (c) => {
-      const text = await callProvider({ url: c.url, apiKey: c.apiKey, model: c.model, messages, temperature: c.temperature, maxTokens: c.maxTokens, extra: c.extra });
+      const text = await callProvider({ url: c.url, apiKey: c.apiKey, model: c.model, messages: preparata.messages, system, compatta, temperature: c.temperature, maxTokens: c.maxTokens, extra: c.extra });
       if (!rispostaValida(text)) {
         if (text && text.trim()) parziali.push({ text, provider: c.model });
         throw new Error("risposta non nel formato JSON atteso");   // passa al fornitore successivo
